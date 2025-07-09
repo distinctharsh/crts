@@ -8,8 +8,7 @@ use App\Http\Controllers\DashboardController;
 use App\Http\Controllers\MastersController;
 use App\Http\Controllers\ProfileController;
 use App\Http\Controllers\AuditLogController;
-
-
+use App\Services\ComplaintAutoCloser;
 
 
 // Redirect root URL to /home

@@ -7,11 +7,13 @@ use App\Models\Complaint;
 use App\Models\Status;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Log;
+use App\Services\ComplaintAutoCloser;
 
 class DashboardController extends Controller
 {
     public function index()
     {
+        ComplaintAutoCloser::autoClose();
         try {
             $user = auth()->user();
 
