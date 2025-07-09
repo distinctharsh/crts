@@ -51,6 +51,9 @@ class ComplaintPolicy
         if ($user->isManager()) {
             return true;
         }
+        if ($user->isVM()) {
+            return true;
+        }
 
         // VMs can update complaints assigned to them
         if ($user->isVM() && $complaint->assigned_to === $user->id) {

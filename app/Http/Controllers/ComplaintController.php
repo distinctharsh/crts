@@ -235,7 +235,8 @@ class ComplaintController extends Controller
 
         $complaint->load(['client', 'assignedTo', 'status']);
 
-        return view('complaints.edit', compact('complaint', 'networkTypes', 'verticals', 'sections', 'statuses'));
+        // Use the unified create view for both add and edit
+        return view('complaints.create', compact('complaint', 'networkTypes', 'verticals', 'sections', 'statuses'));
     }
 
 
