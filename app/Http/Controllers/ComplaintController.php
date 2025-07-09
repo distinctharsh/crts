@@ -130,7 +130,7 @@ class ComplaintController extends Controller
         $managers = User::whereHas('role', function ($q) {
             $q->where('slug', 'manager');
         })->get();
-        $statuses = Status::active()->ordered()->where('name', '!=', 'assign_to_me')->get();
+        $statuses = Status::query()->ordered()->where('name', '!=', 'assign_to_me')->get();
 
         // Remove perPage and server-side pagination
         $complaints = $query->latest()->get();
@@ -231,7 +231,7 @@ class ComplaintController extends Controller
         $networkTypes = NetworkType::all();
         $verticals = Vertical::all();
         $sections = Section::all();
-        $statuses = Status::active()->ordered()->get();
+        $statuses = Status::query()->ordered()->get();
 
         $complaint->load(['client', 'assignedTo', 'status']);
 
@@ -526,12 +526,9 @@ class ComplaintController extends Controller
         $complaint->load(['client', 'assignedTo', 'actions.user', 'networkType', 'vertical', 'section', 'status']);
 
         // Statuses for assigned user to update
-        $statusOptions = \App\Models\Status::whereIn('name', [
-            'pending_with_vendor',
-            'pending_with_user',
-            'in_progress',
-            'completed'
-        ])->ordered()->get();
+        $statusOptions = \App\Models\Status::where('visible_to_user', true)
+            ->ordered()
+            ->get();
 
         // Show close/assign for manager (or VM if assigned to NFO) when status is completed
         $showCloseOrAssign = false;

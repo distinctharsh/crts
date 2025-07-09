@@ -17,7 +17,6 @@ return new class extends Migration
             $table->string('slug')->unique(); // e.g., 'pending', 'in-progress'
             $table->string('color')->default('secondary'); // Bootstrap color class
             $table->text('description')->nullable();
-            $table->boolean('is_active')->default(true);
             $table->integer('sort_order')->default(0);
             $table->timestamps();
         });

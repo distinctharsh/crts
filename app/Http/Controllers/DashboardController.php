@@ -13,7 +13,7 @@ class DashboardController extends Controller
 {
     public function index()
     {
-        ComplaintAutoCloser::autoClose();
+        // ComplaintAutoCloser::autoClose();
         try {
             $user = auth()->user();
 

@@ -11,16 +11,10 @@ class Status extends Model
     use LogsActivity, HasFactory;
 
     protected $fillable = [
-        'name',
-        'slug',
-        'color',
-        'description',
-        'is_active',
-        'sort_order'
+        'name', 'color', 'slug', 'visible_to_user', 'sort_order', 'description'
     ];
 
     protected $casts = [
-        'is_active' => 'boolean',
         'sort_order' => 'integer',
     ];
 
@@ -31,11 +25,6 @@ class Status extends Model
     }
 
     // Scopes
-    public function scopeActive($query)
-    {
-        return $query->where('is_active', true);
-    }
-
     public function scopeOrdered($query)
     {
         return $query->orderBy('sort_order', 'asc');

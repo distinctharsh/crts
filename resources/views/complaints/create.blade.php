@@ -305,6 +305,31 @@
         </div>
     </div>
 </div>
+
+
+
+<script src="https://www.google.com/jsapi"></script>
+<script>
+  google.load("elements", "1", {
+    packages: "transliteration"
+  });
+
+  google.setOnLoadCallback(onLoad);
+
+  function onLoad() {
+    var options = {
+      sourceLanguage: google.elements.transliteration.LanguageCode.ENGLISH,
+      destinationLanguage: [google.elements.transliteration.LanguageCode.HINDI],
+      transliterationEnabled: true
+    };
+
+    var control = new google.elements.transliteration.TransliterationControl(options);
+    control.makeTransliteratable(['description']);
+  }
+</script>
+
+
+
 @endsection
 
 @push('style')

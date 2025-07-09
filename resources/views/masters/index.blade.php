@@ -15,6 +15,9 @@
     @if(session('success'))
         <div class="alert alert-success">{{ session('success') }}</div>
     @endif
+    @if(session('error'))
+        <div class="alert alert-danger">{{ session('error') }}</div>
+    @endif
     <ul class="nav nav-tabs mb-3" id="masterTabs" role="tablist">
         <li class="nav-item" role="presentation">
             <button class="nav-link active" id="network-types-tab" data-bs-toggle="tab" data-bs-target="#network-types" type="button" role="tab">Network Types</button>
@@ -246,7 +249,22 @@
                                                 </div>
                                                 <div class="mb-3">
                                                     <label class="form-label">Color</label>
-                                                    <input type="color" name="color" class="form-control form-control-color" value="{{ $status->color }}" required>
+                                                    <select name="color" class="form-select" required>
+                                                        <option value="primary" {{ $status->color == 'primary' ? 'selected' : '' }}>Primary</option>
+                                                        <option value="secondary" {{ $status->color == 'secondary' ? 'selected' : '' }}>Secondary</option>
+                                                        <option value="success" {{ $status->color == 'success' ? 'selected' : '' }}>Success</option>
+                                                        <option value="danger" {{ $status->color == 'danger' ? 'selected' : '' }}>Danger</option>
+                                                        <option value="warning" {{ $status->color == 'warning' ? 'selected' : '' }}>Warning</option>
+                                                        <option value="info" {{ $status->color == 'info' ? 'selected' : '' }}>Info</option>
+                                                        <option value="light" {{ $status->color == 'light' ? 'selected' : '' }}>Light</option>
+                                                        <option value="dark" {{ $status->color == 'dark' ? 'selected' : '' }}>Dark</option>
+                                                    </select>
+                                                </div>
+                                                <div class="form-check mb-3">
+                                                    <input class="form-check-input" type="checkbox" name="visible_to_user" id="visible_to_user_{{ $status->id }}" value="1" {{ $status->visible_to_user ? 'checked' : '' }}>
+                                                    <label class="form-check-label" for="visible_to_user_{{ $status->id }}">
+                                                        Show to user in status dropdown?
+                                                    </label>
                                                 </div>
                                             </div>
                                             <div class="modal-footer">
@@ -426,7 +444,8 @@
     <div class="modal fade" id="addSectionModal" tabindex="-1">
         <div class="modal-dialog">
             <div class="modal-content">
-                <form>
+                  <form action="{{ route('masters.sections.store') }}" method="POST">
+                    @csrf
                     <div class="modal-header">
                         <h5 class="modal-title">Add Section</h5>
                         <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
@@ -471,7 +490,8 @@
     <div class="modal fade" id="addStatusModal" tabindex="-1">
         <div class="modal-dialog">
             <div class="modal-content">
-                <form>
+                <form action="{{ route('masters.statuses.store') }}" method="POST">
+                    @csrf
                     <div class="modal-header">
                         <h5 class="modal-title">Add Status</h5>
                         <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
@@ -479,11 +499,26 @@
                     <div class="modal-body">
                         <div class="mb-3">
                             <label class="form-label">Name</label>
-                            <input type="text" class="form-control tom-select" required>
+                            <input type="text" name="name" class="form-control tom-select" required>
                         </div>
                         <div class="mb-3">
                             <label class="form-label">Color</label>
-                            <input type="color" class="form-control form-control-color" value="#0d6efd" title="Choose color">
+                            <select name="color" class="form-select" required>
+                                <option value="primary">Primary</option>
+                                <option value="secondary">Secondary</option>
+                                <option value="success">Success</option>
+                                <option value="danger">Danger</option>
+                                <option value="warning">Warning</option>
+                                <option value="info">Info</option>
+                                <option value="light">Light</option>
+                                <option value="dark">Dark</option>
+                            </select>
+                        </div>
+                        <div class="form-check mb-3">
+                            <input class="form-check-input" type="checkbox" name="visible_to_user" id="visible_to_user_new" value="1" checked>
+                            <label class="form-check-label" for="visible_to_user_new">
+                                Show to user in status dropdown?
+                            </label>
                         </div>
                     </div>
                     <div class="modal-footer">
@@ -524,7 +559,8 @@
     <div class="modal fade" id="addVerticalModal" tabindex="-1">
         <div class="modal-dialog">
             <div class="modal-content">
-                <form>
+                <form action="{{ route('masters.verticals.store') }}" method="POST">
+                    @csrf
                     <div class="modal-header">
                         <h5 class="modal-title">Add Vertical</h5>
                         <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
@@ -532,7 +568,7 @@
                     <div class="modal-body">
                         <div class="mb-3">
                             <label class="form-label">Name</label>
-                            <input type="text" class="form-control tom-select" required>
+                            <input type="text" name="name" class="form-control tom-select" required>
                         </div>
                     </div>
                     <div class="modal-footer">
@@ -546,7 +582,9 @@
     <div class="modal fade" id="editVerticalModal" tabindex="-1">
         <div class="modal-dialog">
             <div class="modal-content">
-                <form>
+                  <form action="{{ route('masters.verticals.update', $vertical) }}"  method="POST">
+                    @csrf
+                    @method('PUT')
                     <div class="modal-header">
                         <h5 class="modal-title">Edit Vertical</h5>
                         <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
