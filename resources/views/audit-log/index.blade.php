@@ -25,7 +25,6 @@
                             <td>{{ $log->created_at->format('d-m-Y H:i:s') }}</td>
                             <td>
                                 @if($log->properties['user_full_name'] ?? null)
-                                    <span class="avatar-circle me-2">{{ strtoupper(substr($log->properties['user_full_name'],0,1)) }}</span>
                                     <span>{{ $log->properties['user_full_name'] }}</span>
                                     @php
                                         $eventDesc = strtolower($log->event ? $log->event : $log->description);
@@ -35,10 +34,9 @@
                                     @endif
                                 @else
                                     @if($log->causer)
-                                        <span class="avatar-circle me-2">{{ strtoupper(substr($log->causer->name,0,1)) }}</span>
                                         <span>{{ $log->causer->name }}</span>
                                     @else
-                                        <span class="avatar-circle bg-secondary me-2">S</span> System
+                                        System
                                     @endif
                                 @endif
                             </td>
@@ -71,7 +69,20 @@
                             </td>
                             <td>{{ $log->subject_id }}</td>
                             <td>
-                                @if($log->properties['old'] ?? null)
+                                @if($log->event == 'updated' && ($log->properties['old'] ?? null) && ($log->properties['attributes'] ?? null))
+                                    @php
+                                        $old = $log->properties['old'];
+                                        $new = $log->properties['attributes'];
+                                        $changed = collect($new)->filter(function($value, $key) use ($old) {
+                                            return !array_key_exists($key, $old) || $old[$key] != $value;
+                                        });
+                                    @endphp
+                                    <ul class="list-unstyled mb-0">
+                                    @foreach($changed as $key => $value)
+                                        <li><strong>{{ $key }}:</strong> <span class="text-danger bg-light px-1 rounded">{{ $old[$key] ?? '-' }}</span></li>
+                                    @endforeach
+                                    </ul>
+                                @elseif($log->properties['old'] ?? null)
                                     <ul class="list-unstyled mb-0">
                                     @foreach($log->properties['old'] as $key => $value)
                                         <li><strong>{{ $key }}:</strong> <span class="text-danger bg-light px-1 rounded">{{ $value }}</span></li>
@@ -84,7 +95,20 @@
                                 @endif
                             </td>
                             <td>
-                                @if($log->properties['attributes'] ?? null)
+                                @if($log->event == 'updated' && ($log->properties['old'] ?? null) && ($log->properties['attributes'] ?? null))
+                                    @php
+                                        $old = $log->properties['old'];
+                                        $new = $log->properties['attributes'];
+                                        $changed = collect($new)->filter(function($value, $key) use ($old) {
+                                            return !array_key_exists($key, $old) || $old[$key] != $value;
+                                        });
+                                    @endphp
+                                    <ul class="list-unstyled mb-0">
+                                    @foreach($changed as $key => $value)
+                                        <li><strong>{{ $key }}:</strong> <span class="text-success bg-light px-1 rounded">{{ $value }}</span></li>
+                                    @endforeach
+                                    </ul>
+                                @elseif($log->properties['attributes'] ?? null)
                                     <ul class="list-unstyled mb-0">
                                     @foreach($log->properties['attributes'] as $key => $value)
                                         <li><strong>{{ $key }}:</strong> <span class="text-success bg-light px-1 rounded">{{ $value }}</span></li>
@@ -115,17 +139,7 @@
 @endsection
 
 @push('scripts')
-<script src="https://cdn.datatables.net/1.13.4/js/jquery.dataTables.min.js"></script>
-<script src="https://cdn.datatables.net/1.13.4/js/dataTables.bootstrap5.min.js"></script>
-<script src="https://cdn.datatables.net/buttons/2.4.1/js/dataTables.buttons.min.js"></script>
-<script src="https://cdn.datatables.net/buttons/2.4.1/js/buttons.bootstrap5.min.js"></script>
-<script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.1.3/jszip.min.js"></script>
-<script src="https://cdnjs.cloudflare.com/ajax/libs/pdfmake/0.1.53/pdfmake.min.js"></script>
-<script src="https://cdnjs.cloudflare.com/ajax/libs/pdfmake/0.1.53/vfs_fonts.js"></script>
-<script src="https://cdn.datatables.net/buttons/2.4.1/js/buttons.html5.min.js"></script>
-<script src="https://cdn.datatables.net/buttons/2.4.1/js/buttons.print.min.js"></script>
-<script src="https://cdn.datatables.net/buttons/2.4.1/js/buttons.colVis.min.js"></script>
-<script src="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/js/all.min.js"></script>
+
 <script>
 $(document).ready(function() {
     $('#auditLogTable').DataTable({
