@@ -159,7 +159,9 @@ class Complaint extends Model
         }
 
         // Get all user_ids and assigned_to from assignment actions
-        $actions = $this->actions()->whereIn('action', ['assigned', 'reassigned'])->get();
+        $actions = $this->actions()->whereHas('status', function($q) {
+            $q->whereIn('name', ['assigned', 'reassigned']);
+        })->get();
         $userIds = $actions->pluck('user_id')->toArray();
         $assignedToIds = $actions->pluck('assigned_to')->toArray();
         $relatedUserIds = array_unique(array_merge($userIds, $assignedToIds));

@@ -14,7 +14,7 @@ class ComplaintAction extends Model
         'complaint_id',
         'user_id',
         'assigned_to',
-        'action',
+        'status_id',
         'description'
     ];
 
@@ -26,6 +26,11 @@ class ComplaintAction extends Model
     public function user()
     {
         return $this->belongsTo(User::class);
+    }
+
+    public function status()
+    {
+        return $this->belongsTo(Status::class);
     }
 
     public function getActivitylogOptions(): \Spatie\Activitylog\LogOptions

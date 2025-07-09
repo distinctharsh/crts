@@ -215,7 +215,7 @@ class ComplaintController extends Controller
         ComplaintAction::create([
             'complaint_id' => $complaint->id,
             'user_id' => Auth::user()->id ?? 0,
-            'action' => 'created',
+            'status_id' => $unassignedStatus->id,
             'description' => 'Complaint created',
             'changes' => json_encode($complaint->getChanges())
         ]);
@@ -260,7 +260,7 @@ class ComplaintController extends Controller
             ComplaintAction::create([
                 'complaint_id' => $complaint->id,
                 'user_id' => Auth::user()->id ?? 0,
-                'action' => 'closed',
+                'status_id' => $validated['status_id'],
                 'description' => $validated['description'],
             ]);
 
@@ -309,7 +309,7 @@ class ComplaintController extends Controller
         ComplaintAction::create([
             'complaint_id' => $complaint->id,
             'user_id' => Auth::user()->id ?? 0,
-            'action' => 'updated',
+            'status_id' => $validated['status_id'],
             'description' => 'Complaint updated',
             'changes' => json_encode($complaint->getChanges())
         ]);
@@ -363,8 +363,7 @@ class ComplaintController extends Controller
         ComplaintAction::create([
             'complaint_id' => $complaint->id,
             'user_id' => $user->id,
-            'assigned_to' => $validated['assigned_to'],
-            'action' => 'assigned',
+            'status_id' => $assignedStatus->id,
             'description' => $validated['description']
         ]);
 
@@ -412,7 +411,7 @@ class ComplaintController extends Controller
         ComplaintAction::create([
             'complaint_id' => $complaint->id,
             'user_id' => $user->id,
-            'action' => $finalStatus->name,
+            'status_id' => $finalStatus->id,
             'description' => $validated['description']
         ]);
 
@@ -451,7 +450,7 @@ class ComplaintController extends Controller
         ComplaintAction::create([
             'complaint_id' => $complaint->id,
             'user_id' => $user->id,
-            'action' => 'reverted',
+            'status_id' => $revertedStatus->id,
             'description' => $validated['description']
         ]);
 
@@ -486,8 +485,8 @@ class ComplaintController extends Controller
 
         // Filter by action
         if ($request->filled('action')) {
-            $query->whereHas('actions', function ($q) use ($request) {
-                $q->where('action', $request->action);
+            $query->whereHas('actions.status', function ($q) use ($request) {
+                $q->where('name', $request->action);
             });
         }
 
@@ -513,7 +512,7 @@ class ComplaintController extends Controller
         $complaints = $query->latest()->paginate(10)->withQueryString();
 
         // For filter dropdowns
-        $actionsList = \App\Models\ComplaintAction::select('action')->distinct()->pluck('action');
+        $actionsList = \App\Models\Status::pluck('name');
         $usersList = \App\Models\User::select('username')->distinct()->pluck('username');
 
         return view('complaints.history', compact('complaints', 'actionsList', 'usersList'));
@@ -565,7 +564,7 @@ class ComplaintController extends Controller
             \App\Models\ComplaintAction::create([
                 'complaint_id' => $complaint->id,
                 'user_id' => Auth::user()->id ?? 0,
-                'action' => \App\Models\Status::find($request->status_id)->name,
+                'status_id' => $request->status_id,
                 'description' => $request->comment,
             ]);
         }

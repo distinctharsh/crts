@@ -17,9 +17,9 @@
                             </div>
                             <div class="col-md-2">
                                 <select name="action" class="form-select">
-                                    <option value="">All Actions</option>
+                                    <option value="">All Statuses</option>
                                     @foreach($actionsList as $action)
-                                    <option value="{{ $action }}" {{ request('action') == $action ? 'selected' : '' }}>{{ ucfirst($action) }}</option>
+                                    <option value="{{ $action }}" {{ request('action') == $action ? 'selected' : '' }}>{{ ucfirst(str_replace('_', ' ', $action)) }}</option>
                                     @endforeach
                                 </select>
                             </div>
@@ -64,7 +64,7 @@
                                             {{ $complaint->reference_number }}
                                         </a>
                                     </td>
-                                    <td>{{ $latestAction?->action ?? '-' }}</td>
+                                    <td>{{ $latestAction?->status?->display_name ?? '-' }}</td>
                                     <td>{{ $latestAction?->user?->full_name ?? $latestAction?->user?->username ?? '-' }}</td>
                                     <td>
                                         @if($latestAction?->assigned_to)
