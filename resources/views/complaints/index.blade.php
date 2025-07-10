@@ -475,5 +475,45 @@ $breadcrumbs = [
         font-size: 1.1rem !important;
         padding: 0.5rem 1rem !important;
     }
+
+    /* Modern Table Enhancements */
+    .table-responsive {
+        border-radius: 16px;
+        box-shadow: 0 4px 24px rgba(0,0,0,0.08);
+        overflow-x: auto;
+        background: #fff;
+        margin-bottom: 1.5rem;
+    }
+
+    #complaintsTable {
+        min-width: 1200px;
+        border-radius: 12px;
+        overflow: hidden;
+    }
+
+    #complaintsTable thead th {
+        position: sticky;
+        top: 0;
+        background: linear-gradient(90deg, #0d6efd 0%, #0a58ca 100%) !important;
+        color: #fff !important;
+        z-index: 2;
+    }
+
+    #complaintsTable tbody tr:hover {
+        background: #eaf1fb !important;
+        transition: background 0.2s;
+    }
+
+    .table-responsive::-webkit-scrollbar {
+        height: 8px;
+    }
+    .table-responsive::-webkit-scrollbar-thumb {
+        background: #0d6efd;
+        border-radius: 4px;
+    }
+    .table-responsive::-webkit-scrollbar-track {
+        background: #f1f1f1;
+        border-radius: 4px;
+    }
 </style>
 @endpush
