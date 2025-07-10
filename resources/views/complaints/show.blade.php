@@ -262,19 +262,19 @@ $breadcrumbs = [
                 @endif
                 @endauth
 
-                <div class="comments">
+                <div class="comments" style="max-height: 350px; overflow-y: auto;">
                     @forelse($complaint->comments ?? [] as $comment)
-                    <div class="comment mb-3 p-2 border rounded bg-light">
+                    <div class="comment mb-2 p-2 border rounded bg-light">
                         <div class="d-flex align-items-center mb-1">
-                            <div class="avatar bg-secondary text-white rounded-circle d-flex align-items-center justify-content-center" style="width: 32px; height: 32px; font-size: 1rem;">
+                            <div class="avatar bg-secondary text-white rounded-circle d-flex align-items-center justify-content-center" style="width: 28px; height: 28px; font-size: 0.95rem;">
                                 {{ substr($comment->user->full_name, 0, 1) }}
                             </div>
                             <div class="ms-2">
-                                <strong>{{ $comment->user->full_name }}</strong>
+                                <span class="fw-bold">{{ $comment->user->full_name }}</span>
                                 <span class="text-muted small">&nbsp;{{ $comment->created_at->format('M d, Y H:i') }}</span>
                             </div>
                         </div>
-                        <div>{{ $comment->comment }}</div>
+                        <div class="p-2 bg-white border rounded fst-italic small">{{ $comment->comment }}</div>
                     </div>
                     @empty
                     <p class="text-muted">No comments yet.</p>

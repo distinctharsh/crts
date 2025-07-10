@@ -363,6 +363,7 @@ class ComplaintController extends Controller
         ComplaintAction::create([
             'complaint_id' => $complaint->id,
             'user_id' => $user->id,
+            'assigned_to' => $validated['assigned_to'], // <-- add this line
             'status_id' => $assignedStatus->id,
             'description' => $validated['description']
         ]);
@@ -450,6 +451,7 @@ class ComplaintController extends Controller
         ComplaintAction::create([
             'complaint_id' => $complaint->id,
             'user_id' => $user->id,
+            'assigned_to' => $validated['assigned_to'], // <-- add this line
             'status_id' => $revertedStatus->id,
             'description' => $validated['description']
         ]);
