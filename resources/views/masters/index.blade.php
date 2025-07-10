@@ -12,12 +12,6 @@
 @endphp
 <div class="container py-4">
     <h2 class="fw-bold mb-4 text-center">Master Management</h2>
-    @if(session('success'))
-        <div class="alert alert-success">{{ session('success') }}</div>
-    @endif
-    @if(session('error'))
-        <div class="alert alert-danger">{{ session('error') }}</div>
-    @endif
     <ul class="nav nav-tabs mb-3" id="masterTabs" role="tablist">
         <li class="nav-item" role="presentation">
             <button class="nav-link active" id="network-types-tab" data-bs-toggle="tab" data-bs-target="#network-types" type="button" role="tab">Network Types</button>
@@ -55,7 +49,7 @@
                                 <td class="ps-4">{{ $networkType->name }}</td>
                                 <td class="text-end pe-4">
                                     <button class="btn btn-outline-primary btn-sm me-1" data-bs-toggle="tooltip" title="Edit" data-bs-target="#editNetworkTypeModal{{ $networkType->id }}" data-bs-toggle2="modal" onclick="$('#editNetworkTypeModal{{ $networkType->id }}').modal('show')"><i class="fas fa-pen"></i></button>
-                                    <button class="btn btn-outline-danger btn-sm" data-bs-toggle="tooltip" title="Delete" data-bs-toggle="modal" data-bs-target="#deleteNetworkTypeModal{{ $networkType->id }}"><i class="fas fa-trash"></i></button>
+                                    <button class="btn btn-outline-danger btn-sm" data-bs-toggle="tooltip" title="Delete" data-bs-target="#deleteNetworkTypeModal{{ $networkType->id }}" data-bs-toggle2="modal" onclick="$('#deleteNetworkTypeModal{{ $networkType->id }}').modal('show')"><i class="fas fa-trash"></i></button>
                                 </td>
                             </tr>
                             <!-- Edit Modal for this NetworkType -->
@@ -121,7 +115,7 @@
             <div class="card mb-4 shadow rounded-4 border-0">
                 <div class="card-header d-flex justify-content-between align-items-center bg-success text-white rounded-top-4">
                     <h5 class="mb-0 fw-bold"><i class="fas fa-layer-group me-2"></i>Sections</h5>
-                    <button class="btn btn-light btn-sm fw-semibold px-3 py-1" data-bs-toggle="modal" data-bs-target="#addSectionModal"><i class="fas fa-plus"></i> Add</button>
+                    <button class="btn btn-light btn-sm fw-semibold px-3 py-1" data-bs-toggle="modal" data-bs-target="#addSectionModal"><i class="fas fa-plus"></i> </button>
                 </div>
                 <div class="card-body p-0">
                     <div class="table-responsive">
@@ -138,7 +132,7 @@
                                 <td class="ps-4">{{ $section->name }}</td>
                                 <td class="text-end pe-4">
                                     <button class="btn btn-outline-success btn-sm me-1" data-bs-toggle="tooltip" title="Edit" data-bs-target="#editSectionModal{{ $section->id }}" onclick="$('#editSectionModal{{ $section->id }}').modal('show')"><i class="fas fa-pen"></i></button>
-                                    <button class="btn btn-outline-danger btn-sm" data-bs-toggle="tooltip" title="Delete" data-bs-toggle="modal" data-bs-target="#deleteSectionModal{{ $section->id }}"><i class="fas fa-trash"></i></button>
+                                    <button class="btn btn-outline-danger btn-sm" data-bs-toggle="tooltip" title="Delete" data-bs-toggle="modal" data-bs-target="#deleteSectionModal{{ $section->id }}" data-bs-toggle2="modal" onclick="$('#deleteSectionModal{{ $section->id }}').modal('show')"><i class="fas fa-trash"></i></button>
                                 </td>
                             </tr>
                             <!-- Edit Modal for this Section -->
@@ -204,7 +198,7 @@
             <div class="card mb-4 shadow rounded-4 border-0">
                 <div class="card-header d-flex justify-content-between align-items-center bg-info text-white rounded-top-4">
                     <h5 class="mb-0 fw-bold"><i class="fas fa-flag me-2"></i>Status</h5>
-                    <button class="btn btn-light btn-sm fw-semibold px-3 py-1" data-bs-toggle="modal" data-bs-target="#addStatusModal"><i class="fas fa-plus"></i> Add</button>
+                    <button class="btn btn-light btn-sm fw-semibold px-3 py-1" data-bs-toggle="modal" data-bs-target="#addStatusModal"><i class="fas fa-plus"></i> </button>
                 </div>
                 <div class="card-body p-0">
                     <div class="table-responsive">
@@ -228,7 +222,7 @@
 
                                 <td class="text-end pe-4">
                                     <button class="btn btn-outline-info btn-sm me-1" data-bs-toggle="tooltip" title="Edit" data-bs-target="#editStatusModal{{ $status->id }}" onclick="$('#editStatusModal{{ $status->id }}').modal('show')"><i class="fas fa-pen"></i></button>
-                                    <button class="btn btn-outline-danger btn-sm" data-bs-toggle="tooltip" title="Delete" data-bs-toggle="modal" data-bs-target="#deleteStatusModal{{ $status->id }}"><i class="fas fa-trash"></i></button>
+                                    <button class="btn btn-outline-danger btn-sm" data-bs-toggle="tooltip" title="Delete" data-bs-toggle="modal" data-bs-target="#deleteStatusModal{{ $status->id }}" data-bs-toggle2="modal" onclick="$('#deleteStatusModal{{ $status->id }}').modal('show')"><i class="fas fa-trash"></i></button>
                                 </td>
                             </tr>
                             <!-- Edit Modal for this Status -->
@@ -313,7 +307,7 @@
             <div class="card mb-4 shadow rounded-4 border-0">
                 <div class="card-header d-flex justify-content-between align-items-center bg-warning text-dark rounded-top-4">
                     <h5 class="mb-0 fw-bold"><i class="fas fa-building me-2"></i>Verticals</h5>
-                    <button class="btn btn-light btn-sm fw-semibold px-3 py-1" data-bs-toggle="modal" data-bs-target="#addVerticalModal"><i class="fas fa-plus"></i> Add</button>
+                    <button class="btn btn-light btn-sm fw-semibold px-3 py-1" data-bs-toggle="modal" data-bs-target="#addVerticalModal"><i class="fas fa-plus"></i> </button>
                 </div>
                 <div class="card-body p-0">
                     <div class="table-responsive">
@@ -330,7 +324,7 @@
                                 <td class="ps-4">{{ $vertical->name }}</td>
                                 <td class="text-end pe-4">
                                     <button class="btn btn-outline-warning btn-sm me-1" data-bs-toggle="tooltip" title="Edit" data-bs-target="#editVerticalModal{{ $vertical->id }}" onclick="$('#editVerticalModal{{ $vertical->id }}').modal('show')"><i class="fas fa-pen"></i></button>
-                                    <button class="btn btn-outline-danger btn-sm" data-bs-toggle="tooltip" title="Delete" data-bs-toggle="modal" data-bs-target="#deleteVerticalModal{{ $vertical->id }}"><i class="fas fa-trash"></i></button>
+                                    <button class="btn btn-outline-danger btn-sm" data-bs-toggle="tooltip" title="Delete" data-bs-toggle="modal" data-bs-target="#deleteVerticalModal{{ $vertical->id }}" data-bs-toggle2="modal" onclick="$('#deleteVerticalModal{{ $vertical->id }}').modal('show')"><i class="fas fa-trash"></i></button>
                                 </td>
                             </tr>
                             <!-- Edit Modal for this Vertical -->

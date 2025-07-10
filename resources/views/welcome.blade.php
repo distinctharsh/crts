@@ -25,6 +25,19 @@
             background-color: #f8f9fa;
         }
 
+        .text-home{
+            color:orange;
+        }
+
+        .text-home-btn{
+            background:orange;
+            color: #fff;
+        }
+
+         .text-home-btn : hover{
+            background:orange;
+            color: #fff;
+        }
         .hero-section {
             background: linear-gradient(135deg, #0d6efd 0%, #0a58ca 100%);
             color: white;
@@ -240,15 +253,15 @@
         <div class="hero-bg position-absolute top-0 start-0  h-100" style="background: url('{{ asset('images/banner.jpeg') }}') center center / cover no-repeat; z-index: 1; width: 100%; background-position-x: left !important;"></div>
         <div class="hero-overlay position-absolute top-0 start-0 w-100 h-100" style="background: rgba(0,0,0,0.45); z-index: 2;"></div>
         <div class="container text-center position-relative" style="z-index: 3;">
-            <h1 class="display-4 mb-4 text-white fw-bold">Welcome to CRTS</h1>
-            <p class="lead mb-4 text-white">Generate your ticket and track their progress easily</p>
+            <h1 class="display-4 mb-4 text-home fw-bold">Welcome to CRTS</h1>
+            <p class="lead mb-4 text-home">Generate your ticket and track their progress easily</p>
             <div class="d-flex justify-content-center gap-3 flex-wrap">
                 @auth
-                <a href="{{ route('dashboard') }}" class="btn btn-outline-light btn-lg">Dashboard</a>
+                <a href="{{ route('dashboard') }}" class="btn btn-outline-light btn-lg text-home-btn">Dashboard</a>
                 @endauth
                 @guest
-                <a href="{{ route('complaints.create') }}" class="btn btn-light btn-lg">Create Ticket</a>
-                <button type="button" class="btn btn-outline-light btn-lg" data-bs-toggle="modal" data-bs-target="#loginModal">
+                <a href="{{ route('complaints.create') }}" class="btn btn-light btn-lg text-home-btn">Create Ticket</a>
+                <button type="button" class="btn btn-outline-light btn-lg text-home-btn" data-bs-toggle="modal" data-bs-target="#loginModal">
                     Login
                 </button>
                 @endguest

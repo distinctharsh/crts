@@ -320,7 +320,8 @@ $breadcrumbs = [
 <script>
     $(document).ready(function() {
         var dt = $('#complaintsTable').DataTable({
-            responsive: true,
+            responsive: false, // Disable responsive extension
+            scrollX: true,     // Enable horizontal scrolling
             order: [[1, 'desc']],
             pageLength: 10,
             lengthMenu: [[10, 15, 20, 50, 100, -1], [10, 15, 20, 50, 100, 'All']],
