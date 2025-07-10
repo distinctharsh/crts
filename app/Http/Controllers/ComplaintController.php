@@ -21,7 +21,7 @@ class ComplaintController extends Controller
 {
     public function __construct()
     {
-        $this->middleware('auth')->except(['create', 'store', 'show', 'history', 'track', 'lookup']);
+        $this->middleware('auth')->except(['create', 'store', 'show', 'history', 'track', 'lookup', 'live', 'liveData']);
     }
 
     public function index(Request $request)
@@ -620,5 +620,43 @@ class ComplaintController extends Controller
         } else {
             return response()->json(['success' => false, 'error' => 'Complaint not found.'], 404);
         }
+    }
+
+    /**
+     * Show the live complaints dashboard (TV/room display)
+     */
+    public function live()
+    {
+        return view('complaints.live');
+    }
+
+    /**
+     * Return JSON data for live complaints dashboard (for polling)
+     */
+    public function liveData()
+    {
+        // Show only open/assigned complaints (not completed/closed)
+        $statuses = Status::whereIn('name', ['unassigned', 'assigned', 'pending_with_vendor', 'pending_with_user', 'assign_to_me', 'in_progress'])
+            ->pluck('id');
+        $complaints = Complaint::with(['assignedTo', 'status'])
+            ->whereIn('status_id', $statuses)
+            ->latest('created_at')
+            ->limit(30)
+            ->get();
+
+        $data = $complaints->map(function($c) {
+            return [
+                'id' => $c->id,
+                'reference_number' => $c->reference_number,
+                'user_name' => $c->user_name,
+                'status' => $c->status?->display_name ?? 'Unknown',
+                'priority' => ucfirst($c->priority),
+                'assigned_to' => $c->assigned_to,
+                'assigned_to_name' => $c->assignedTo?->full_name ?? null,
+                'created_at' => $c->created_at->format('M d, Y H:i'),
+                'updated_at' => $c->updated_at->format('M d, Y H:i'),
+            ];
+        });
+        return response()->json($data);
     }
 }

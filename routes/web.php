@@ -25,6 +25,13 @@ Route::get('/home', function () {
     return view('welcome', ['user_ip' => $publicIp]);
 })->name('home');
 
+
+// Live complaints dashboard (TV/room display)
+Route::get('/complaints/live', [ComplaintController::class, 'live'])->name('complaints.live');
+// Live complaints JSON data endpoint for polling
+Route::get('/complaints/live-data', [ComplaintController::class, 'liveData'])->name('complaints.liveData');
+
+
 // Public ticket routes
 Route::get('/complaints/create', [ComplaintController::class, 'create'])->name('complaints.create');
 Route::post('/complaints', [ComplaintController::class, 'store'])->name('complaints.store');
@@ -106,5 +113,6 @@ Route::middleware(['auth', 'can:isManager'])->group(function () {
     Route::delete('/masters/verticals/{vertical}', [MastersController::class, 'destroyVertical'])->name('masters.verticals.destroy');
     Route::get('/audit-log', [AuditLogController::class, 'index'])->name('audit-log.index');
 });
+
 
 require __DIR__ . '/auth.php';

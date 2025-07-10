@@ -265,6 +265,7 @@
                     Login
                 </button>
                 @endguest
+                <a href="{{ route('complaints.live') }}" class="btn btn-success btn-lg text-home-btn" style="background: #28a745; border: none;">Live Complaints Dashboard</a>
             </div>
         </div>
     </section>
