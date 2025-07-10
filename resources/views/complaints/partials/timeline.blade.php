@@ -48,6 +48,24 @@
             <div class="text-muted small" style="font-size: 0.85em;">
               <i class="bi bi-clock me-1"></i> {{ $action->created_at->format('M d, Y h:i A') }}
             </div>
+          @elseif(in_array($statusName, ['pending_with_user', 'pending_with_vendor']))
+            <div class="mb-1">
+              <span class="badge bg-danger bg-opacity-75 text-white fs-6 px-3 py-2 rounded-pill">
+                {{ ucfirst($action->status->display_name ?? $statusName) }}
+              </span>
+            </div>
+            @if($action->description)
+              <div class="mb-1 p-2 bg-light border rounded fst-italic">
+                {{ $action->description }}
+              </div>
+            @endif
+            <div class="text-muted small mb-1 d-flex align-items-center">
+              <i class="bi bi-person me-1"></i>
+              {{ $action->user && $action->user_id != 0 ? $action->user->full_name : 'Guest User' }}
+            </div>
+            <div class="text-muted small" style="font-size: 0.85em;">
+              <i class="bi bi-clock me-1"></i> {{ $action->created_at->format('M d, Y h:i A') }}
+            </div>
           @else
             @if($statusBoxClass)
               <span class="{{ $statusBoxClass }}">{{ ucfirst($action->status->display_name ?? $statusName) }}</span>
