@@ -1,100 +1,115 @@
+<style>
+.timeline-vertical {
+  position: relative;
+  margin: 0;
+  padding: 0;
+  max-height: 350px;
+  overflow-y: auto;
+}
+.timeline-vertical-line {
+  position: absolute;
+  left: 24px;
+  top: 0;
+  width: 4px;
+  height: 100vh;
+  background: #e0e0e0;
+  border-radius: 2px;
+  z-index: 0;
+}
+.timeline-vertical-item {
+  position: relative;
+  margin-left: 60px;
+  margin-bottom: 28px;
+  padding-left: 0;
+}
+.timeline-vertical-dot {
+  position: absolute;
+  left: -44px;
+  top: 12px;
+  width: 20px;
+  height: 20px;
+  background: #fff;
+  border: 4px solid #0d6efd;
+  border-radius: 50%;
+  z-index: 2;
+}
+.timeline-vertical-item.pending_with_user .timeline-vertical-dot,
+.timeline-vertical-item.pending_with_vendor .timeline-vertical-dot {
+  border-color: #dc3545;
+}
+.timeline-vertical-content {
+  background: #fff;
+  border-radius: 10px;
+  box-shadow: 0 2px 8px rgba(0,0,0,0.04);
+  padding: 12px 18px;
+  border-left: 4px solid #0d6efd;
+}
+.timeline-vertical-item.pending_with_user .timeline-vertical-content,
+.timeline-vertical-item.pending_with_vendor .timeline-vertical-content {
+  border-left-color: #dc3545;
+}
+</style>
 <div class="card shadow-sm mb-4">
   <div class="card-header bg-light">
     <h5 class="mb-0">Status History</h5>
   </div>
-  <div class="card-body" style="max-height: 350px; overflow-y: auto;">
-    <ul class="timeline list-unstyled mb-0">
+  <div class="card-body position-relative" style="max-height: 350px; overflow-y: auto;">
+    <div class="timeline-vertical">
+      <div class="timeline-vertical-line"></div>
       @foreach($complaint->actions as $action)
-      @php
-        $assignedUser = $action->assigned_to ? \App\Models\User::find($action->assigned_to) : null;
-        $statusName = $action->status ? $action->status->name : null;
-      @endphp
-      <li class="mb-3 position-relative ps-4">
         @php
-          // Circle color logic
-          $circleColor = 'primary';
-          if ($statusName === 'resolved') {
-              $circleColor = 'success';
-          } elseif ($statusName === 'reverted') {
-              $circleColor = 'warning';
-          } elseif ($statusName === 'pending_with_user' || $statusName === 'pending_with_vendor') {
-              $circleColor = 'danger'; // red
-          }
-          // Status box color logic
-          $statusBoxClass = '';
-          if ($statusName === 'pending_with_user' || $statusName === 'pending_with_vendor') {
-              $statusBoxClass = 'alert alert-danger mb-1 py-1 px-2 d-inline-block';
-          }
+          $assignedUser = $action->assigned_to ? \App\Models\User::find($action->assigned_to) : null;
+          $statusName = $action->status ? $action->status->name : null;
         @endphp
-        <span class="position-absolute top-0 start-0 translate-middle p-2 bg-{{ $circleColor }} border border-light rounded-circle" style="margin-top: 11px;"></span>
-        <div class="ms-3">
-          @if(in_array($statusName, ['assigned', 'reassigned', 'reverted']) && $action->assigned_to)
-            <div class="fw-semibold mb-1">
-              <span class="badge bg-primary">Assigned to {{ $assignedUser && $assignedUser->role ? strtoupper($assignedUser->role->slug) : 'User' }}</span>
-            </div>
-            <div class="mb-1 fs-6 fw-bold d-flex align-items-center">
-              <i class="bi bi-person-circle me-2"></i> {{ $assignedUser ? $assignedUser->full_name : 'Unknown User' }}
-            </div>
-            @if($action->description)
-              <div class="mb-1 p-2 bg-light border rounded fst-italic">
-                {{ $action->description }}
-              </div>
-            @endif
-            <div class="text-muted small mb-1 d-flex align-items-center">
-              <i class="bi bi-person me-1"></i>
-              <span class="fw-semibold me-1">{{ $statusName === 'reverted' ? 'Reverted By:' : 'Assigned By:' }}</span>
-              {{ $action->user && $action->user_id != 0 ? $action->user->full_name : 'Guest User' }}
-            </div>
-            <div class="text-muted small" style="font-size: 0.85em;">
-              <i class="bi bi-clock me-1"></i> {{ $action->created_at->format('M d, Y h:i A') }}
-            </div>
-          @elseif(in_array($statusName, ['pending_with_user', 'pending_with_vendor']))
+        <div class="timeline-vertical-item {{ $statusName }}">
+          <span class="timeline-vertical-dot"></span>
+          <div class="timeline-vertical-content">
+            {{-- Status badge --}}
             <div class="mb-1">
-              <span class="badge bg-danger bg-opacity-75 text-white fs-6 px-3 py-2 rounded-pill">
+              @php
+                $colorClass = $action->status && $action->status->color ? 'bg-' . $action->status->color : 'bg-secondary';
+              @endphp
+              <span class="badge {{ $colorClass }}">
                 {{ ucfirst($action->status->display_name ?? $statusName) }}
               </span>
             </div>
+            {{-- Assigned/Reverted To (if applicable) --}}
+            @if(in_array($statusName, ['assigned', 'reassigned', 'reverted']) && $action->assigned_to)
+              <div class="text-muted small mb-1">
+                <span class="fw-semibold">{{ $statusName === 'reverted' ? 'Reverted To:' : 'Assigned To:' }}</span>
+                {{ $assignedUser ? $assignedUser->full_name : 'Unknown User' }}
+                @if($assignedUser && $assignedUser->role)
+                  ({{ strtoupper($assignedUser->role->slug) }})
+                @endif
+              </div>
+            @endif
+            {{-- Remarks --}}
             @if($action->description)
               <div class="mb-1 p-2 bg-light border rounded fst-italic">
                 {{ $action->description }}
               </div>
             @endif
-            <div class="text-muted small mb-1 d-flex align-items-center">
-              <i class="bi bi-person me-1"></i>
-              {{ $action->user && $action->user_id != 0 ? $action->user->full_name : 'Guest User' }}
-            </div>
-            <div class="text-muted small" style="font-size: 0.85em;">
+            {{-- User (only for non-assigned/reverted statuses) --}}
+            @if(!in_array($statusName, ['assigned', 'reassigned', 'reverted']))
+              <div class="mb-1 fw-bold d-flex align-items-center">
+                <i class="bi bi-person-circle me-2"></i>
+                {{ $action->user && $action->user_id != 0 ? $action->user->full_name : 'Guest User' }}
+              </div>
+            @endif
+            {{-- Assigned/Reverted By (if applicable) --}}
+            @if(in_array($statusName, ['assigned', 'reassigned', 'reverted']))
+              <div class="text-muted small mb-1">
+                <span class="fw-semibold">{{ $statusName === 'reverted' ? 'Reverted By:' : 'Assigned By:' }}</span>
+                {{ $action->user && $action->user_id != 0 ? $action->user->full_name : 'Guest User' }}
+              </div>
+            @endif
+            {{-- Time --}}
+            <div class="text-muted small mb-1">
               <i class="bi bi-clock me-1"></i> {{ $action->created_at->format('M d, Y h:i A') }}
             </div>
-          @else
-            @if($statusBoxClass)
-              <span class="{{ $statusBoxClass }}">{{ ucfirst($action->status->display_name ?? $statusName) }}</span>
-            @else
-              <h6 class="mb-1">{{ ucfirst($action->status->display_name ?? $statusName) }}</h6>
-            @endif
-            @if($action->description)
-              <div class="mb-1">{{ $action->description }}</div>
-            @endif
-            <div class="text-muted small mb-1">
-              <i class="bi bi-person"></i>
-              @if ($action->user && $action->user_id != 0)
-                {{ $action->user->full_name }}
-              @else
-                Guest User
-              @endif
-              &nbsp;|&nbsp;
-              <i class="bi bi-clock"></i> {{ $action->created_at->format('M d, Y h:i A') }}
-            </div>
-          @endif
-          @if($statusName === 'resolved' && $action->resolution)
-            <div class="mt-2">
-              <strong>Resolution:</strong>
-              <div class="alert alert-success mb-0">{{ $action->resolution }}</div>
-            </div>
-          @endif
+          </div>
         </div>
-      </li>
       @endforeach
-    </ul>
+    </div>
   </div>
 </div>
