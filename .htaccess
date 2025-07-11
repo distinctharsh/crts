@@ -16,7 +16,7 @@
     # Serve assets from the public directory (assets, theme, css, js, images)
     RewriteCond %{REQUEST_FILENAME} !-f
     RewriteCond %{REQUEST_URI} !^/public/
-    RewriteRule ^(assets|theme|css|js|images)/(.*)$ public/$1/$2 [L,NC]
+    RewriteRule ^(assets|theme|css|js|images|webfonts)/(.*)$ public/$1/$2 [L,NC]
 
     # Redirect all other requests to Laravel's front controller (index.php)
     RewriteCond %{REQUEST_FILENAME} !-f
