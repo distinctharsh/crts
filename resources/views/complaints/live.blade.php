@@ -158,6 +158,7 @@ const POLL_INTERVAL = 5000;
 let lastComplaintIds = [];
 let lastAssignedMap = {};
 let dtTable;
+let isFirstLoad = true;
 
 function getStatusBadge(status) {
     if (status.toLowerCase() === 'assigned')
@@ -212,7 +213,7 @@ function playSound() {
     }
 }
 
-function renderTable(complaints) {
+function renderTable(complaints, playNotification) {
     if (!dtTable) {
         dtTable = $('#complaintsTable').DataTable({
             paging: true,
@@ -253,8 +254,8 @@ function renderTable(complaints) {
         }
     });
     dtTable.draw(false);
-    // Play sound if new row
-    if (newRows.length > 0) playSound();
+    // Play sound if new row and not first load
+    if (newRows.length > 0 && playNotification) playSound();
     // Remove animation class after animation
     setTimeout(() => {
         newRows.forEach(row => $(row).removeClass('animate__animated animate__fadeInDown'));
@@ -266,12 +267,21 @@ function pollComplaints() {
         let newIds = data.map(c => c.id);
         let assignedMap = {};
         data.forEach(c => assignedMap[c.id] = c.assigned_to);
+        // Detect new complaints and assignment changes
+        let newComplaint = false;
+        let changedAssignments = [];
+        data.forEach(c => {
+            if (!lastComplaintIds.includes(c.id)) newComplaint = true;
+            else if (lastAssignedMap[c.id] !== undefined && lastAssignedMap[c.id] !== c.assigned_to) changedAssignments.push(c.id);
+        });
         // Masonry grid
         renderComplaintsMasonry(data);
         // DataTable
-        renderTable(data);
+        let shouldPlaySound = !isFirstLoad && (newComplaint || changedAssignments.length > 0);
+        renderTable(data, shouldPlaySound);
         lastComplaintIds = newIds;
         lastAssignedMap = assignedMap;
+        isFirstLoad = false;
     });
 }
 

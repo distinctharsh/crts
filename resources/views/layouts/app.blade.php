@@ -164,6 +164,7 @@
     <script src="{{ asset('js/buttons.bootstrap5.min.js') }}"></script>
     <script src="{{ asset('js/buttons.html5.min.js') }}"></script>
     <script src="{{ asset('js/buttons.print.min.js') }}"></script>
+    <script src="{{ asset('js/buttons.colVis.min.js') }}"></script>
     @stack('scripts')
 </body>
 
