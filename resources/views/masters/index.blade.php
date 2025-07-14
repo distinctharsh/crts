@@ -447,7 +447,7 @@
                     <div class="modal-body">
                         <div class="mb-3">
                             <label class="form-label">Name</label>
-                            <input type="text" class="form-control tom-select" required>
+                            <input type="text" name="name" class="form-control tom-select" required>
                         </div>
                     </div>
                     <div class="modal-footer">
