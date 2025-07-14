@@ -169,7 +169,7 @@
                                                             </div>
                                                             <div class="mb-3">
                                                                 <label for="description{{ $complaint->id }}" class="form-label">Remarks</label>
-                                                                <textarea class="form-control" name="description" id="description{{ $complaint->id }}" rows="3" required></textarea>
+                                                                <textarea class="form-control" name="description" id="description{{ $complaint->id }}" rows="3"></textarea>
                                                             </div>
                                                         </div>
                                                         <div class="modal-footer">

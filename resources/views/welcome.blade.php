@@ -237,11 +237,12 @@
     foreach($errors->all() as $err) $messages[] = $err;
     }
     @endphp
-    <div id="global-alert" class="alert alert-{{ $type }} custom-global-alert alert-dismissible fade show position-fixed top-0 start-50 translate-middle-x mt-4 shadow-lg" role="alert" style="z-index: 2000; min-width: 320px; max-width: 90vw;">
+    <div id="global-alert" class="alert alert-{{ $type }} custom-global-alert alert-dismissible fade show position-fixed top-0 start-50 translate-middle-x mt-4 shadow-lg stylish-alert" role="alert" style="z-index: 2000; min-width: 320px; max-width: 90vw;">
+        <button type="button" class="btn-close stylish-close" data-bs-dismiss="alert" aria-label="Close"></button>
+        <br>
         @foreach($messages as $msg)
-        <div class="fw-semibold">{{ $msg }}</div>
+        <div class="fw-semibold">{!! $msg !!}</div>
         @endforeach
-        <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
     </div>
     @endif
     <!-- Navigation -->
@@ -259,12 +260,16 @@
                 @auth
                 <a href="{{ route('dashboard') }}" class="btn btn-outline-light btn-lg text-home-btn">Dashboard</a>
                 @endauth
-                @guest
+                
                 <a href="{{ route('complaints.create') }}" class="btn btn-light btn-lg text-home-btn">Create Ticket</a>
-                <button type="button" class="btn btn-outline-light btn-lg text-home-btn" data-bs-toggle="modal" data-bs-target="#loginModal">
-                    Login
-                </button>
+
+                @guest
+                    <button type="button" class="btn btn-outline-light btn-lg text-home-btn" data-bs-toggle="modal" data-bs-target="#loginModal">
+                        Login
+                    </button>
                 @endguest
+
+
                 <a href="{{ route('complaints.live') }}" class="btn btn-success btn-lg text-home-btn" style="background: #28a745; border: none;">Live Complaints Dashboard</a>
             </div>
         </div>

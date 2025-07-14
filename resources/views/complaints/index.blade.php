@@ -217,7 +217,7 @@ $breadcrumbs = [
                                                             </div>
                                                             <div class="mb-3">
                                                                 <label for="description" class="form-label">Remarks</label>
-                                                                <textarea class="form-control" name="description" rows="3" required></textarea>
+                                                                <textarea class="form-control" name="description" rows="3"></textarea>
                                                             </div>
                                                         </div>
                                                         <div class="modal-footer">

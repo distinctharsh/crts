@@ -3,8 +3,28 @@
   position: relative;
   margin: 0;
   padding: 0;
-  max-height: 350px;
+  max-height: 400px;
   overflow-y: auto;
+}
+/* Hide scrollbar when not needed (Webkit browsers) */
+.timeline-vertical::-webkit-scrollbar {
+  width: 8px;
+  background: transparent;
+}
+.timeline-vertical:has(> *:only-child)::-webkit-scrollbar {
+  display: none;
+}
+/* Hide scrollbar when not needed (Firefox) */
+.timeline-vertical {
+  scrollbar-width: thin;
+  scrollbar-color: #bbb #f8fafc;
+}
+.timeline-vertical:not(:hover)::-webkit-scrollbar-thumb {
+  background: #eee;
+}
+/* Hide scrollbar if not overflowing */
+.timeline-vertical:not(:hover):not(:active)::-webkit-scrollbar-thumb {
+  background: transparent;
 }
 .timeline-vertical-line {
   position: absolute;
@@ -53,7 +73,7 @@
   <div class="card-header bg-light">
     <h5 class="mb-0">Status History</h5>
   </div>
-  <div class="card-body position-relative" style="max-height: 350px; overflow-y: auto;">
+  <div class="card-body position-relative">
     <div class="timeline-vertical">
       <div class="timeline-vertical-line"></div>
       @foreach($complaint->actions as $action)

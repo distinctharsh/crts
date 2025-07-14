@@ -224,7 +224,7 @@ $breadcrumbs = [
                             </select>
                         </div>
                         <div class="mb-3">
-                            <textarea name="description" class="form-control" rows="2" placeholder="Remarks (required)" required></textarea>
+                            <textarea name="description" class="form-control" rows="2" placeholder="Remarks (optional)"></textarea>
                         </div>
                         <a href="#" class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#assignModal{{ $complaint->id }}">Reassign</a>
                         <button type="submit" class="btn btn-success" style="float:right;">Close</button>
@@ -342,7 +342,7 @@ $breadcrumbs = [
                     </div>
                     <div class="mb-3">
                         <label for="description" class="form-label">Remarks</label>
-                        <textarea class="form-control" name="description" rows="3" required></textarea>
+                        <textarea class="form-control" name="description" rows="3"></textarea>
                     </div>
                 </div>
                 <div class="modal-footer">

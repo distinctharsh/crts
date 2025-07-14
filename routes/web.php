@@ -50,7 +50,7 @@ Route::get('/complaints/{complaint}', [ComplaintController::class, 'show'])->nam
 
 // Authentication routes
 Route::middleware('guest')->group(function () {
-    Route::post('/login', [AuthController::class, 'login']);
+    Route::post('/login', [AuthController::class, 'login'])->name('login');
 });
 
 Route::middleware(['auth', 'force.password.change'])->group(function () {
@@ -80,16 +80,21 @@ Route::middleware(['auth', 'force.password.change'])->group(function () {
 Route::get('/api/complaints/lookup', [App\Http\Controllers\ComplaintController::class, 'lookup'])->name('api.complaints.lookup');
 Route::get('/complaints/track', [App\Http\Controllers\ComplaintController::class, 'track'])->name('complaints.track');
 
-// Redirect any GET /login access to /home
-Route::get('/login', function () {
-    return redirect('/home');
-});
 // Redirect any GET or POST /register access to /home
 Route::match(['get', 'post'], '/register', function () {
     return redirect('/home');
 });
 
-
+// Handle GET /logout gracefully to avoid 419 error
+Route::get('/logout', function () {
+    if (auth()->check()) {
+        auth()->logout();
+        request()->session()->invalidate();
+        request()->session()->regenerateToken();
+        return redirect('/home')->with('success', 'You have been logged out successfully.');
+    }
+    return redirect('/home');
+});
 
 
 Route::middleware(['auth', 'can:isManager'])->group(function () {
@@ -116,3 +121,13 @@ Route::middleware(['auth', 'can:isManager'])->group(function () {
 
 
 require __DIR__ . '/auth.php';
+
+// Force override GET /login to always redirect to /home (for Laravel 12+)
+Route::get('/login', function () {
+    return redirect('/home');
+})->name('login-override');
+
+// Fallback route for all unknown URLs
+Route::fallback(function () {
+    return redirect('/home')->with('error', 'You were redirected because the page was not found.<br>आप जिस पेज पर गए हैं, वह मौजूद नहीं है।');
+});

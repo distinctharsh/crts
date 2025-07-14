@@ -14,6 +14,11 @@
 
     <div class="collapse navbar-collapse" id="navbarNav">
       <ul class="navbar-nav ms-auto">
+        @if (!request()->routeIs('home'))
+        <li class="nav-item mt-1">
+          <a class="nav-link" href="{{ route('home') }}">Home</a>
+        </li>
+        @endif
         @auth
         <li class="nav-item mt-1">
           <a class="nav-link {{ request()->routeIs('dashboard') ? 'active fw-bold text-primary' : '' }}" href="{{ route('dashboard') }}">Dashboard</a>
