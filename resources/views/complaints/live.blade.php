@@ -35,6 +35,12 @@
     .cm-priority-low { background: #d1e7dd; color: #0f5132; }
     .complaint-list-item .cm-meta { min-width: 120px; font-size: 0.85rem; color: #555; }
     .complaint-list-item .cm-time { font-size: 0.78rem; color: #888; margin-top: 0.05rem; font-style: italic; display: flex; align-items: center; gap: 0.13rem; }
+    .layout-switcher { display: flex; gap: 0.5rem; margin-bottom: 1.2rem; justify-content: center; }
+    .layout-switcher button { border: none; background: #e0e7ef; color: #0d6efd; font-weight: 600; padding: 0.4rem 1.1rem; border-radius: 6px; cursor: pointer; transition: background 0.18s, color 0.18s; }
+    .layout-switcher button.active { background: #0d6efd; color: #fff; }
+    .metro-empty-message { text-align: center; color: #888; font-size: 1.2rem; margin-top: 100px; }
+    .metro-map-container { width: 100%; max-width: 1200px; margin: 0 auto 2rem auto; position: relative; height: 340px; overflow-x: auto; }
+    .metro-svg { height: 340px; min-width: 1000px; display: block; }
     @media (max-width: 900px) {
         .complaints-list { width: 98vw; }
         .complaint-list-item { flex-direction: column; align-items: flex-start; gap: 0.3rem; }
@@ -48,7 +54,18 @@
         <button data-theme="glass">Glass</button>
         <button data-theme="colorful">Colorful</button>
     </div>
-    <div class="complaints-list" id="complaintsList"></div>
+    <div class="layout-switcher">
+        <button class="active" data-layout="list">List</button>
+        <button data-layout="metro">Metro Map</button>
+    </div>
+    <div id="layout-list" class="layout-section">
+        <div class="complaints-list" id="complaintsList"></div>
+    </div>
+    <div id="layout-metro" class="layout-section" style="display:none;">
+        <div class="metro-map-container">
+            <svg class="metro-svg" id="metroSVG"></svg>
+        </div>
+    </div>
 </div>
 <audio id="notifySound" src="{{ asset('sounds/notify.mp3') }}" preload="auto"></audio>
 @endsection
@@ -90,6 +107,57 @@ function renderComplaintsList(complaints) {
     });
     $('#complaintsList').html(html);
 }
+function renderMetroMap(complaints) {
+    console.log('MetroMap complaints:', complaints);
+    const svg = $('#metroSVG');
+    svg.empty();
+    // Remove any previous message
+    $('.metro-empty-message').remove();
+    try {
+        // Set SVG width/height dynamically
+        const minW = 1000;
+        const pxPerComplaint = 200;
+        const w = Math.max(minW, complaints.length * pxPerComplaint);
+        const h = 340;
+        svg.attr('width', w);
+        svg.attr('height', h);
+        const n = complaints.length;
+        if (!complaints || n === 0) {
+            svg.after('<div class="metro-empty-message">No complaints to display.</div>');
+            return;
+        }
+        // Build SVG content as string
+        let svgContent = '';
+        // Draw a smooth path (sine wave)
+        let path = '';
+        let nodes = [];
+        const margin = 60;
+        const usableW = w - 2 * margin;
+        const usableH = h - 2 * margin;
+        for (let i = 0; i < n; i++) {
+            const x = margin + (usableW) * (i / (n - 1 || 1));
+            const y = margin + usableH / 2 + Math.sin(i / (n - 1 || 1) * Math.PI * 2) * (usableH / 2 - 40);
+            nodes.push({ x, y });
+        }
+        // Path string
+        path += `M${nodes[0].x},${nodes[0].y}`;
+        for (let i = 1; i < nodes.length; i++) {
+            path += ` L${nodes[i].x},${nodes[i].y}`;
+        }
+        svgContent += `<path d="${path}" stroke="#0d6efd" stroke-width="4" fill="none" stroke-linecap="round" stroke-dasharray="8 8" />`;
+        // Draw nodes
+        complaints.forEach((c, i) => {
+            const node = nodes[i];
+            svgContent += `<circle class="metro-node" cx="${node.x}" cy="${node.y}" r="18" fill="#fff" stroke="#0d6efd" stroke-width="3" />`;
+            svgContent += `<text class="metro-label" x="${node.x}" y="${node.y - 28}">${c.reference_number}</text>`;
+            svgContent += `<text class="metro-label" x="${node.x}" y="${node.y + 32}" font-size="0.8rem" fill="#888">${c.user_name}</text>`;
+        });
+        svg.html(svgContent);
+    } catch (err) {
+        svg.after('<div class="metro-empty-message">Error rendering Metro Map. Check console for details.</div>');
+        console.error('Metro Map Render Error:', err);
+    }
+}
 function playSound() {
     const audio = document.getElementById('notifySound');
     if (audio) {
@@ -106,7 +174,9 @@ function fetchComplaints() {
     $.get(DATA_URL, function(data) {
         if (!data || !Array.isArray(data.complaints)) return;
         const complaints = data.complaints;
+        window.lastComplaints = complaints;
         renderComplaintsList(complaints);
+        renderMetroMap(window.lastComplaints);
         let newIds = complaints.map(c => c.id);
         if (!isFirstLoad && newIds.length > lastComplaintIds.length) playSound();
         lastComplaintIds = newIds;
@@ -116,6 +186,18 @@ function fetchComplaints() {
 $(document).ready(function() {
     fetchComplaints();
     setInterval(fetchComplaints, POLL_INTERVAL);
+    // Layout switcher
+    $('.layout-switcher button').on('click', function() {
+        $('.layout-switcher button').removeClass('active');
+        $(this).addClass('active');
+        const layout = $(this).data('layout');
+        $('.layout-section').hide();
+        $(`#layout-${layout}`).show();
+        if (layout === 'metro') {
+            // Redraw metro map on show (for correct sizing)
+            setTimeout(() => { renderMetroMap(window.lastComplaints); }, 100);
+        }
+    });
     // Theme switcher
     $('.theme-switcher button').on('click', function() {
         $('.theme-switcher button').removeClass('active');
