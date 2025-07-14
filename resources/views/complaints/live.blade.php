@@ -41,6 +41,7 @@
     .metro-empty-message { text-align: center; color: #888; font-size: 1.2rem; margin-top: 100px; }
     .metro-map-container { width: 100%; max-width: 1200px; margin: 0 auto 2rem auto; position: relative; height: 340px; overflow-x: auto; }
     .metro-svg { height: 340px; min-width: 1000px; display: block; }
+    .theme-dark .metro-label { fill: #42a5f5 !important; }
     @media (max-width: 900px) {
         .complaints-list { width: 98vw; }
         .complaint-list-item { flex-direction: column; align-items: flex-start; gap: 0.3rem; }
