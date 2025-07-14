@@ -688,7 +688,7 @@ class ComplaintController extends Controller
                     'updated_at' => $c->updated_at->format('M d, Y H:i'),
                 ];
             });
-            return response()->json($data);
+            return response()->json(['complaints' => $data]);
         } catch (\Exception $e) {
             \Log::error('Complaint liveData error: ' . $e->getMessage());
             return response()->json(['error' => 'Something went wrong while fetching live data. Please try again. (Kuch galat ho gaya, kripya fir se koshish karein.)'], 500);

@@ -3,161 +3,62 @@
 @section('content')
 <link rel="stylesheet" href="{{ asset('css/animate.min.css') }}">
 <style>
-    .live-dashboard-container {
-        min-height: 100vh;
-        display: flex;
-        flex-direction: column;
-        align-items: center;
-        justify-content: flex-start;
-        padding: 1.2rem 0.3rem 0.5rem 0.3rem;
+    body.theme-light { background: #f4f8fb; color: #222; }
+    body.theme-dark { background: #181c24; color: #f4f8fb; }
+    body.theme-glass { background: linear-gradient(135deg, #e0e7ef 0%, #f4f8fb 100%); }
+    body.theme-colorful { background: linear-gradient(120deg, #a1c4fd 0%, #c2e9fb 100%); }
+    .theme-dark .dashboard-title { color: #90caf9 !important; }
+    .theme-dark .complaint-list-item { background: #232a36 !important; color: #f4f8fb; border-color: #222 !important; }
+    .theme-dark .complaint-list-item .cm-user,
+    .theme-dark .complaint-list-item .cm-meta,
+    .theme-dark .complaint-list-item .cm-time,
+    .theme-dark .complaint-list-item .bi {
+        color: #e0e7ef !important;
     }
-    .dashboard-title {
-        font-size: 2rem;
-        font-weight: bold;
-        letter-spacing: 1.5px;
-        color: #0d6efd;
-        margin-bottom: 1rem;
-        text-shadow: 0 2px 8px rgba(13,110,253,0.08);
-    }
-    .complaints-masonry {
-        display: grid;
-        grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
-        gap: 0.5rem;
-        width: 100%;
-        max-width: 1800px;
-        margin-bottom: 1.2rem;
-    }
-    .complaint-masonry-card {
-        background: #fff;
-        border-radius: 10px;
-        box-shadow: 0 1px 6px 0 rgba(31, 38, 135, 0.08);
-        padding: 0.6rem 0.7rem 0.5rem 0.7rem;
-        display: flex;
-        flex-direction: column;
-        min-height: 80px;
-        position: relative;
-        transition: box-shadow 0.18s, transform 0.18s;
-        border: 1.5px solid #f0f4fa;
-        cursor: pointer;
-        overflow: hidden;
-        animation: fadeInUp 0.6s;
-    }
-    .complaint-masonry-card:hover {
-        box-shadow: 0 4px 16px 0 rgba(13,110,253,0.10);
-        transform: translateY(-2px) scale(1.025);
-        border-color: #0d6efd18;
-    }
-    @keyframes fadeInUp {
-        0% { opacity: 0; transform: translateY(24px); }
-        100% { opacity: 1; transform: translateY(0); }
-    }
-    .cm-ref {
-        font-size: 0.98rem;
-        font-weight: 600;
-        color: #0d6efd;
-        margin-bottom: 0.08rem;
-        letter-spacing: 0.5px;
-        word-break: break-all;
-    }
-    .cm-user {
-        font-size: 0.93rem;
-        color: #333;
-        font-weight: 500;
-        overflow: hidden;
-        text-overflow: ellipsis;
-        white-space: nowrap;
-        display: flex;
-        align-items: center;
-        gap: 0.18rem;
-        margin-bottom: 0.08rem;
-    }
-    .cm-badges {
-        display: flex;
-        align-items: center;
-        gap: 0.18rem;
-        margin-bottom: 0.08rem;
-    }
-    .cm-badge {
-        display: inline-block;
-        font-size: 0.78rem;
-        font-weight: 600;
-        padding: 0.07rem 0.45rem;
-        border-radius: 9px;
-        margin-right: 0.02rem;
-        letter-spacing: 0.2px;
-        line-height: 1.1;
-    }
+    .theme-dark .complaint-list-item .cm-ref { color: #42a5f5 !important; }
+    .theme-glass .complaint-list-item { background: rgba(255,255,255,0.35) !important; box-shadow: 0 8px 32px 0 rgba(31,38,135,0.18); backdrop-filter: blur(8px); border: 1.5px solid rgba(255,255,255,0.18); }
+    .theme-colorful .complaint-list-item { background: linear-gradient(135deg, #fda085 0%, #f6d365 100%) !important; color: #222; }
+    .theme-switcher { display: flex; gap: 0.5rem; margin-bottom: 1.2rem; justify-content: center; }
+    .theme-switcher button { border: none; background: #e0e7ef; color: #0d6efd; font-weight: 600; padding: 0.4rem 1.1rem; border-radius: 6px; cursor: pointer; transition: background 0.18s, color 0.18s; }
+    .theme-switcher button.active { background: #0d6efd; color: #fff; }
+    .dashboard-title { font-size: 2rem; font-weight: bold; letter-spacing: 1.5px; color: #0d6efd; margin-bottom: 1rem; text-shadow: 0 2px 8px rgba(13,110,253,0.08); text-align: center; }
+    .complaints-list { width: 100%; max-width: 900px; margin: 0 auto 1.2rem auto; }
+    .complaint-list-item { background: #fff; border-radius: 7px; box-shadow: 0 1px 4px 0 rgba(31, 38, 135, 0.07); padding: 0.7rem 1rem; margin-bottom: 0.7rem; display: flex; align-items: center; gap: 1.2rem; border-left: 4px solid #0d6efd; transition: box-shadow 0.18s; }
+    .complaint-list-item .cm-ref { min-width: 120px; font-size: 1.05rem; font-weight: 700; color: #0d6efd; }
+    .complaint-list-item .cm-user { min-width: 120px; font-size: 0.98rem; color: #333; font-weight: 500; }
+    .complaint-list-item .cm-badges { display: flex; align-items: center; gap: 0.18rem; margin-bottom: 0.08rem; }
+    .complaint-list-item .cm-badge { display: inline-block; font-size: 0.78rem; font-weight: 600; padding: 0.07rem 0.45rem; border-radius: 9px; margin-right: 0.02rem; letter-spacing: 0.2px; line-height: 1.1; }
     .cm-status-assigned { background: #eaf1fb; color: #0d6efd; }
     .cm-status-unassigned { background: #f8d7da; color: #b02a37; }
     .cm-priority-high { background: #f8d7da; color: #b02a37; }
     .cm-priority-medium { background: #fff3cd; color: #856404; }
     .cm-priority-low { background: #d1e7dd; color: #0f5132; }
-    .cm-meta {
-        font-size: 0.82rem;
-        color: #555;
-        margin-bottom: 0.03rem;
-        display: flex;
-        align-items: center;
-        gap: 0.18rem;
-        flex-wrap: wrap;
-    }
-    .cm-meta i {
-        font-size: 0.98em;
-        margin-right: 0.13em;
-        opacity: 0.7;
-    }
-    .cm-time {
-        font-size: 0.78rem;
-        color: #888;
-        margin-top: 0.05rem;
-        font-style: italic;
-        display: flex;
-        align-items: center;
-        gap: 0.13rem;
-    }
+    .complaint-list-item .cm-meta { min-width: 120px; font-size: 0.85rem; color: #555; }
+    .complaint-list-item .cm-time { font-size: 0.78rem; color: #888; margin-top: 0.05rem; font-style: italic; display: flex; align-items: center; gap: 0.13rem; }
     @media (max-width: 900px) {
-        .complaints-masonry { gap: 0.3rem; }
-        .complaint-masonry-card { min-width: 92vw; max-width: 98vw; }
+        .complaints-list { width: 98vw; }
+        .complaint-list-item { flex-direction: column; align-items: flex-start; gap: 0.3rem; }
     }
 </style>
-<div class="live-dashboard-container">
+<div class="container-fluid">
     <div class="dashboard-title">Live Complaints Dashboard</div>
-    <div class="complaints-masonry" id="complaintsMasonry">
-        <!-- Complaint cards will be rendered here by JS -->
+    <div class="theme-switcher">
+        <button class="active" data-theme="light">Light</button>
+        <button data-theme="dark">Dark</button>
+        <button data-theme="glass">Glass</button>
+        <button data-theme="colorful">Colorful</button>
     </div>
-    <div style="width:100%;max-width:1800px;margin-top:1.2rem;">
-        <table id="complaintsTable" class="display table table-bordered" style="width:100%">
-            <thead>
-                <tr>
-                    <th>Reference No</th>
-                    <th>User</th>
-                    <th>Status</th>
-                    <th>Priority</th>
-                    <th>Assigned To</th>
-                    <th>Created At</th>
-                </tr>
-            </thead>
-            <tbody>
-                <!-- Rows will be added by JS -->
-            </tbody>
-        </table>
-    </div>
+    <div class="complaints-list" id="complaintsList"></div>
 </div>
-<!-- Notification Sound -->
 <audio id="notifySound" src="{{ asset('sounds/notify.mp3') }}" preload="auto"></audio>
 @endsection
 
 @push('scripts')
 <script src="{{ asset('js/jquery-3.6.0.min.js') }}"></script>
-<script src="{{ asset('js/jquery.dataTables.min.js') }}"></script>
-<link rel="stylesheet" href="{{ asset('css/dataTables.bootstrap5.min.css') }}">
-<script src="{{ asset('js/dataTables.bootstrap5.min.js') }}"></script>
 <script>
 const DATA_URL = "{{ route('complaints.liveData') }}";
 const POLL_INTERVAL = 5000;
 let lastComplaintIds = [];
-let lastAssignedMap = {};
-let dtTable;
 let isFirstLoad = true;
 
 function getStatusBadge(status) {
@@ -173,33 +74,22 @@ function getPriorityBadge(priority) {
         return '<span class="cm-badge cm-priority-medium"><i class="bi bi-exclamation-circle"></i>Medium</span>';
     return '<span class="cm-badge cm-priority-low"><i class="bi bi-arrow-down-circle"></i>Low</span>';
 }
-
-function renderComplaintsMasonry(complaints) {
-    const grid = $('#complaintsMasonry');
+function renderComplaintsList(complaints) {
     let html = '';
     complaints.forEach(c => {
-        let animateClass = '';
-        if (!lastComplaintIds.includes(c.id)) {
-            animateClass = 'animate__animated animate__fadeInUp';
-        }
-        html += `<div class="complaint-masonry-card ${animateClass}" data-id="${c.id}">
-            <div class="cm-ref">${c.reference_number}</div>
-            <div class="cm-user"><i class="bi bi-person"></i> ${c.user_name}</div>
-            <div class="cm-badges">
+        html += `<div class=\"complaint-list-item\">
+            <div class=\"cm-ref\">${c.reference_number}</div>
+            <div class=\"cm-user\"><i class=\"bi bi-person\"></i> ${c.user_name}</div>
+            <div class=\"cm-badges\">
                 ${getStatusBadge(c.status)}
                 ${getPriorityBadge(c.priority)}
             </div>
-            <div class="cm-meta"><i class="bi bi-person-badge"></i> ${c.assigned_to_name || 'Not Assigned'}</div>
-            <div class="cm-time"><i class="bi bi-clock"></i> ${c.created_at}</div>
+            <div class=\"cm-meta\"><i class=\"bi bi-person-badge\"></i> ${c.assigned_to_name || 'Not Assigned'}</div>
+            <div class=\"cm-time\"><i class=\"bi bi-clock\"></i> ${c.created_at}</div>
         </div>`;
     });
-    grid.html(html);
-    // Remove animation class after animation
-    setTimeout(() => {
-        $('.complaint-masonry-card.animate__animated').removeClass('animate__animated animate__fadeInUp');
-    }, 1200);
+    $('#complaintsList').html(html);
 }
-
 function playSound() {
     const audio = document.getElementById('notifySound');
     if (audio) {
@@ -212,83 +102,29 @@ function playSound() {
         }
     }
 }
-
-function renderTable(complaints, playNotification) {
-    if (!dtTable) {
-        dtTable = $('#complaintsTable').DataTable({
-            paging: true,
-            searching: true,
-            info: true,
-            order: [[5, 'desc']],
-            columnDefs: [
-                { targets: [5], type: 'date' }
-            ]
-        });
-    }
-    // Track existing IDs
-    let currentIds = dtTable.rows().data().toArray().map(row => row[0]);
-    let newRows = [];
-    complaints.forEach(c => {
-        let rowId = c.reference_number;
-        let assignedTo = c.assigned_to_name || 'Not Assigned';
-        let rowData = [
-            c.reference_number,
-            c.user_name,
-            c.status,
-            c.priority,
-            assignedTo,
-            c.created_at
-        ];
-        // If not present, add with animation
-        if (!currentIds.includes(c.reference_number)) {
-            let rowNode = dtTable.row.add(rowData).draw(false).node();
-            $(rowNode).addClass('animate__animated animate__fadeInDown');
-            newRows.push(rowNode);
-        }
-    });
-    // Remove rows not in new data
-    dtTable.rows().every(function() {
-        let data = this.data();
-        if (!complaints.find(c => c.reference_number === data[0])) {
-            this.remove();
-        }
-    });
-    dtTable.draw(false);
-    // Play sound if new row and not first load
-    if (newRows.length > 0 && playNotification) playSound();
-    // Remove animation class after animation
-    setTimeout(() => {
-        newRows.forEach(row => $(row).removeClass('animate__animated animate__fadeInDown'));
-    }, 1200);
-}
-
-function pollComplaints() {
+function fetchComplaints() {
     $.get(DATA_URL, function(data) {
-        let newIds = data.map(c => c.id);
-        let assignedMap = {};
-        data.forEach(c => assignedMap[c.id] = c.assigned_to);
-        // Detect new complaints and assignment changes
-        let newComplaint = false;
-        let changedAssignments = [];
-        data.forEach(c => {
-            if (!lastComplaintIds.includes(c.id)) newComplaint = true;
-            else if (lastAssignedMap[c.id] !== undefined && lastAssignedMap[c.id] !== c.assigned_to) changedAssignments.push(c.id);
-        });
-        // Masonry grid
-        renderComplaintsMasonry(data);
-        // DataTable
-        let shouldPlaySound = !isFirstLoad && (newComplaint || changedAssignments.length > 0);
-        renderTable(data, shouldPlaySound);
+        if (!data || !Array.isArray(data.complaints)) return;
+        const complaints = data.complaints;
+        renderComplaintsList(complaints);
+        let newIds = complaints.map(c => c.id);
+        if (!isFirstLoad && newIds.length > lastComplaintIds.length) playSound();
         lastComplaintIds = newIds;
-        lastAssignedMap = assignedMap;
         isFirstLoad = false;
     });
 }
-
 $(document).ready(function() {
-    pollComplaints();
-    setInterval(pollComplaints, POLL_INTERVAL);
+    fetchComplaints();
+    setInterval(fetchComplaints, POLL_INTERVAL);
+    // Theme switcher
+    $('.theme-switcher button').on('click', function() {
+        $('.theme-switcher button').removeClass('active');
+        $(this).addClass('active');
+        const theme = $(this).data('theme');
+        $('body').removeClass('theme-light theme-dark theme-glass theme-colorful').addClass('theme-' + theme);
+    });
+    // Default theme
+    $('body').addClass('theme-light');
 });
 </script>
-
 @endpush 
