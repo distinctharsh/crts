@@ -79,7 +79,10 @@
                                     @endphp
                                     <ul class="list-unstyled mb-0">
                                     @foreach($changed as $key => $value)
-                                        <li><strong>{{ $key }}:</strong> <span class="text-danger bg-light px-1 rounded">{{ $old[$key] ?? '-' }}</span></li>
+                                        @php
+                                            $displayValue = isset($fieldMaps[$key]) ? ($fieldMaps[$key][$value] ?? $value) : $value;
+                                        @endphp
+                                        <li><strong>{{ $key }}:</strong> <span class="text-danger bg-light px-1 rounded">{{ $displayValue }}</span></li>
                                     @endforeach
                                     </ul>
                                 @elseif($log->properties['old'] ?? null)
@@ -105,7 +108,10 @@
                                     @endphp
                                     <ul class="list-unstyled mb-0">
                                     @foreach($changed as $key => $value)
-                                        <li><strong>{{ $key }}:</strong> <span class="text-success bg-light px-1 rounded">{{ $value }}</span></li>
+                                        @php
+                                            $displayValue = isset($fieldMaps[$key]) ? ($fieldMaps[$key][$value] ?? $value) : $value;
+                                        @endphp
+                                        <li><strong>{{ $key }}:</strong> <span class="text-success bg-light px-1 rounded">{{ $displayValue }}</span></li>
                                     @endforeach
                                     </ul>
                                 @elseif($log->properties['attributes'] ?? null)
@@ -129,9 +135,7 @@
                         @endforeach
                     </tbody>
                 </table>
-                <div class="mt-3">
-                    {{ $logs->links() }}
-                </div>
+              
             </div>
         </div>
     </div>

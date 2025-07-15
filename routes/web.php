@@ -129,5 +129,5 @@ Route::get('/login', function () {
 
 // Fallback route for all unknown URLs
 Route::fallback(function () {
-    return redirect('/home')->with('error', 'You were redirected because the page was not found.<br>आप जिस पेज पर गए हैं, वह मौजूद नहीं है।');
+    return redirect('/home')->with('error', 'You were redirected because the page was not found. आप जिस पेज पर गए हैं, वह मौजूद नहीं है।');
 });

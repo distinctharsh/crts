@@ -38,6 +38,8 @@ class Status extends Model
 
     public function getActivitylogOptions(): \Spatie\Activitylog\LogOptions
     {
-        return \Spatie\Activitylog\LogOptions::defaults();
+        return \Spatie\Activitylog\LogOptions::defaults()
+            ->logAll()
+            ->logOnlyDirty();
     }
 }
