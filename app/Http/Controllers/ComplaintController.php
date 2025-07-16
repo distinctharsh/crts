@@ -557,16 +557,19 @@ class ComplaintController extends Controller
     public function comment(Request $request, Complaint $complaint)
     {
         try {
+            $isManager = Auth::user() && Auth::user()->isManager();
             $request->validate([
-                'comment' => 'required|string|max:2000',
+                'comment' => ($isManager ? 'required' : 'nullable') . '|string|max:2000',
                 'status_id' => 'nullable|exists:statuses,id',
             ]);
 
-            // Add comment
-            $complaint->comments()->create([
-                'user_id' => Auth::user()->id ?? 0,
-                'comment' => $request->comment,
-            ]);
+            // Add comment only if not blank
+            if (trim($request->comment ?? '') !== '') {
+                $complaint->comments()->create([
+                    'user_id' => Auth::user()->id ?? 0,
+                    'comment' => $request->comment,
+                ]);
+            }
 
             // If status_id is present and different, update status and add to history
             if ($request->filled('status_id') && $complaint->status_id != $request->status_id) {

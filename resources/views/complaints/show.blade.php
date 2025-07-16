@@ -252,7 +252,7 @@ $breadcrumbs = [
                 </div>
                 @endif
                 <div class="mb-3">
-                    <textarea name="comment" class="form-control" rows="3" placeholder="Add a comment..." required></textarea>
+                    <textarea name="comment" class="form-control" rows="3" placeholder="Add a comment..." @if($isManager) required @endif></textarea>
                 </div>
                 <button type="submit" class="btn btn-primary">Add Comment</button>
                 </form>
@@ -264,20 +264,22 @@ $breadcrumbs = [
 
                 <div class="comments" style="max-height: 350px; overflow-y: auto;">
                     @forelse($complaint->comments ?? [] as $comment)
-                    <div class="comment mb-2 p-2 border rounded bg-light">
-                        <div class="d-flex align-items-center mb-1">
-                            <div class="avatar bg-secondary text-white rounded-circle d-flex align-items-center justify-content-center" style="width: 28px; height: 28px; font-size: 0.95rem;">
-                                {{ substr($comment->user->full_name, 0, 1) }}
+                        @if(trim($comment->comment) !== '')
+                            <div class="comment mb-2 p-2 border rounded bg-light">
+                                <div class="d-flex align-items-center mb-1">
+                                    <div class="avatar bg-secondary text-white rounded-circle d-flex align-items-center justify-content-center" style="width: 28px; height: 28px; font-size: 0.95rem;">
+                                        {{ substr($comment->user->full_name, 0, 1) }}
+                                    </div>
+                                    <div class="ms-2">
+                                        <span class="fw-bold">{{ $comment->user->full_name }}</span>
+                                        <span class="text-muted small">&nbsp;{{ $comment->created_at->format('M d, Y H:i') }}</span>
+                                    </div>
+                                </div>
+                                <div class="p-2 bg-white border rounded fst-italic small">{{ $comment->comment }}</div>
                             </div>
-                            <div class="ms-2">
-                                <span class="fw-bold">{{ $comment->user->full_name }}</span>
-                                <span class="text-muted small">&nbsp;{{ $comment->created_at->format('M d, Y H:i') }}</span>
-                            </div>
-                        </div>
-                        <div class="p-2 bg-white border rounded fst-italic small">{{ $comment->comment }}</div>
-                    </div>
+                        @endif
                     @empty
-                    <p class="text-muted">No comments yet.</p>
+                        <p class="text-muted">No comments yet.</p>
                     @endforelse
                 </div>
             </div>
