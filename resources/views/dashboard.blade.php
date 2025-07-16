@@ -128,9 +128,9 @@
                                                         {{ $assignedBy?->full_name ?? 'N/A' }}
                                                     </td> -->
                                                       <td>
-                                                        <span class="badge bg-{{ $complaint->priority_color ?? 'secondary' }}">
-                                                            {{ ucfirst($complaint->description) ?? 'Unknown' }}
-                                                        </span>
+                                                        <div style="white-space: pre-wrap; word-break: break-word; max-width: 300px;">
+                                                            {{ $complaint->description ?? 'Unknown' }}
+                                                        </div>
                                                     </td>
                                                     <td>
                                                         <a href="{{ route('complaints.show', $complaint) }}" class="btn btn-sm btn-primary">View</a>
