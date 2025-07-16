@@ -99,7 +99,7 @@
                                                     <th>Status</th>
                                                     <th>Priority</th>
                                                     <th>Assigned To</th>
-                                                    <th>Assigned By</th>
+                                                    <th>Description</th>
                                                     <th>Actions</th>
                                                 </tr>
                                             </thead>
@@ -123,9 +123,14 @@
                                                         </span>
                                                     </td>
                                                     <td>{{ $complaint->assignedTo?->full_name ?? 'Not Assigned' }}</td>
-                                                    <td>
+                                                    <!-- <td>
                                                         @php $assignedBy = $complaint->assigned_by ? \App\Models\User::find($complaint->assigned_by) : null; @endphp
                                                         {{ $assignedBy?->full_name ?? 'N/A' }}
+                                                    </td> -->
+                                                      <td>
+                                                        <span class="badge bg-{{ $complaint->priority_color ?? 'secondary' }}">
+                                                            {{ ucfirst($complaint->description) ?? 'Unknown' }}
+                                                        </span>
                                                     </td>
                                                     <td>
                                                         <a href="{{ route('complaints.show', $complaint) }}" class="btn btn-sm btn-primary">View</a>
