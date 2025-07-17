@@ -132,7 +132,7 @@ $breadcrumbs = [
                                     <th>Status</th>
                                     <th>Priority</th>
                                     <th>Assigned To</th>
-                                    <th>Assigned By</th>
+                                    <th>Description</th>
                                     <th>Actions</th>
                                 </tr>
                             </thead>
@@ -156,10 +156,7 @@ $breadcrumbs = [
                                         </span>
                                     </td>
                                     <td>{{ $complaint->assignedTo?->full_name ?? 'Not Assigned' }}</td>
-                                    <td>
-                                        @php $assignedBy = $complaint->assigned_by ? \App\Models\User::find($complaint->assigned_by) : null; @endphp
-                                        {{ $assignedBy?->full_name ?? 'N/A' }}
-                                    </td>
+                                    <td>{{ $complaint->description }}</td>
                                     <td>
                                         <div class="btn-group">
                                             <a href="{{ route('complaints.show', $complaint) }}" class="btn btn-sm btn-info me-1">View</a>

@@ -7,11 +7,32 @@
             <div class="card">
                 <div class="card-header bg-primary text-white">Change Password</div>
                 <div class="card-body">
+                    @if ($errors->any())
+                        <div class="alert alert-danger">
+                            <ul class="mb-0">
+                                @foreach ($errors->all() as $error)
+                                    <li>{{ $error }}</li>
+                                @endforeach
+                            </ul>
+                        </div>
+                    @endif
                     @if(session('status'))
                         <div class="alert alert-success">{{ session('status') }}</div>
                     @endif
                     <form method="POST" action="{{ url('/profile/change-password') }}">
                         @csrf
+                        <div class="mb-3">
+                            <label for="old_password" class="form-label">Old Password</label>
+                            <div class="input-group">
+                                <input type="password" class="form-control @error('old_password') is-invalid @enderror" id="old_password" name="old_password" required>
+                                <button class="btn btn-outline-secondary toggle-password" type="button" data-target="#old_password" tabindex="-1">
+                                    <i class="bi bi-eye-slash" id="togglePasswordIcon0"></i>
+                                </button>
+                            </div>
+                            @error('old_password')
+                                <div class="invalid-feedback">{{ $message }}</div>
+                            @enderror
+                        </div>
                         <div class="mb-3">
                             <label for="password" class="form-label">New Password</label>
                             <div class="input-group">
