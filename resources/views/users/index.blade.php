@@ -317,14 +317,17 @@ $breadcrumbs = [
             $('#defaultPasswordNote').hide();
             $('#password').removeAttr('required');
             $('#passwordHelpText').text(' (leave blank to keep current)');
-            // Set verticals
-            if (user.verticals && user.verticals.length > 0) {
-            var verticalIds = user.verticals.map(function(v) { return v.id; });
-                $('#vertical_ids').val(verticalIds);
-            } else {
-                $('#vertical_ids').val([]);
+
+            // Set verticals in Tom Select dropdown
+            if (window.TomSelect && $('#vertical_ids')[0].tomselect) {
+                var tomselect = $('#vertical_ids')[0].tomselect;
+                tomselect.clear();
+                if (user.verticals && user.verticals.length > 0) {
+                    var verticalIds = user.verticals.map(function(v) { return v.id; });
+                    tomselect.setValue(verticalIds);
+                }
             }
-            $('#vertical_ids').trigger('change');
+
             // Show/hide vertical box based on role slug
             var selectedRoleSlug = $('#role_id option:selected').data('slug');
             if (selectedRoleSlug === 'vm' || selectedRoleSlug === 'nfo') {
