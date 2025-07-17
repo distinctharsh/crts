@@ -191,7 +191,7 @@ $breadcrumbs = [
                             <label for="vertical_ids" class="form-label">Verticals</label>
                             <div class="input-group">
                                 <span class="input-group-text"><i class="bi bi-diagram-3"></i></span>
-                                <select name="vertical_ids[]" id="vertical_ids" class="form-control" multiple>
+                                <select name="vertical_ids[]" id="vertical_ids" class="form-select tom-select" multiple>
                                     @foreach($verticals as $vertical)
                                     <option value="{{ $vertical->id }}" {{ collect(old('vertical_ids', []))->contains($vertical->id) ? 'selected' : '' }}>{{ $vertical->name }}</option>
                                     @endforeach
@@ -379,6 +379,19 @@ $breadcrumbs = [
                 icon.removeClass('bi-eye').addClass('bi-eye-slash');
             }
         });
+
+        if (window.TomSelect) {
+            if ($('#vertical_ids').data('tomselect')) {
+                $('#vertical_ids')[0].tomselect.destroy();
+            }
+            new TomSelect('#vertical_ids', {
+                plugins: ['remove_button'],
+                create: false,
+                persist: false,
+                maxItems: null,
+                placeholder: 'Select vertical(s)'
+            });
+        }
     });
 </script>
 @endpush
