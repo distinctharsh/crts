@@ -107,12 +107,12 @@ $breadcrumbs = [
 
 <div class="modal fade" id="userModal" tabindex="-1" aria-labelledby="userModalLabel" aria-hidden="true">
     <div class="modal-dialog modal-lg">
-        <div class="modal-content">
-            <div class="modal-header">
-                <h5 class="modal-title" id="userModalLabel">Create User</h5>
-                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+        <div class="modal-content shadow-lg rounded-4 border-0">
+            <div class="modal-header bg-primary text-white rounded-top-4">
+                <h5 class="modal-title fw-bold" id="userModalLabel">Create User</h5>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
             </div>
-            <div class="modal-body">
+            <div class="modal-body p-4">
                 @if($errors->any())
                 <div class="alert alert-danger">
                     <ul class="mb-0">
@@ -126,72 +126,88 @@ $breadcrumbs = [
                     @csrf
                     <input type="hidden" name="user_id" id="user_id" value="{{ old('user_id', '') }}">
                     <input type="hidden" name="_method" id="form_method" value="{{ old('user_id') ? 'PUT' : 'POST' }}">
-                    <div class="mb-3">
-                        <label for="username" class="form-label">Username</label>
-                        <input type="text" class="form-control @error('username') is-invalid @enderror" id="username" name="username" value="{{ old('username') }}" required autofocus maxlength="50">
-                        @error('username')
-                        <div class="invalid-feedback">{{ $message }}</div>
-                        @enderror
-                    </div>
-                    <div class="mb-3">
-                        <label for="full_name" class="form-label">Full Name</label>
-                        <input type="text" class="form-control @error('full_name') is-invalid @enderror" id="full_name" name="full_name" value="{{ old('full_name') }}" required maxlength="60">
-                        @error('full_name')
-                        <div class="invalid-feedback">{{ $message }}</div>
-                        @enderror
-                    </div>
-                    <div class="mb-3" id="defaultPasswordNote">
-                        <span class="text-info small">Default password will be assigned: <b>Welcome@123</b></span>
-                    </div>
-                    <div class="mb-3">
-                        <label for="password" class="form-label">Password</label>
-                        <div class="input-group">
-                            <input type="password" class="form-control @error('password') is-invalid @enderror" id="password" name="password" minlength="6">
-                            <button class="btn btn-outline-secondary" type="button" id="setDefaultPasswordBtn">Set Default Password</button>
-                            <button class="btn btn-outline-secondary toggle-password" type="button" data-target="#password" tabindex="-1">
-                                <i class="bi bi-eye-slash" id="togglePasswordIcon"></i>
-                            </button>
+                    <div class="row g-3">
+                        <div class="col-md-6">
+                            <label for="username" class="form-label">Username</label>
+                            <div class="input-group">
+                                <span class="input-group-text"><i class="bi bi-person"></i></span>
+                                <input type="text" class="form-control @error('username') is-invalid @enderror" id="username" name="username" value="{{ old('username') }}" required autofocus maxlength="50">
+                            </div>
+                            @error('username')
+                            <div class="invalid-feedback d-block">{{ $message }}</div>
+                            @enderror
                         </div>
-                        <small id="passwordHelpText" class="form-text text-muted">(leave blank to keep current)</small>
-                        @error('password')
-                        <div class="invalid-feedback">{{ $message }}</div>
-                        @enderror
-                    </div>
-                    <div class="mb-3">
-                        <label for="password_confirmation" class="form-label">Confirm Password</label>
-                        <div class="input-group">
-                            <input type="password" class="form-control" id="password_confirmation" name="password_confirmation">
-                            <button class="btn btn-outline-secondary toggle-password" type="button" data-target="#password_confirmation" tabindex="-1">
-                                <i class="bi bi-eye-slash" id="togglePasswordIconConfirm"></i>
-                            </button>
+                        <div class="col-md-6">
+                            <label for="full_name" class="form-label">Full Name</label>
+                            <div class="input-group">
+                                <span class="input-group-text"><i class="bi bi-card-text"></i></span>
+                                <input type="text" class="form-control @error('full_name') is-invalid @enderror" id="full_name" name="full_name" value="{{ old('full_name') }}" required maxlength="60">
+                            </div>
+                            @error('full_name')
+                            <div class="invalid-feedback d-block">{{ $message }}</div>
+                            @enderror
+                        </div>
+                        <div class="col-md-6">
+                            <label for="password" class="form-label">Password</label>
+                            <div class="input-group">
+                                <span class="input-group-text"><i class="bi bi-key"></i></span>
+                                <input type="password" class="form-control @error('password') is-invalid @enderror" id="password" name="password" minlength="6">
+                                <button class="btn btn-outline-secondary" type="button" id="setDefaultPasswordBtn">Set Default Password</button>
+                                <button class="btn btn-outline-secondary toggle-password" type="button" data-target="#password" tabindex="-1">
+                                    <i class="bi bi-eye-slash" id="togglePasswordIcon"></i>
+                                </button>
+                            </div>
+                            <small id="passwordHelpText" class="form-text text-muted">(leave blank to keep current)</small>
+                            @error('password')
+                            <div class="invalid-feedback d-block">{{ $message }}</div>
+                            @enderror
+                        </div>
+                        <div class="col-md-6">
+                            <label for="password_confirmation" class="form-label">Confirm Password</label>
+                            <div class="input-group">
+                                <span class="input-group-text"><i class="bi bi-key"></i></span>
+                                <input type="password" class="form-control" id="password_confirmation" name="password_confirmation">
+                                <button class="btn btn-outline-secondary toggle-password" type="button" data-target="#password_confirmation" tabindex="-1">
+                                    <i class="bi bi-eye-slash" id="togglePasswordIconConfirm"></i>
+                                </button>
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <label for="role_id" class="form-label">Role</label>
+                            <div class="input-group">
+                                <span class="input-group-text"><i class="bi bi-person-badge"></i></span>
+                                <select class="form-select @error('role_id') is-invalid @enderror" id="role_id" name="role_id" required>
+                                    <option value="">Select a role</option>
+                                    @foreach($roles as $role)
+                                    <option value="{{ $role->id }}" data-slug="{{ $role->slug }}" {{ old('role_id') == $role->id ? 'selected' : '' }}>{{ $role->name }}</option>
+                                    @endforeach
+                                </select>
+                            </div>
+                            @error('role_id')
+                            <div class="invalid-feedback d-block">{{ $message }}</div>
+                            @enderror
+                        </div>
+                        <div class="col-md-6" id="verticalBox" style="display: {{ (old('role_id') && (App\Models\Role::find(old('role_id'))->slug == 'vm' || App\Models\Role::find(old('role_id'))->slug == 'nfo')) ? 'block' : 'none' }};">
+                            <label for="vertical_ids" class="form-label">Verticals</label>
+                            <div class="input-group">
+                                <span class="input-group-text"><i class="bi bi-diagram-3"></i></span>
+                                <select name="vertical_ids[]" id="vertical_ids" class="form-control" multiple>
+                                    @foreach($verticals as $vertical)
+                                    <option value="{{ $vertical->id }}" {{ collect(old('vertical_ids', []))->contains($vertical->id) ? 'selected' : '' }}>{{ $vertical->name }}</option>
+                                    @endforeach
+                                </select>
+                            </div>
+                            @error('vertical_ids')
+                            <div class="invalid-feedback d-block">{{ $message }}</div>
+                            @enderror
+                            <small class="form-text text-muted">Hold Ctrl (Windows) or Cmd (Mac) to select multiple.</small>
+                        </div>
+                        <div class="col-12" id="defaultPasswordNote">
+                            <span class="text-info small">Default password will be assigned: <b>Welcome@123</b></span>
                         </div>
                     </div>
-                    <div class="mb-3">
-                        <label for="role_id" class="form-label">Role</label>
-                        <select class="form-select @error('role_id') is-invalid @enderror" id="role_id" name="role_id" required>
-                            <option value="">Select a role</option>
-                            @foreach($roles as $role)
-                            <option value="{{ $role->id }}" data-slug="{{ $role->slug }}" {{ old('role_id') == $role->id ? 'selected' : '' }}>{{ $role->name }}</option>
-                            @endforeach
-                        </select>
-                        @error('role_id')
-                        <div class="invalid-feedback">{{ $message }}</div>
-                        @enderror
-                    </div>
-                    <div class="mb-3" id="verticalBox" style="display: {{ (old('role_id') && (App\Models\Role::find(old('role_id'))->slug == 'vm' || App\Models\Role::find(old('role_id'))->slug == 'nfo')) ? 'block' : 'none' }};">
-                        <label for="vertical_ids" class="form-label">Verticals</label>
-                        <select name="vertical_ids[]" id="vertical_ids" class="form-control" multiple>
-                            @foreach($verticals as $vertical)
-                            <option value="{{ $vertical->id }}" {{ collect(old('vertical_ids', []))->contains($vertical->id) ? 'selected' : '' }}>{{ $vertical->name }}</option>
-                            @endforeach
-                        </select>
-                        @error('vertical_ids')
-                        <div class="invalid-feedback d-block">{{ $message }}</div>
-                        @enderror
-                        <small class="form-text text-muted">Hold Ctrl (Windows) or Cmd (Mac) to select multiple.</small>
-                    </div>
-                    <div class="d-grid gap-2">
-                        <button type="submit" class="btn btn-primary" id="userSubmitBtn">
+                    <div class="d-grid gap-2 mt-4">
+                        <button type="submit" class="btn btn-primary btn-lg shadow-sm" id="userSubmitBtn">
                             <span id="userBtnText">{{ old('user_id') ? 'Update' : 'Create' }}</span>
                             <span id="userBtnSpinner" class="spinner-border spinner-border-sm d-none" role="status" aria-hidden="true"></span>
                         </button>
