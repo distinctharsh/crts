@@ -86,108 +86,11 @@
                                     <span class="badge bg-light text-primary fs-6">{{ $todayComplaints->count() }} Today</span>
                                 </div>
                                 <div class="card-body">
-                                    <div class="table-responsive">
-                                        <table id="complaintsTable" class="table table-hover table-bordered table-striped align-middle w-100">
-                                            <thead class="table-primary">
-                                                <tr>
-                                                    <th class="no-sort">S.No.</th>
-                                                    <th>Reference</th>
-                                                    <th>User</th>
-                                                    <th>Section</th>
-                                                    <th>Network</th>
-                                                    <th>Vertical</th>
-                                                    <th>Status</th>
-                                                    <th>Priority</th>
-                                                    <th>Assigned To</th>
-                                                    <th>Description</th>
-                                                    <th>Actions</th>
-                                                </tr>
-                                            </thead>
-                                            <tbody>
-                                                @forelse($todayComplaints as $complaint)
-                                                <tr>
-                                                    <td>{{ $loop->iteration }}</td>
-                                                    <td>{{ $complaint->reference_number }}</td>
-                                                    <td>{{ $complaint->user_name  ?? '-'}}</td>
-                                                    <td>{{ $complaint->section  ? $complaint->section->name : ''}}</td>
-                                                    <td>{{ $complaint->networkType?->name ?? 'N/A' }}</td>
-                                                    <td>{{ $complaint->vertical?->name ?? 'N/A' }}</td>
-                                                    <td>
-                                                        <span class="badge bg-{{ $complaint->status_color }}">
-                                                            {{ $complaint->status?->display_name ?? 'Unknown' }}
-                                                        </span>
-                                                    </td>
-                                                    <td>
-                                                        <span class="badge bg-{{ $complaint->priority_color ?? 'secondary' }}">
-                                                            {{ ucfirst($complaint->priority) ?? 'Unknown' }}
-                                                        </span>
-                                                    </td>
-                                                    <td>{{ $complaint->assignedTo?->full_name ?? 'Not Assigned' }}</td>
-                                                    <!-- <td>
-                                                        @php $assignedBy = $complaint->assigned_by ? \App\Models\User::find($complaint->assigned_by) : null; @endphp
-                                                        {{ $assignedBy?->full_name ?? 'N/A' }}
-                                                    </td> -->
-                                                      <td>
-                                                        <div style="white-space: pre-wrap; word-break: break-word; max-width: 300px;">
-                                                            {{ $complaint->description ?? 'Unknown' }}
-                                                        </div>
-                                                    </td>
-                                                    <td>
-                                                        <a href="{{ route('complaints.show', $complaint) }}" class="btn btn-sm btn-primary">View</a>
-                                                        @auth
-                                                        @if((auth()->user()->isManager() || auth()->user()->isVM()) && (!$complaint->assigned_to || $complaint->assigned_to == 0) && $complaint->status->name != 'completed' && $complaint->status->name != 'closed')
-                                                        <button type="button" class="btn btn-sm btn-primary" data-bs-toggle="modal" data-bs-target="#assignModal{{ $complaint->id }}">
-                                                            Assign
-                                                        </button>
-                                                        @endif
-                                                        @endauth
-                                                    </td>
-                                                </tr>
-                                                @empty
-                                                <tr>
-                                                    <td colspan="10" class="text-center">No complaints today.</td>
-                                                </tr>
-                                                @endforelse
-                                            </tbody>
-                                        </table>
-                                        <!-- Render all assign modals after the table for DataTables compatibility -->
-                                        @foreach($todayComplaints as $complaint)
-                                        @if((auth()->user()->isManager() || auth()->user()->isVM()) && (!$complaint->assigned_to || $complaint->assigned_to == 0) && $complaint->status->name != 'completed' && $complaint->status->name != 'closed')
-                                        <div class="modal fade" id="assignModal{{ $complaint->id }}" tabindex="-1" aria-labelledby="assignModalLabel{{ $complaint->id }}" aria-hidden="true">
-                                            <div class="modal-dialog">
-                                                <div class="modal-content">
-                                                    <form action="{{ route('complaints.assign', $complaint) }}" method="POST">
-                                                        @csrf
-                                                        <div class="modal-header">
-                                                            <h5 class="modal-title" id="assignModalLabel{{ $complaint->id }}">Assign Ticket {{ $complaint->reference_number }}</h5>
-                                                            <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
-                                                        </div>
-                                                        <div class="modal-body">
-                                                            <div class="mb-3">
-                                                                <label for="assigned_to{{ $complaint->id }}" class="form-label">Assign To</label>
-                                                                <select class="form-select" name="assigned_to" id="assigned_to{{ $complaint->id }}" required>
-                                                                    <option value="">Select User</option>
-                                                                    @foreach($complaint->assignableUsers as $user)
-                                                                    <option value="{{ $user->id }}">{{ $user->full_name }} ({{ strtoupper($user->role->name) }})</option>
-                                                                    @endforeach
-                                                                </select>
-                                                            </div>
-                                                            <div class="mb-3">
-                                                                <label for="description{{ $complaint->id }}" class="form-label">Remarks</label>
-                                                                <textarea class="form-control" name="description" id="description{{ $complaint->id }}" rows="3"></textarea>
-                                                            </div>
-                                                        </div>
-                                                        <div class="modal-footer">
-                                                            <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
-                                                            <button type="submit" class="btn btn-primary">Assign</button>
-                                                        </div>
-                                                    </form>
-                                                </div>
-                                            </div>
-                                        </div>
-                                        @endif
-                                        @endforeach
-                                    </div>
+                                    @include('complaints.partials.table', ['complaints' => isset($todayComplaints) ? $todayComplaints : $complaints, 'tableId' => 'dashboardComplaintsTable'])
+                                    @foreach(isset($todayComplaints) ? $todayComplaints : $complaints as $complaint)
+                                        @include('complaints.partials.assign-modal', ['complaint' => $complaint])
+                                        @include('complaints.partials.revert-modal', ['complaint' => $complaint, 'managers' => $managers])
+                                    @endforeach
                                 </div>
                             </div>
                         </div>
@@ -222,7 +125,7 @@
 
 <script>
     $(document).ready(function() {
-        $('#complaintsTable').DataTable({
+        $('#dashboardComplaintsTable').DataTable({
             responsive: false, // Disable responsive extension
             scrollX: true,     // Enable horizontal scrolling
             order: [

@@ -423,7 +423,7 @@ class ComplaintController extends Controller
 
             $validated = $request->validate([
                 'assigned_to' => 'required|exists:users,id',
-                'description' => 'required|string'
+                'description' => 'nullable|string'
             ]);
 
             // Get reverted status
