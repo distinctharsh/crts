@@ -22,19 +22,20 @@
                     <tbody>
                         @foreach($logs as $log)
                         <tr>
-                            <td>{{ $log->created_at->format('d-m-Y H:i:s') }}</td>
+                            <td>{{ $log->created_at->format('d-m-Y H:i:s') }}
+                            </td>
                             <td>
                                 @if($log->properties['user_full_name'] ?? null)
                                     <span>{{ $log->properties['user_full_name'] }}</span>
                                     @php
                                         $eventDesc = strtolower($log->event ? $log->event : $log->description);
                                     @endphp
-                                    @if(!str_contains($eventDesc, 'logged in') && !str_contains($eventDesc, 'logged out') && $log->causer && $log->properties['user_full_name'] !== $log->causer->name)
-                                        <br><small class="text-muted">(Edited by: {{ $log->causer->name }})</small>
+                                    @if(!str_contains($eventDesc, 'logged in') && !str_contains($eventDesc, 'logged out') && $log->causer && $log->properties['user_full_name'] !== $log->causer->full_name)
+                                        <br><small class="text-muted">(Edited by: {{ $log->causer->full_name }})</small>
                                     @endif
                                 @else
                                     @if($log->causer)
-                                        <span>{{ $log->causer->name }}</span>
+                                        <span>{{ $log->causer->full_name }}</span>
                                     @else
                                         System
                                     @endif
