@@ -10,7 +10,6 @@ use Illuminate\Support\Facades\Request;
 use App\Models\Comment;
 use App\Observers\CommentObserver;
 use App\Models\ComplaintAction;
-use App\Observers\ComplaintActionObserver;
 
 class AppServiceProvider extends ServiceProvider
 {
@@ -41,6 +40,5 @@ class AppServiceProvider extends ServiceProvider
 
         // Register observers
         Comment::observe(CommentObserver::class);
-        ComplaintAction::observe(ComplaintActionObserver::class);
     }
 }

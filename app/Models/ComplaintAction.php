@@ -8,7 +8,7 @@ use Spatie\Activitylog\Traits\LogsActivity;
 
 class ComplaintAction extends Model
 {
-    use LogsActivity, HasFactory;
+    use HasFactory;
 
     protected $fillable = [
         'complaint_id',
@@ -33,10 +33,4 @@ class ComplaintAction extends Model
         return $this->belongsTo(Status::class);
     }
 
-    public function getActivitylogOptions(): \Spatie\Activitylog\LogOptions
-    {
-        return \Spatie\Activitylog\LogOptions::defaults()
-            ->logAll()
-            ->logOnlyDirty();
-    }
 }
