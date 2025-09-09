@@ -32,21 +32,12 @@ class UsageReportController extends Controller
             $reportData[] = [
                 'id' => $user->id,
                 'name' => $user->full_name ?: $user->username,
-                'role' => $user->role->name,
                 'pending' => $pending,
                 'completed' => $completed,
                 'total' => $total,
                 'completion_rate' => $total > 0 ? round(($completed / $total) * 100, 2) : 0,
             ];
         }
-
-        // Sort by role (VM first) and then by name
-        usort($reportData, function($a, $b) {
-            if ($a['role'] === $b['role']) {
-                return strcmp($a['name'], $b['name']);
-            }
-            return $a['role'] === 'VM' ? -1 : 1;
-        });
 
         return view('usage-report.index', compact('reportData'));
     }

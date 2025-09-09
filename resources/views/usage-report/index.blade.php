@@ -15,7 +15,6 @@
                                 <tr>
                                     <th>#</th>
                                     <th>Name</th>
-                                    <!-- <th>Role</th> -->
                                     <th>Pending</th>
                                     <th>Completed</th>
                                     <th>Total</th>
@@ -27,7 +26,6 @@
                                 <tr>
                                     <td>{{ $index + 1 }}</td>
                                     <td>{{ $user['name'] }}</td>
-                                    <td>{{ $user['role'] }}</td>
                                     <td class="text-center">
                                         <span class="badge bg-warning">{{ $user['pending'] }}</span>
                                     </td>
