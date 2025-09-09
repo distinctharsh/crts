@@ -36,6 +36,9 @@
         <li class="nav-item mt-1">
           <a class="nav-link {{ request()->routeIs('masters.index') ? 'active fw-bold text-primary' : '' }}" href="{{ route('masters.index') }}">Masters</a>
         </li>
+        <li class="nav-item mt-1">
+          <a class="nav-link {{ request()->routeIs('usage-report.index') ? 'active fw-bold text-primary' : '' }}" href="{{ route('usage-report.index') }}">Usage Report</a>
+        </li>
         @endif
 
         @if(auth()->check() && auth()->user()->role && strtolower(auth()->user()->role->name) === 'manager')

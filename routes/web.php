@@ -8,7 +8,7 @@ use App\Http\Controllers\DashboardController;
 use App\Http\Controllers\MastersController;
 use App\Http\Controllers\ProfileController;
 use App\Http\Controllers\AuditLogController;
-use App\Services\ComplaintAutoCloser;
+use App\Http\Controllers\UsageReportController;
 
 
 // Redirect root URL to /home
@@ -117,6 +117,8 @@ Route::middleware(['auth', 'can:isManager'])->group(function () {
     Route::put('/masters/verticals/{vertical}', [MastersController::class, 'updateVertical'])->name('masters.verticals.update');
     Route::delete('/masters/verticals/{vertical}', [MastersController::class, 'destroyVertical'])->name('masters.verticals.destroy');
     Route::get('/audit-log', [AuditLogController::class, 'index'])->name('audit-log.index');
+
+    Route::get('/usage-report', [UsageReportController::class, 'index'])->name('usage-report.index');
 });
 
 
