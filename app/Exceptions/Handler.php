@@ -42,16 +42,16 @@ class Handler extends ExceptionHandler
 
     public function render($request, Throwable $exception)
     {
-        // Redirect 404, 419, 403 errors to /home with a message
+        // Redirect 404, 419, 403 errors to / (dashboard) with a message
         if ($this->isHttpException($exception)) {
             $status = $exception->getStatusCode();
             if ($status === 419) {
                 \Auth::logout();
                 \Session::flush();
-                return redirect('/home')->with('error', 'You have been logged out due to inactivity or session expired.');
+                return redirect('/')->with('error', 'You have been logged out due to inactivity or session expired.');
             }
             if (in_array($status, [404, 403])) {
-                return redirect('/home')->with('error', 'You were redirected because the page was not found, expired, or you do not have access.');
+                return redirect('/')->with('error', 'You were redirected because the page was not found, expired, or you do not have access.');
             }
         }
         return parent::render($request, $exception);
