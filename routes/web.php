@@ -1,4 +1,5 @@
 <?php
+require __DIR__ . '/auth.php';
 
 use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\AuthController;
@@ -24,6 +25,14 @@ Route::get('/home', function () {
     }
     return view('welcome', ['user_ip' => $publicIp]);
 })->name('home');
+
+
+// Force override GET /login to always redirect to /home (for Laravel 12+)
+Route::get('/login', function () {
+    return redirect('/home');
+})->name('login-override');
+
+
 
 
 // Live complaints dashboard (TV/room display)
@@ -122,12 +131,8 @@ Route::middleware(['auth', 'can:isManager'])->group(function () {
 });
 
 
-require __DIR__ . '/auth.php';
 
-// Force override GET /login to always redirect to /home (for Laravel 12+)
-Route::get('/login', function () {
-    return redirect('/home');
-})->name('login-override');
+
 
 // Fallback route for all unknown URLs
 Route::fallback(function () {
