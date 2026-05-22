@@ -10,10 +10,29 @@ use App\Http\Controllers\MastersController;
 use App\Http\Controllers\ProfileController;
 use App\Http\Controllers\AuditLogController;
 use App\Http\Controllers\UsageReportController;
-
+use Illuminate\Support\Str;
 
 // Redirect root URL to /home
 Route::redirect('/', '/home');
+
+
+
+Route::get('/test-report', function () {
+
+    $reportData = [
+        'date' => now()->format('M d, Y'),
+        'today_complaints' => 50,
+        'unassigned' => 12,
+        'completed' => 30,
+        'action_pending' => 8,
+    ];
+
+    return view(
+        'emails.hod_report',
+        compact('reportData')
+    );
+});
+
 
 // Show welcome view at /home
 Route::get('/home', function () {
