@@ -34,6 +34,70 @@ Route::get('/login', function () {
 
 
 
+use App\Mail\HODReportMail;
+
+Route::get('/test-hod-mail', function () {
+
+    $reportData = [
+        'date' => now()->format('M d, Y'),
+
+        'total_complaints' => 50,
+        'pending_complaints' => 12,
+        'assigned_complaints' => 20,
+        'resolved_complaints' => 18,
+
+        'high_priority_complaints' => 3,
+
+        'vertical_breakdown' => [
+            'Electrical' => [
+                'total' => 20,
+                'pending' => 5,
+                'resolved' => 15,
+            ],
+            'Plumbing' => [
+                'total' => 15,
+                'pending' => 4,
+                'resolved' => 11,
+            ],
+            'Housekeeping' => [
+                'total' => 15,
+                'pending' => 3,
+                'resolved' => 12,
+            ],
+        ],
+
+        'recent_complaints' => [
+            [
+                'reference_number' => 'CMP001',
+                'description' => 'AC not working in Room 201',
+                'status' => 'pending',
+            ],
+            [
+                'reference_number' => 'CMP002',
+                'description' => 'Water leakage issue',
+                'status' => 'assigned',
+            ],
+            [
+                'reference_number' => 'CMP003',
+                'description' => 'Power outage in Block A',
+                'status' => 'resolved',
+            ],
+            [
+                'reference_number' => 'CMP004',
+                'description' => 'Internet connectivity issue',
+                'status' => 'pending',
+            ],
+            [
+                'reference_number' => 'CMP005',
+                'description' => 'Lift malfunction',
+                'status' => 'resolved',
+            ],
+        ],
+    ];
+
+    return (new HODReportMail($reportData))->render();
+});
+
 
 // Live complaints dashboard (TV/room display)
 Route::get('/complaints/live', [ComplaintController::class, 'live'])->name('complaints.live');
