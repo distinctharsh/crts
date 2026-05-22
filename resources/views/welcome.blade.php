@@ -31,13 +31,21 @@
 
         .text-home-btn{
             background:orange;
-            color: #fff;
+            color: #000;
         }
 
-         .text-home-btn : hover{
-            background:orange;
-            color: #fff;
+        .text-home-btn {
+            background: orange !important; 
+            color: #000 !important;
+            border-color: orange !important;
         }
+
+        .btn.text-home-btn:hover {
+            background-color: #ffffff !important; 
+            color: orange !important; 
+            border-color: #ffffff !important;
+        }
+            
         .hero-section {
             background: linear-gradient(135deg, #0d6efd 0%, #0a58ca 100%);
             color: white;
@@ -270,7 +278,7 @@
                 @endguest
 
 
-                <a href="{{ route('complaints.live') }}" class="btn btn-success btn-lg text-home-btn" style="background: #28a745; border: none;">Live Complaints Dashboard</a>
+                <a href="{{ route('complaints.live') }}" class="btn btn-success btn-lg " style="background: #28a745; color: #fff; border: none;">Live Complaints Dashboard</a>
             </div>
         </div>
     </section>
@@ -400,7 +408,7 @@
                             <label for="reference_number" class="form-label stylish-label">Ticket Reference Number</label>
                             <div class="input-group">
                                 <span class="input-group-text stylish-input-icon"><i class="bi bi-hash"></i></span>
-                                <input type="text" class="form-control stylish-input" id="reference_number" name="reference_number" required placeholder="e.g. CMP-2025xxxx">
+                                <input type="text" class="form-control stylish-input" id="reference_number" name="reference_number" required placeholder="e.g. CMP-2026xxxx">
                             </div>
                         </div>
                         <div id="searchError" class="alert alert-danger d-none stylish-alert"></div>

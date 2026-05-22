@@ -45,8 +45,17 @@
                         </div>
                         <div class="col-md-6">
                             <label for="intercom" class="form-label">Intercom / Telephone No. <span class="text-danger">*</span></label>
-                            <input type="number" class="form-control @error('intercom') is-invalid @enderror"
-                                id="intercom" name="intercom" value="{{ old('intercom', isset($complaint) ? $complaint->intercom : '') }}" oninput="this.value = this.value.replace(/[^0-9]/g, '').substring(0, 10)" placeholder="Enter Telephone / Intercom No." required maxlength="10">
+                            <select id="intercom" name="intercom" class="form-select tom-select @error('intercom') is-invalid @enderror" required >
+                                <option value="">Enter or select Intercom</option>
+                                @foreach($intercoms as $intercom)
+                                    <option value="{{ $intercom }}"
+                                        {{ old('intercom', isset($complaint) ? $complaint->intercom : '') == $intercom ? 'selected' : '' }}
+                                    >
+                                        {{ $intercom }}
+                                    </option>
+                                @endforeach
+                            </select>
+
                             @error('intercom')
                             <div class="invalid-feedback">{{ $message }}</div>
                             @enderror
@@ -55,6 +64,15 @@
 
                     <!-- Second Row - Network Type and Priority -->
                     <div class="row mb-3">
+                        <div class="col-md-6">
+                            <label for="room_number" class="form-label">Room Number <span class="text-danger">*</span></label>
+                            <input type="number" class="form-control @error('room_number') is-invalid @enderror"
+                                id="room_number" name="room_number" value="{{ old('room_number', isset($complaint) ? $complaint->room_number : '') }}" placeholder="Enter Room Number" required min="0" max="999999">
+                            @error('room_number')
+                            <div class="invalid-feedback">{{ $message }}</div>
+                            @enderror
+                            <!-- <small class="text-muted">Max 6 digits</small> -->
+                        </div>
                         <div class="col-md-6">
                             <label for="section_id" class="form-label">Section <span class="text-danger">*</span></label>
                             <select class="form-select tom-select @error('section_id') is-invalid @enderror"
@@ -70,7 +88,12 @@
                             <div class="invalid-feedback">{{ $message }}</div>
                             @enderror
                         </div>
-                        <div class="col-md-6">
+                       
+                    </div>
+
+                    <!-- Third Row - Vertical and Room Number -->
+                    <div class="row mb-3">
+                         <div class="col-md-6">
                             <label for="network_type_id" class="form-label">Issue Type <span class="text-danger">*</span></label>
                             <select class="form-select tom-select @error('network_type_id') is-invalid @enderror"
                                 id="network_type_id" name="network_type_id" required>
@@ -85,41 +108,53 @@
                             <div class="invalid-feedback">{{ $message }}</div>
                             @enderror
                         </div>
-                    </div>
-
-                    <!-- Third Row - Vertical and Section -->
-                    <div class="row mb-3">
                         <div class="col-md-6">
                             <label for="vertical_id" class="form-label">Vertical <span class="text-danger">*</span></label>
                             <select class="form-select tom-select @error('vertical_id') is-invalid @enderror"
                                 id="vertical_id" name="vertical_id" required>
                                 <option value="">Select --</option>
-                                @foreach($verticals as $vertical)
+                                @php
+                                    // Separate verticals: those that are not "Other" and the "Other" option
+                                    $otherVertical = null;
+                                    $regularVerticals = [];
+                                    foreach($verticals as $vertical) {
+                                        if(strtolower($vertical->name) === 'other') {
+                                            $otherVertical = $vertical;
+                                        } else {
+                                            $regularVerticals[] = $vertical;
+                                        }
+                                    }
+                                @endphp
+                                @foreach($regularVerticals as $vertical)
                                 <option value="{{ $vertical->id }}" {{ old('vertical_id', isset($complaint) ? $complaint->vertical_id : '') == $vertical->id ? 'selected' : '' }}>
                                     {{ $vertical->name }}
                                 </option>
                                 @endforeach
+                                @if($otherVertical)
+                                <option value="{{ $otherVertical->id }}" {{ old('vertical_id', isset($complaint) ? $complaint->vertical_id : '') == $otherVertical->id ? 'selected' : '' }}>
+                                    {{ $otherVertical->name }}
+                                </option>
+                                @endif
                             </select>
                             @error('vertical_id')
                             <div class="invalid-feedback">{{ $message }}</div>
                             @enderror
                         </div>
-                        <div class="col-md-6">
+                      
+                    </div>
+
+                    <!-- Priority Field - Checkbox instead of Radio -->
+                    <div class="row mb-3">
+                        <div class="col-md-12">
                             <label class="form-label">Priority <span class="text-danger">*</span></label>
                             <div class="d-flex gap-3">
                                 <div class="form-check">
-                                    <input class="form-check-input" type="radio" name="priority" id="high" value="high" {{ old('priority', isset($complaint) ? $complaint->priority : 'medium') == 'high' ? 'checked' : '' }} required>
+                                    <input class="form-check-input" type="checkbox" name="priority" id="high" value="high" 
+                                        {{ old('priority', isset($complaint) ? $complaint->priority : '') == 'high' ? 'checked' : '' }}>
                                     <label class="form-check-label" for="high">High</label>
                                 </div>
-                                <div class="form-check">
-                                    <input class="form-check-input" type="radio" name="priority" id="medium" value="medium" {{ old('priority', isset($complaint) ? $complaint->priority : 'medium') == 'medium' ? 'checked' : '' }}>
-                                    <label class="form-check-label" for="medium">Medium</label>
-                                </div>
-                                <div class="form-check">
-                                    <input class="form-check-input" type="radio" name="priority" id="low" value="low" {{ old('priority', isset($complaint) ? $complaint->priority : 'medium') == 'low' ? 'checked' : '' }}>
-                                    <label class="form-check-label" for="low">Low</label>
-                                </div>
                             </div>
+                            <small class="text-muted d-block mt-2">If not selected, priority will default to Medium</small>
                             @error('priority')
                             <div class="invalid-feedback d-block">{{ $message }}</div>
                             @enderror
@@ -181,76 +216,7 @@
                         </button>
                     </div>
                 </form>
-                <script>
-                document.addEventListener('DOMContentLoaded', function() {
-                    // Tom Select initialization for all .tom-select dropdowns
-                    document.querySelectorAll('select.tom-select').forEach(function(el) {
-                        new TomSelect(el, {
-                            create: false,
-                            sortField: {
-                                field: 'text',
-                                direction: 'asc'
-                            }
-                        });
-                    });
-                    // Hide vertical option with id=2 if network_type_id is 1
-                    function updateVerticalOptions() {
-                        var networkType = document.getElementById('network_type_id');
-                        var verticalSelect = document.getElementById('vertical_id');
-                        if (!networkType || !verticalSelect) return;
-                        var hideId = '2';
-                        for (var i = 0; i < verticalSelect.options.length; i++) {
-                            var opt = verticalSelect.options[i];
-                            if (opt.value === hideId) {
-                                if (networkType.value === '1') {
-                                    opt.style.display = 'none';
-                                    // If currently selected, reset
-                                    if (verticalSelect.value === hideId) {
-                                        verticalSelect.value = '';
-                                    }
-                                } else {
-                                    opt.style.display = '';
-                                }
-                            }
-                        }
-                    }
-                    var networkType = document.getElementById('network_type_id');
-                    if (networkType) {
-                        networkType.addEventListener('change', updateVerticalOptions);
-                        updateVerticalOptions(); // On page load
-                    }
-                    // File validation and submit button spinner
-                    const form = document.querySelector('form');
-                    const fileInput = document.getElementById('file');
-                    const submitBtn = document.getElementById('submitTicketBtn');
-                    const submitBtnText = document.getElementById('submitBtnText');
-                    const submitBtnSpinner = document.getElementById('submitBtnSpinner');
-                    if (form && fileInput) {
-                        form.addEventListener('submit', function(e) {
-                            if (fileInput.files.length > 0) {
-                                const file = fileInput.files[0];
-                                const allowedTypes = [
-                                    'application/pdf',
-                                    'image/jpeg',
-                                    'image/png'
-                                ];
-                                if (!allowedTypes.includes(file.type)) {
-                                    e.preventDefault();
-                                    alert('Only PDF and image files (jpg, jpeg, png) are allowed.');
-                                    fileInput.value = '';
-                                    return false;
-                                }
-                            }
-                            // Show loader and disable button
-                            if (submitBtn && submitBtnText && submitBtnSpinner) {
-                                submitBtn.disabled = true;
-                                submitBtnText.classList.add('d-none');
-                                submitBtnSpinner.classList.remove('d-none');
-                            }
-                        });
-                    }
-                });
-                </script>
+                
             </div>
         </div>
     </div>
@@ -278,19 +244,11 @@
                 </dl>
                 @else
                 <p class="mb-3">Please provide all the required information to create a new ticket. Our team will review your ticket and take appropriate action.</p>
-                <h6 class="mb-2">Priority Levels:</h6>
+                <h6 class="mb-2">Important Note:</h6>
                 <ul class="list-unstyled mb-3">
-                    <li class="mb-2">
-                        <span class="badge bg-success">Low</span>
-                        - Non-urgent issues that can be addressed within 5-7 business days
-                    </li>
-                    <li class="mb-2">
-                        <span class="badge bg-warning">Medium</span>
-                        - Issues that need attention within 2-3 business days
-                    </li>
                     <li>
-                        <span class="badge bg-danger">High</span>
-                        - Urgent issues that require immediate attention
+                        <span class="badge bg-danger">High Priority</span>
+                        - Use only for urgent issues requiring immediate attention
                     </li>
                 </ul>
                 <h6 class="mb-2">What happens next?</h6>
@@ -306,7 +264,36 @@
     </div>
 </div>
 
+<script>
+document.addEventListener('DOMContentLoaded', function () {
 
+    document.querySelectorAll('select.tom-select').forEach(function(el){
+
+        let config = {
+            searchField:['text'],
+            maxOptions:100,
+            persist:false,
+
+            render:{
+                no_results:function(){
+                    return '<div class="no-results">No result found</div>';
+                }
+            }
+        };
+
+        // Only intercom allows new entries
+        if(el.id === 'intercom'){
+            config.create = true;
+        } else {
+            config.create = false;
+        }
+
+        new TomSelect(el, config);
+
+    });
+
+});
+</script>
 
 @endsection
 
@@ -376,6 +363,29 @@ input.form-control:focus, select.form-select:focus, textarea.form-control:focus 
 .card-body {
     padding-top: 2rem;
     padding-bottom: 2rem;
+}
+/* Intercom Suggestions Styling */
+#intercomSuggestions {
+    width: 100%;
+    left: 0;
+    top: 100%;
+    max-height: 200px;
+    overflow-y: auto;
+    box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+    border-radius: 8px;
+}
+#intercomSuggestions .list-group-item {
+    border: none;
+    border-bottom: 1px solid #e3eafc;
+    padding: 0.6rem 1rem;
+    font-size: 0.95rem;
+    transition: background-color 0.2s;
+}
+#intercomSuggestions .list-group-item:last-child {
+    border-bottom: none;
+}
+#intercomSuggestions .list-group-item:hover {
+    background-color: #e7f1ff;
 }
 @media (max-width: 991px) {
     .card-body {

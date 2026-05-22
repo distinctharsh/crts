@@ -26,6 +26,7 @@ class Complaint extends Model
         'network_type_id',
         'vertical_id',
         'section_id',
+        'room_number',
     ];
 
     protected $casts = [

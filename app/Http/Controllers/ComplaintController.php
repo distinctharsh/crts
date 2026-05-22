@@ -21,7 +21,7 @@ class ComplaintController extends Controller
 {
     public function __construct()
     {
-        $this->middleware('auth')->except(['create', 'store', 'show', 'history', 'track', 'lookup', 'live', 'liveData']);
+        $this->middleware('auth')->except(['create', 'store', 'show', 'history', 'track', 'lookup', 'live', 'liveData', 'intercomSuggestions']);
     }
 
     public function index(Request $request)
@@ -118,7 +118,7 @@ class ComplaintController extends Controller
             return view('complaints.index', compact('complaints', 'usersList', 'managers', 'statuses', 'networkTypes', 'sections', 'verticals'));
         } catch (\Exception $e) {
             \Log::error('Complaint index error: ' . $e->getMessage());
-            return redirect('/home')->with('error', 'Something went wrong while loading complaints. Please try again. (Kuch galat ho gaya, kripya fir se koshish karein.)');
+            return redirect('/home')->with('error', 'Something went wrong while loading complaints. Please try again. (कुछ गलत हो गया, कृपया फिर से कोशिश करें.)');
         }
     }
 
@@ -128,8 +128,11 @@ class ComplaintController extends Controller
         $networkTypes = NetworkType::all();
         $verticals = Vertical::all();
         $sections = Section::all();
+        $intercoms = Complaint::whereNotNull('intercom')
+        ->distinct()
+        ->pluck('intercom');
 
-        return view('complaints.create', compact('networkTypes', 'verticals', 'sections'));
+        return view('complaints.create', compact('networkTypes', 'verticals', 'sections', 'intercoms'));
     }
 
     public function store(Request $request)
@@ -137,14 +140,18 @@ class ComplaintController extends Controller
         try {
             $validated = $request->validate([
                 'network_type_id' => 'required|exists:network_types,id',
-                'priority' => 'required|in:low,medium,high',
+                'priority' => 'nullable|in:high',
                 'description' => 'required|string',
                 'vertical_id' => 'required|exists:verticals,id',
                 'user_name' => 'required|string|max:255',
                 'file' => 'nullable|file|max:2048',
                 'section_id' => 'required|exists:sections,id',
                 'intercom' => 'required|string|max:255',
+                'room_number' => 'required|integer',
             ]);
+
+            // Set default priority to 'medium' if 'high' checkbox is not checked
+            $priority = $validated['priority'] ?? 'medium';
 
             // Get unassigned status
             $unassignedStatus = Status::where('name', 'unassigned')->first();
@@ -158,12 +165,13 @@ class ComplaintController extends Controller
                 'reference_number' => $referenceNumber,
                 'client_id' => Auth::user()->id ?? 0,
                 'description' => $validated['description'],
-                'priority' => $validated['priority'],
+                'priority' => $priority,
                 'status_id' => $unassignedStatus->id,
                 'network_type_id' => $validated['network_type_id'],
                 'vertical_id' => $validated['vertical_id'],
                 'section_id' => $validated['section_id'],
                 'user_name' => $validated['user_name'],
+                'room_number' => $validated['room_number'],
                 'file_path' => $request->hasFile('file') ? $request->file('file')->store('complaint_files', 'public') : null,
                 'intercom' => $validated['intercom'],
                 'network_type' => NetworkType::find($validated['network_type_id'])->name,
@@ -185,8 +193,8 @@ class ComplaintController extends Controller
             return redirect()->route('complaints.show', $complaint)
                 ->with('success', 'Complaint created successfully.');
         } catch (\Exception $e) {
-            \Log::error('Complaint store error: ' . $e->getMessage());
-            return redirect()->back()->with('error', 'Something went wrong while creating complaint. Please try again. (Kuch galat ho gaya, kripya fir se koshish karein.)');
+            \Log::error('Complaint Store Error: ' . $e->getMessage());
+            return redirect()->back()->with('error', $e->getMessage())->withInput();
         }
     }
 
@@ -199,14 +207,17 @@ class ComplaintController extends Controller
             $verticals = Vertical::all();
             $sections = Section::all();
             $statuses = Status::query()->ordered()->get();
+            $intercoms = Complaint::whereNotNull('intercom')
+                ->distinct()
+                ->pluck('intercom');
 
             $complaint->load(['client', 'assignedTo', 'status']);
 
             // Use the unified create view for both add and edit
-            return view('complaints.create', compact('complaint', 'networkTypes', 'verticals', 'sections', 'statuses'));
+            return view('complaints.create', compact('complaint', 'networkTypes', 'verticals', 'sections', 'statuses', 'intercoms'));
         } catch (\Exception $e) {
             \Log::error('Complaint edit error: ' . $e->getMessage());
-            return redirect()->back()->with('error', 'Something went wrong while editing complaint. Please try again. (Kuch galat ho gaya, kripya fir se koshish karein.)');
+            return redirect()->back()->with('error', 'Something went wrong while editing complaint. Please try again. (कुछ गलत हो गया, कृपया फिर से कोशिश करें.)');
         }
     }
 
@@ -250,12 +261,17 @@ class ComplaintController extends Controller
                 'user_name' => 'required|string|max:255',
                 'section_id' => 'required|exists:sections,id',
                 'intercom' => 'required|string|max:255',
-                'priority' => 'required|in:low,medium,high',
+                'room_number' => 'required|numeric|min:0|max:999999|digits_between:1,6',
+                'priority' => 'nullable|in:high',
                 'status_id' => 'required|exists:statuses,id',
                 'file' => 'nullable|file|max:2048',
                 'delete_file' => 'sometimes|boolean',
                 'assigned_to' => 'nullable|exists:users,id',
             ]);
+
+            // Set default priority to 'medium' if 'high' checkbox is not checked
+            $priority = $validated['priority'] ?? 'medium';
+            $validated['priority'] = $priority;
 
             // Handle file deletion
             if ($request->input('delete_file') && $complaint->file_path) {
@@ -292,7 +308,7 @@ class ComplaintController extends Controller
                 ->with('success', 'Complaint updated successfully.');
         } catch (\Exception $e) {
             \Log::error('Complaint update error: ' . $e->getMessage());
-            return redirect()->back()->with('error', 'Something went wrong while updating complaint. Please try again. (Kuch galat ho gaya, kripya fir se koshish karein.)');
+            return redirect()->back()->with('error', 'Something went wrong while updating complaint. Please try again. (कुछ गलत हो गया, कृपया फिर से कोशिश करें.)');
         }
     }
 
@@ -357,7 +373,7 @@ class ComplaintController extends Controller
             return redirect()->back()->with('success', 'Complaint updated successfully.');
         } catch (\Exception $e) {
             \Log::error('Complaint assign error: ' . $e->getMessage());
-            return redirect()->back()->with('error', 'Something went wrong while assigning complaint. Please try again. (Kuch galat ho gaya, kripya fir se koshish karein.)');
+            return redirect()->back()->with('error', 'Something went wrong while assigning complaint. Please try again. (कुछ गलत हो गया, कृपया फिर से कोशिश करें.)');
         }
     }
 
@@ -403,7 +419,7 @@ class ComplaintController extends Controller
                 ->with('success', 'Complaint ' . $finalStatus->name . ' successfully.');
         } catch (\Exception $e) {
             \Log::error('Complaint resolve error: ' . $e->getMessage());
-            return redirect()->back()->with('error', 'Something went wrong while resolving complaint. Please try again. (Kuch galat ho gaya, kripya fir se koshish karein.)');
+            return redirect()->back()->with('error', 'Something went wrong while resolving complaint. Please try again. (कुछ गलत हो गया, कृपया फिर से कोशिश करें.)');
         }
     }
 
@@ -439,7 +455,7 @@ class ComplaintController extends Controller
             ComplaintAction::create([
                 'complaint_id' => $complaint->id,
                 'user_id' => $user->id,
-                'assigned_to' => $validated['assigned_to'], // <-- add this line
+                'assigned_to' => $validated['assigned_to'],
                 'status_id' => $revertedStatus->id,
                 'description' => $validated['description']
             ]);
@@ -448,7 +464,7 @@ class ComplaintController extends Controller
                 ->with('success', 'Complaint reverted to manager successfully.');
         } catch (\Exception $e) {
             \Log::error('Complaint revert error: ' . $e->getMessage());
-            return redirect()->back()->with('error', 'Something went wrong while reverting complaint. Please try again. (Kuch galat ho gaya, kripya fir se koshish karein.)');
+            return redirect()->back()->with('error', 'Something went wrong while reverting complaint. Please try again. (कुछ गलत हो गया, कृपया फिर से कोशिश करें.)');
         }
     }
 
@@ -462,12 +478,12 @@ class ComplaintController extends Controller
                 $complaint = Complaint::find($request->complaint_id);
             }
 
-            $assignableUsers = $user->getAssignableUsers($complaint); // Pass complaint
+            $assignableUsers = $user->getAssignableUsers($complaint);
 
             return response()->json($assignableUsers);
         } catch (\Exception $e) {
             \Log::error('Complaint getAssignableUsers error: ' . $e->getMessage());
-            return response()->json(['error' => 'Something went wrong while fetching assignable users. Please try again. (Kuch galat ho gaya, kripya fir se koshish karein.)'], 500);
+            return response()->json(['error' => 'Something went wrong while fetching assignable users. Please try again. (कुछ गलत हो गया, कृपया फिर से कोशिश करें.)'], 500);
         }
     }
 
@@ -518,7 +534,7 @@ class ComplaintController extends Controller
             return view('complaints.history', compact('complaints', 'actionsList', 'usersList'));
         } catch (\Exception $e) {
             \Log::error('Complaint history error: ' . $e->getMessage());
-            return redirect()->back()->with('error', 'Something went wrong while loading complaint history. Please try again. (Kuch galat ho gaya, kripya fir se koshish karein.)');
+            return redirect()->back()->with('error', 'Something went wrong while loading complaint history. Please try again. (कुछ गलत हो गया, कृपया फिर से कोशिश करें.)');
         }
     }
 
@@ -588,7 +604,7 @@ class ComplaintController extends Controller
             return redirect()->back()->with('success', 'Comment added successfully.');
         } catch (\Exception $e) {
             \Log::error('Complaint comment error: ' . $e->getMessage());
-            return redirect()->back()->with('error', 'Something went wrong while adding comment. Please try again. (Kuch galat ho gaya, kripya fir se koshish karein.)');
+            return redirect()->back()->with('error', 'Something went wrong while adding comment. Please try again. (कुछ गलत हो गया, कृपया फिर से कोशिश करें.)');
         }
     }
 
@@ -631,7 +647,7 @@ class ComplaintController extends Controller
                         'status_color' => $complaint->status_color,
                         'priority' => ucfirst($complaint->priority),
                         'priority_color' => $complaint->priority_color,
-                        'ássigned_to' => $complaint->assignedTo->full_name ?? '' ,
+                        'assigned_to' => $complaint->assignedTo->full_name ?? '' ,
                         'created_by' => $complaint->client?->full_name ?? $complaint->user_name ?? 'Guest',
                         'created_at' => $complaint->created_at->format('M d, Y H:i'),
                         'description' => $complaint->description,
@@ -646,7 +662,7 @@ class ComplaintController extends Controller
             }
         } catch (\Exception $e) {
             \Log::error('Complaint lookup error: ' . $e->getMessage());
-            return response()->json(['error' => 'Something went wrong while looking up complaint. Please try again. (Kuch galat ho gaya, kripya fir se koshish karein.)'], 500);
+            return response()->json(['error' => 'Something went wrong while looking up complaint. Please try again. (कुछ गलत हो गया, कृपया फिर से कोशिश करें.)'], 500);
         }
     }
 
@@ -659,7 +675,7 @@ class ComplaintController extends Controller
             return view('complaints.live');
         } catch (\Exception $e) {
             \Log::error('Complaint live error: ' . $e->getMessage());
-            return redirect('/home')->with('error', 'Something went wrong while loading live complaints. Please try again. (Kuch galat ho gaya, kripya fir se koshish karein.)');
+            return redirect('/home')->with('error', 'Something went wrong while loading live complaints. Please try again. (कुछ गलत हो गया, कृपया फिर से कोशिश करें.)');
         }
     }
 
@@ -679,7 +695,7 @@ class ComplaintController extends Controller
                 ->orderByDesc('created_at')
                 ->get();
 
-            $data = $complaints->map(function($c) {
+            $data = $complaints->map(function ($c) {
                 return [
                     'id' => $c->id,
                     'reference_number' => $c->reference_number,
@@ -696,7 +712,7 @@ class ComplaintController extends Controller
             return response()->json(['complaints' => $data]);
         } catch (\Exception $e) {
             \Log::error('Complaint liveData error: ' . $e->getMessage());
-            return response()->json(['error' => 'Something went wrong while fetching live data. Please try again. (Kuch galat ho gaya, kripya fir se koshish karein.)'], 500);
+            return response()->json(['error' => 'Something went wrong while fetching live data. Please try again. (कुछ गलत हो गया, कृपया फिर से कोशिश करें.)'], 500);
         }
     }
 }
