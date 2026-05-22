@@ -35,13 +35,15 @@ class UserController extends Controller
         $request->validate([
             'full_name' => 'required|string|max:255',
             'username' => ['required', 'string', 'max:255', Rule::unique('users')->ignore($user->id)],
+            'email' => 'nullable|email|max:255',
+            'number' => 'nullable|digits_between:10,15',
             'role_id' => 'nullable|exists:roles,id',
             'password' => 'nullable|string|min:6|confirmed',
             'vertical_ids'  => 'nullable|array',
             'vertical_ids.*' => 'exists:verticals,id',
         ]);
 
-        $data = $request->only('full_name', 'username', 'role_id');
+        $data = $request->only('full_name', 'username', 'email', 'number', 'role_id');
         if ($request->filled('password')) {
             $data['password'] = Hash::make($request->password);
         }
@@ -83,6 +85,8 @@ class UserController extends Controller
     {
         $validator = Validator::make($request->all(), [
             'username'     => 'required|string|max:50|unique:users',
+            'email'        => 'nullable|email|max:255',
+            'number'       => 'nullable|digits_between:10,15',
             'full_name'    => 'required|string|max:100',
             'role_id'      => 'required|exists:roles,id',
             'vertical_ids'  => 'nullable|array',
@@ -97,6 +101,8 @@ class UserController extends Controller
 
         $user = User::create([
             'username'    => $request->username,
+            'email'       => $request->email,
+            'number'      => $request->number,
             'full_name'   => $request->full_name,
             'password'    => Hash::make('Welcome@123'),
             'role_id'     => $request->role_id,

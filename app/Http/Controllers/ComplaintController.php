@@ -16,6 +16,7 @@ use Illuminate\Support\Facades\Storage;
 use App\Models\Comment;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Pagination\LengthAwarePaginator;
+use App\Services\ComplaintNotificationService;
 
 class ComplaintController extends Controller
 {
@@ -190,6 +191,15 @@ class ComplaintController extends Controller
                 'changes' => json_encode($complaint->getChanges())
             ]);
 
+            // Send email notifications to appropriate users based on roles
+            try {
+                $notificationService = new ComplaintNotificationService();
+                $notificationService->sendNewComplaintNotifications($complaint);
+            } catch (\Exception $e) {
+                \Log::error('Email notification failed: ' . $e->getMessage());
+                // Continue with redirect even if email fails
+            }
+
             return redirect()->route('complaints.show', $complaint)
                 ->with('success', 'Complaint created successfully.');
         } catch (\Exception $e) {
@@ -289,6 +299,7 @@ class ComplaintController extends Controller
             }
 
             // Check if assigned_to is being changed
+            $wasAssigned = $complaint->assigned_to;
             if (isset($validated['assigned_to']) && $validated['assigned_to'] != $complaint->assigned_to) {
                 $validated['assigned_by'] = Auth::user()->id ?? 0;
             }
@@ -303,6 +314,17 @@ class ComplaintController extends Controller
                 'description' => 'Complaint updated',
                 'changes' => json_encode($complaint->getChanges())
             ]);
+
+            // Send email notification if complaint was assigned
+            if (!$wasAssigned && $complaint->assigned_to) {
+                try {
+                    $notificationService = new ComplaintNotificationService();
+                    $notificationService->sendAssignedComplaintNotifications($complaint);
+                } catch (\Exception $e) {
+                    \Log::error('Email notification failed: ' . $e->getMessage());
+                    // Continue with redirect even if email fails
+                }
+            }
 
             return redirect()->route('complaints.index') // or another existing route
                 ->with('success', 'Complaint updated successfully.');

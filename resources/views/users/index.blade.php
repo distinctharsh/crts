@@ -33,7 +33,6 @@ $breadcrumbs = [
                             <th>Username</th>
                             <th>Role</th>
                             <th>Verticals</th>
-                            <th>Created At</th>
                             <th>Status</th>
                             <th>Actions</th>
                         </tr>
@@ -45,7 +44,7 @@ $breadcrumbs = [
                             <td>{{ $user->full_name }}</td>
                             <td>{{ $user->username }}</td>
                             <td>
-                                <span class="badge 
+                                <span class="badge
                                     @switch($user->role->slug ?? '')
                                         @case('admin') bg-danger @break
                                         @case('manager') bg-primary @break
@@ -64,7 +63,6 @@ $breadcrumbs = [
                                 -
                                 @endif
                             </td>
-                            <td>{{ $user->created_at->format('M d, Y H:i') }}</td>
                             <td>
                                 @if($user->deleted_at)
                                 <span class="badge bg-danger">Deleted</span>
@@ -94,7 +92,7 @@ $breadcrumbs = [
                         </tr>
                         @empty
                         <tr>
-                            <td colspan="8" class="text-center">No users found</td>
+                            <td colspan="9" class="text-center">No users found</td>
                         </tr>
                         @endforelse
                     </tbody>
@@ -138,12 +136,32 @@ $breadcrumbs = [
                             @enderror
                         </div>
                         <div class="col-md-6">
+                            <label for="email" class="form-label">Email <small class="text-muted">(Optional - for notifications)</small></label>
+                            <div class="input-group">
+                                <span class="input-group-text"><i class="bi bi-envelope"></i></span>
+                                <input type="email" class="form-control @error('email') is-invalid @enderror" id="email" name="email" value="{{ old('email') }}" placeholder="user@example.com">
+                            </div>
+                            @error('email')
+                            <div class="invalid-feedback d-block">{{ $message }}</div>
+                            @enderror
+                        </div>
+                        <div class="col-md-6">
                             <label for="full_name" class="form-label">Full Name</label>
                             <div class="input-group">
                                 <span class="input-group-text"><i class="bi bi-card-text"></i></span>
                                 <input type="text" class="form-control @error('full_name') is-invalid @enderror" id="full_name" name="full_name" value="{{ old('full_name') }}" required maxlength="60">
                             </div>
                             @error('full_name')
+                            <div class="invalid-feedback d-block">{{ $message }}</div>
+                            @enderror
+                        </div>
+                        <div class="col-md-6">
+                            <label for="number" class="form-label">Phone Number <small class="text-muted">(Optional - for notifications)</small></label>
+                            <div class="input-group">
+                                <span class="input-group-text"><i class="bi bi-envelope"></i></span>
+                                <input type="number" class="form-control @error('number') is-invalid @enderror" id="number" name="number" value="{{ old('number') }}" placeholder="9876543210" maxlength="15" pattern="[0-9]{10,15}">
+                            </div>
+                            @error('number')
                             <div class="invalid-feedback d-block">{{ $message }}</div>
                             @enderror
                         </div>
@@ -312,6 +330,8 @@ $breadcrumbs = [
             $('#form_method').val('PUT');
             $('#user_id').val(user.id);
             $('#username').val(user.username);
+            $('#email').val(user.email || '');
+            $('#number').val(user.number || '');
             $('#full_name').val(user.full_name);
             $('#role_id').val(user.role_id);
             $('#defaultPasswordNote').hide();
