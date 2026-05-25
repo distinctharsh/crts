@@ -165,6 +165,43 @@
     <script src="{{ asset('js/buttons.html5.min.js') }}"></script>
     <script src="{{ asset('js/buttons.print.min.js') }}"></script>
     <script src="{{ asset('js/buttons.colVis.min.js') }}"></script>
+
+    @if(auth()->check() && (auth()->user()->isManager() || auth()->user()->isVM() || auth()->user()->isNFO()))
+    <div id="complaintNotification"
+        style="
+        position:fixed;
+        bottom:20px;
+        right:-400px;
+        width:300px;
+        background:white;
+        padding:15px;
+        border-radius:10px;
+        box-shadow:0 4px 12px rgba(0,0,0,.2);
+        transition:right .5s;
+        z-index:9999;
+        ">
+
+        <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:10px;">
+            <strong style="font-size:16px;">Today Complaint Summary</strong>
+
+            <button onclick="hideNotification()"
+            style="border:none;background:none;font-size:24px;cursor:pointer;line-height:1;padding:0;width:24px;height:24px;display:flex;align-items:center;justify-content:center;">
+            ×
+            </button>
+        </div>
+
+        <hr style="margin:0 0 10px 0;">
+
+        <div id="notificationContent"></div>
+
+        </div>
+
+    <script>
+        window.canShowNotifications = true;
+    </script>
+    <script src="{{ asset('js/notifications.js') }}"></script>
+    @endif
+
     @stack('scripts')
 </body>
 

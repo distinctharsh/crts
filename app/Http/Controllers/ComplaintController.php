@@ -737,4 +737,72 @@ class ComplaintController extends Controller
             return response()->json(['error' => 'Something went wrong while fetching live data. Please try again. (कुछ गलत हो गया, कृपया फिर से कोशिश करें.)'], 500);
         }
     }
+
+    /**
+     * Get notification data for logged-in users (Manager, VM, NFO)
+     * Returns unassigned and assign_to_me complaints
+     */
+    public function notificationData()
+    {
+        try {
+            $user = Auth::user();
+            if (!$user) {
+                return response()->json(['unassigned' => 0, 'assign_to_me' => 0, 'complaints' => []]);
+            }
+
+            // Only for Manager, VM, NFO
+            if (!$user->isManager() && !$user->isVM() && !$user->isNFO()) {
+                return response()->json(['unassigned' => 0, 'assign_to_me' => 0, 'complaints' => []]);
+            }
+
+            // Get unassigned status
+            $unassignedStatus = Status::where('name', 'unassigned')->first();
+
+            // Get unassigned complaints (where assigned_to is null)
+           $unassignedCount = Complaint::whereDate('created_at', today())
+            ->whereNull('assigned_to')
+            ->count();
+
+            // Get complaints assigned to current user (assign_to_me)
+            $assignToMeCount = Complaint::whereDate('created_at', today())
+                ->where('assigned_to', $user->id)
+                ->whereHas('status', function ($q) {
+                    $q->whereNotIn('name', ['closed', 'completed']);
+                })
+                ->count();
+
+            // Get recent complaints for display
+            $recentComplaints = Complaint::with(['assignedTo', 'status', 'vertical'])
+    			->whereDate('created_at', today())
+    			->where(function ($query) use ($user) {
+        			$query->whereNull('assigned_to')->orWhere('assigned_to', $user->id);
+    			})
+    			->whereHas('status', function ($q) {
+        			$q->whereNotIn('name', ['closed', 'completed']);
+    			})->orderByDesc('created_at')->limit(5)->get();
+
+            $complaints = $recentComplaints->map(function ($c) {
+                return [
+                    'id' => $c->id,
+                    'reference_number' => $c->reference_number,
+                    'user_name' => $c->user_name,
+                    'status' => $c->status?->display_name ?? 'Unknown',
+                    'priority' => ucfirst($c->priority),
+                    'assigned_to_name' => $c->assignedTo?->full_name ?? 'Unassigned',
+                    'description' => $c->description,
+                    'vertical' => $c->vertical?->name ?? 'N/A',
+                    'created_at' => $c->created_at->format('M d, Y H:i'),
+                ];
+            });
+
+            return response()->json([
+                'unassigned' => $unassignedCount,
+                'assign_to_me' => $assignToMeCount,
+                'complaints' => $complaints
+            ]);
+        } catch (\Exception $e) {
+            \Log::error('Complaint notificationData error: ' . $e->getMessage());
+            return response()->json(['error' => 'Something went wrong while fetching notification data.'], 500);
+        }
+    }
 }
