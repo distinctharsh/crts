@@ -25,18 +25,28 @@ function markNotificationShown() {
 // Fetch data
 async function fetchNotificationData() {
     try {
-
         const response = await fetch('/complaints/notification-data');
 
         if (!response.ok) {
-            throw new Error('Failed to fetch');
+            console.error(
+                'API Error:',
+                response.status,
+                response.statusText
+            );
+
+            return null;
         }
 
-        return await response.json();
+        const data = await response.json();
+
+        return data;
 
     } catch (error) {
 
-        console.error('Fetch error:', error);
+        console.error(
+            'Fetch error:',
+            error.message
+        );
 
         return null;
     }
