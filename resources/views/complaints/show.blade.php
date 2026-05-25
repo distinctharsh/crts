@@ -159,8 +159,8 @@ $breadcrumbs = [
                         <div class="mb-3">
                             <p class="mb-1 fw-semibold"><i class="bi bi-paperclip"></i> Attachment:</p>
                             <div class="d-flex align-items-center">
-                                <a href="{{ url('storage/app/public/' . $complaint->file_path) }}" target="_blank" class="btn btn-sm btn-outline-primary me-2">
-                                    <i class="fa-solid fa-download"></i> 
+                                <a href="{{ asset('storage/' . ltrim($complaint->file_path, '/')) }}" target="_blank" class="btn btn-sm btn-outline-primary me-2">
+                                    <i class="fa-solid fa-download"></i>
                                 </a>
                                 <span class="text-muted small">
                                     {{ basename($complaint->file_path) }}
