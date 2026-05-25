@@ -713,7 +713,7 @@ function renderComplaintCard(complaint, isNew = false) {
     return `
         <div class="complaint-card ${priorityClass}" data-id="${complaint.id}">
             ${isNewIndicator}
-            <div class="card-ref">#${complaint.reference_number.slice(-6)}</div>
+            <div class="card-ref">#${complaint.reference_number}</div>
             <div class="card-user">${complaint.user_name}</div>
             <div class="card-badges">
                 ${getStatusBadge(complaint.status)}

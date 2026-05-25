@@ -212,7 +212,7 @@ $breadcrumbs = [
                     @php $isManager = auth()->user() && auth()->user()->isManager(); @endphp
                     @if($complaint->isClosed())
                     <textarea class="form-control" rows="3" placeholder="Comments are disabled for this ticket as it is closed." disabled></textarea>
-                    <button class="btn btn-primary mt-2" disabled>Add Comment</button>
+                    <button class="btn btn-primary mt-2 mb-2" disabled>Add Comment</button>
                     @elseif($complaint->isCompleted() && $isManager)
                     <form action="{{ route('complaints.update', $complaint) }}" method="POST" class="mb-4">
                         @csrf
@@ -258,7 +258,7 @@ $breadcrumbs = [
                 </form>
                 @else
                 <textarea class="form-control" rows="3" placeholder="You are not allowed to comment on this ticket." disabled></textarea>
-                <button class="btn btn-primary mt-2" disabled>Add Comment</button>
+                <button class="btn btn-primary mt-2 mb-2" disabled>Add Comment</button>
                 @endif
                 @endauth
 
