@@ -80,25 +80,26 @@ function showNotification(data) {
     }
 
     content.innerHTML = `
-        <div style="display:flex;align-items:center;gap:12px;margin-bottom:12px;padding:12px;background:#f8f9fa;border-radius:8px;">
-            <div style="width:40px;height:40px;background:#dc3545;border-radius:8px;display:flex;align-items:center;justify-content:center;">
-                <i class="bi bi-exclamation-circle-fill" style="color:#fff;font-size:20px;"></i>
+        <div style="display:flex;flex-direction:column;gap:10px">
+
+            <div style="display:flex;align-items:center;justify-content:space-between;padding:12px 15px;background:#f8f9fa;border-radius:8px;">
+                <div style="display:flex;align-items:center;gap:10px;">
+                    <i class="bi bi-exclamation-circle-fill" style="color:#dc3545;font-size:18px;"></i>
+                    <span style="font-size:14px;font-weight:500;">Unassigned Complaints</span>
+                </div>
+                <span style="font-size:22px;font-weight:700;color:#dc3545;">${unassigned}</span>
             </div>
-            <div>
-                <div style="font-size:12px;color:#6c757d;margin-bottom:2px;">Unassigned Complaints</div>
-                <div style="font-size:24px;font-weight:700;color:#dc3545;">${unassigned}</div>
+
+            <div style="display:flex;align-items:center;justify-content:space-between;padding:12px 15px;background:#f8f9fa;border-radius:8px;">
+                <div style="display:flex;align-items:center;gap:10px;">
+                    <i class="bi bi-person-check-fill" style="color:#0d6efd;font-size:18px;"></i>
+                    <span style="font-size:14px;font-weight:500;">Assigned To You</span>
+                </div>
+                <span style="font-size:22px;font-weight:700;color:#0d6efd;">${assignToMe}</span>
             </div>
+
         </div>
-        <div style="display:flex;align-items:center;gap:12px;padding:12px;background:#f8f9fa;border-radius:8px;">
-            <div style="width:40px;height:40px;background:#0d6efd;border-radius:8px;display:flex;align-items:center;justify-content:center;">
-                <i class="bi bi-person-check-fill" style="color:#fff;font-size:20px;"></i>
-            </div>
-            <div>
-                <div style="font-size:12px;color:#6c757d;margin-bottom:2px;">Assigned To You</div>
-                <div style="font-size:24px;font-weight:700;color:#0d6efd;">${assignToMe}</div>
-            </div>
-        </div>
-    `;
+        `;
 
     popup.style.right = '20px';
     markNotificationShown();
