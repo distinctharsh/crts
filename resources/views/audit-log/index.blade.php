@@ -3,6 +3,60 @@
 @section('content')
 <div class="container-fluid">
     <h1 class="mb-4">Audit Log</h1>
+
+    <!-- Filters -->
+    <div class="card shadow mb-4">
+        <div class="card-body">
+            <form method="GET" action="{{ route('audit-log.index') }}">
+                <div class="row g-3">
+                    <div class="col-md-3">
+                        <label class="form-label">User</label>
+                        <select name="user_id" class="form-select">
+                            <option value="">All Users</option>
+                            @foreach($allUsers as $id => $name)
+                                <option value="{{ $id }}" {{ request('user_id') == $id ? 'selected' : '' }}>{{ $name }}</option>
+                            @endforeach
+                        </select>
+                    </div>
+                    <div class="col-md-2">
+                        <label class="form-label">Event Type</label>
+                        <select name="event" class="form-select">
+                            <option value="">All Events</option>
+                            @foreach($eventTypes as $eventType)
+                                <option value="{{ $eventType }}" {{ request('event') == $eventType ? 'selected' : '' }}>{{ ucfirst($eventType) }}</option>
+                            @endforeach
+                        </select>
+                    </div>
+                    <div class="col-md-2">
+                        <label class="form-label">Model Type</label>
+                        <select name="model_type" class="form-select">
+                            <option value="">All Models</option>
+                            @foreach($modelTypes as $modelType)
+                                <option value="{{ $modelType }}" {{ request('model_type') == $modelType ? 'selected' : '' }}>{{ $modelType }}</option>
+                            @endforeach
+                        </select>
+                    </div>
+                    <div class="col-md-2">
+                        <label class="form-label">Date From</label>
+                        <input type="date" name="date_from" class="form-control" value="{{ request('date_from') }}">
+                    </div>
+                    <div class="col-md-2">
+                        <label class="form-label">Date To</label>
+                        <input type="date" name="date_to" class="form-control" value="{{ request('date_to') }}">
+                    </div>
+                    <div class="col-md-1 d-flex align-items-end">
+                        <button type="submit" class="btn btn-primary w-100">Filter</button>
+                    </div>
+                </div>
+                @if(request()->hasAny(['user_id', 'event', 'model_type', 'date_from', 'date_to']))
+                <div class="mt-2">
+                    <a href="{{ route('audit-log.index') }}" class="btn btn-sm btn-outline-secondary">Clear Filters</a>
+                </div>
+                @endif
+            </form>
+        </div>
+    </div>
+
     <div class="card shadow mb-4">
         <div class="card-body">
             <div class="table-responsive">
@@ -14,8 +68,7 @@
                             <th>Event</th>
                             <th>Model</th>
                             <th>Model ID</th>
-                            <th>Old Values</th>
-                            <th>New Values</th>
+                            <th>Changes</th>
                             <th>IP Address</th>
                         </tr>
                     </thead>
@@ -78,53 +131,51 @@
                                             return !array_key_exists($key, $old) || $old[$key] != $value;
                                         });
                                     @endphp
-                                    <ul class="list-unstyled mb-0">
+                                    <ul class="list-unstyled mb-0 small">
                                     @foreach($changed as $key => $value)
+                                        @php
+                                            $oldValue = $old[$key] ?? null;
+                                            $newValue = $value;
+                                            // Map IDs to readable names
+                                            if (isset($fieldMaps[$key])) {
+                                                $oldValue = $fieldMaps[$key][$oldValue] ?? $oldValue;
+                                                $newValue = $fieldMaps[$key][$newValue] ?? $newValue;
+                                            }
+                                        @endphp
+                                        <li><strong>{{ $key }}:</strong> <span class="text-danger bg-light px-1 rounded">{{ $oldValue }}</span> → <span class="text-success bg-light px-1 rounded">{{ $newValue }}</span></li>
+                                    @endforeach
+                                    </ul>
+                                @elseif($log->properties['old'] ?? null)
+                                    <ul class="list-unstyled mb-0 small">
+                                    @foreach($log->properties['old'] as $key => $value)
                                         @php
                                             $displayValue = isset($fieldMaps[$key]) ? ($fieldMaps[$key][$value] ?? $value) : $value;
                                         @endphp
                                         <li><strong>{{ $key }}:</strong> <span class="text-danger bg-light px-1 rounded">{{ $displayValue }}</span></li>
                                     @endforeach
                                     </ul>
-                                @elseif($log->properties['old'] ?? null)
-                                    <ul class="list-unstyled mb-0">
-                                    @foreach($log->properties['old'] as $key => $value)
-                                        <li><strong>{{ $key }}:</strong> <span class="text-danger bg-light px-1 rounded">{{ $value }}</span></li>
-                                    @endforeach
-                                    </ul>
-                                @elseif($log->properties['old_vertical_ids'] ?? null)
-                                    <span class="text-danger bg-light px-1 rounded">
-                                        {{ collect($log->properties['old_vertical_ids'])->map(fn($id) => $verticalMap[$id] ?? $id)->implode(', ') }}
-                                    </span>
-                                @endif
-                            </td>
-                            <td>
-                                @if($log->event == 'updated' && ($log->properties['old'] ?? null) && ($log->properties['attributes'] ?? null))
-                                    @php
-                                        $old = $log->properties['old'];
-                                        $new = $log->properties['attributes'];
-                                        $changed = collect($new)->filter(function($value, $key) use ($old) {
-                                            return !array_key_exists($key, $old) || $old[$key] != $value;
-                                        });
-                                    @endphp
-                                    <ul class="list-unstyled mb-0">
-                                    @foreach($changed as $key => $value)
+                                @elseif($log->properties['attributes'] ?? null)
+                                    <ul class="list-unstyled mb-0 small">
+                                    @foreach($log->properties['attributes'] as $key => $value)
                                         @php
                                             $displayValue = isset($fieldMaps[$key]) ? ($fieldMaps[$key][$value] ?? $value) : $value;
                                         @endphp
                                         <li><strong>{{ $key }}:</strong> <span class="text-success bg-light px-1 rounded">{{ $displayValue }}</span></li>
                                     @endforeach
                                     </ul>
-                                @elseif($log->properties['attributes'] ?? null)
-                                    <ul class="list-unstyled mb-0">
-                                    @foreach($log->properties['attributes'] as $key => $value)
-                                        <li><strong>{{ $key }}:</strong> <span class="text-success bg-light px-1 rounded">{{ $value }}</span></li>
-                                    @endforeach
+                                @elseif(isset($log->properties['old_vertical_ids']) || isset($log->properties['new_vertical_ids']))
+                                    <ul class="list-unstyled mb-0 small">
+                                        @if(isset($log->properties['old_vertical_ids']))
+                                        <li><strong>Verticals:</strong> <span class="text-danger bg-light px-1 rounded">{{ collect($log->properties['old_vertical_ids'])->map(fn($id) => $verticalMap[$id] ?? $id)->implode(', ') }}</span></li>
+                                        @endif
+                                        @if(isset($log->properties['new_vertical_ids']))
+                                        <li><strong>Verticals:</strong> <span class="text-success bg-light px-1 rounded">{{ collect($log->properties['new_vertical_ids'])->map(fn($id) => $verticalMap[$id] ?? $id)->implode(', ') }}</span></li>
+                                        @endif
                                     </ul>
-                                @elseif($log->properties['new_vertical_ids'] ?? null)
-                                    <span class="text-success bg-light px-1 rounded">
-                                        {{ collect($log->properties['new_vertical_ids'])->map(fn($id) => $verticalMap[$id] ?? $id)->implode(', ') }}
-                                    </span>
+                                @elseif($log->properties['comment'] ?? null)
+                                    <span class="text-muted small">{{ $log->properties['comment'] }}</span>
+                                @else
+                                    <span class="text-muted small">No changes recorded</span>
                                 @endif
                             </td>
                             <td>
@@ -136,7 +187,12 @@
                         @endforeach
                     </tbody>
                 </table>
-              
+
+                @if($logs->hasPages())
+                <div class="d-flex justify-content-center mt-3">
+                    {{ $logs->appends(request()->except('page'))->links() }}
+                </div>
+                @endif
             </div>
         </div>
     </div>
