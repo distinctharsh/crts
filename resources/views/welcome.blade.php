@@ -272,7 +272,7 @@
                 <a href="{{ route('complaints.create') }}" class="btn btn-light btn-lg text-home-btn">Create Ticket</a>
 
                 @guest
-                    <button type="button" class="btn btn-outline-light btn-lg text-home-btn" data-bs-toggle="modal" data-bs-target="#loginModal">
+                    <button type="button" class="btn btn-outline-light btn-lg text-home-btn" data-bs-toggle="modal" data-bs-target="#loginModal" onclick="event.preventDefault();">
                         Login
                     </button>
                 @endguest
@@ -601,6 +601,27 @@
                     } else {
                         passwordInput.type = 'password';
                         togglePassword.innerHTML = '<i class="bi bi-eye"></i>';
+                    }
+                });
+            }
+
+            // Fallback for login button if Bootstrap modal fails
+            const loginBtn = document.querySelector('[data-bs-target="#loginModal"]');
+            if (loginBtn) {
+                loginBtn.addEventListener('click', function(e) {
+                    e.preventDefault();
+                    const loginModal = document.getElementById('loginModal');
+                    if (loginModal && typeof bootstrap !== 'undefined' && bootstrap.Modal) {
+                        const modal = new bootstrap.Modal(loginModal);
+                        modal.show();
+                    } else if (loginModal) {
+                        // Fallback: manually show modal if Bootstrap fails
+                        loginModal.classList.add('show');
+                        loginModal.style.display = 'block';
+                        document.body.classList.add('modal-open');
+                        const backdrop = document.createElement('div');
+                        backdrop.className = 'modal-backdrop fade show';
+                        document.body.appendChild(backdrop);
                     }
                 });
             }
