@@ -43,6 +43,13 @@ class ComplaintNotificationService
         }
 
         try {
+            $complaint->load([
+                'vertical',
+                'section',
+                'networkType',
+                'status',
+                'assignedTo'
+                ]);
             $recipient = $primaryRecipient->email ?? $primaryRecipient->username;
             Mail::to($recipient)
                 ->cc($ccRecipients)
@@ -81,6 +88,13 @@ class ComplaintNotificationService
         $ccRecipients = $vms->pluck('email')->filter()->toArray();
 
         try {
+            $complaint->load([
+                'vertical',
+                'section',
+                'networkType',
+                'status',
+                'assignedTo'
+            ]);
             $recipient = $assignedUser->email ?? $assignedUser->username;
             Mail::to($recipient)
                 ->cc($ccRecipients)

@@ -17,7 +17,7 @@
         </h1>
 
         <p style="margin-top:8px;font-size:15px;opacity:0.9;">
-            {{ $reportData['date'] }}
+            {{ $reportData['date'] ?? 0  }}
         </p>
     </div>
 
@@ -48,7 +48,7 @@
                         </div>
 
                         <div style="font-size:34px;font-weight:bold;margin-top:5px;">
-                            {{ $reportData['today_complaints'] }}
+                            {{ $reportData['total_complaints'] ?? 0  }}
                         </div>
                     </div>
                 </td>
@@ -60,7 +60,7 @@
                         </div>
 
                         <div style="font-size:34px;font-weight:bold;margin-top:5px;">
-                            {{ $reportData['unassigned'] }}
+                            {{ $reportData['unassigned'] ?? 0  }}
                         </div>
                     </div>
                 </td>
@@ -76,7 +76,7 @@
                         </div>
 
                         <div style="font-size:34px;font-weight:bold;margin-top:5px;">
-                            {{ $reportData['completed'] }}
+                            {{ $reportData['completed'] ?? 0  }}
                         </div>
                     </div>
                 </td>
@@ -88,7 +88,7 @@
                         </div>
 
                         <div style="font-size:34px;font-weight:bold;margin-top:5px;">
-                            {{ $reportData['action_pending'] }}
+                            {{ $reportData['action_pending'] ?? 0  }}
                         </div>
                     </div>
                 </td>

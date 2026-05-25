@@ -61,60 +61,104 @@ Route::get('/test-hod-mail', function () {
         'date' => now()->format('M d, Y'),
 
         'total_complaints' => 50,
-        'pending_complaints' => 12,
-        'assigned_complaints' => 20,
-        'resolved_complaints' => 18,
-
-        'high_priority_complaints' => 3,
-
-        'vertical_breakdown' => [
-            'Electrical' => [
-                'total' => 20,
-                'pending' => 5,
-                'resolved' => 15,
-            ],
-            'Plumbing' => [
-                'total' => 15,
-                'pending' => 4,
-                'resolved' => 11,
-            ],
-            'Housekeeping' => [
-                'total' => 15,
-                'pending' => 3,
-                'resolved' => 12,
-            ],
-        ],
-
-        'recent_complaints' => [
-            [
-                'reference_number' => 'CMP001',
-                'description' => 'AC not working in Room 201',
-                'status' => 'pending',
-            ],
-            [
-                'reference_number' => 'CMP002',
-                'description' => 'Water leakage issue',
-                'status' => 'assigned',
-            ],
-            [
-                'reference_number' => 'CMP003',
-                'description' => 'Power outage in Block A',
-                'status' => 'resolved',
-            ],
-            [
-                'reference_number' => 'CMP004',
-                'description' => 'Internet connectivity issue',
-                'status' => 'pending',
-            ],
-            [
-                'reference_number' => 'CMP005',
-                'description' => 'Lift malfunction',
-                'status' => 'resolved',
-            ],
-        ],
+        'unassigned' => 8,
+        'completed' => 30,
+        'action_pending' => 12,
     ];
 
     return (new HODReportMail($reportData))->render();
+});
+
+Route::get('/test-complaint-mail', function () {
+
+    // Dummy User
+    $user = (object)[
+        'full_name' => 'Harsh Kumar'
+    ];
+
+    // Dummy Status object
+    $status = (object)[
+        'display_name' => 'Assigned'
+    ];
+
+    // Dummy Assigned User
+    $assignedTo = (object)[
+        'full_name' => 'Yogesh Sir'
+    ];
+
+    // Dummy Complaint object
+    $complaint = (object)[
+        'reference_number' => 'CMP20260525001',
+        'user_name' => 'Rahul Sharma',
+        'room_number' => '201',
+        'intercom' => '4567',
+        'vertical' => 'Electrical',
+        'section' => 'Maintenance',
+        'network_type' => 'Power Failure',
+        'priority' => 'high',
+        'assigned_to' => 1,
+        'assignedTo' => $assignedTo,
+        'status' => $status,
+        'description' => 'Power supply issue in Room 201. Lights and AC are not functioning properly.',
+        'created_at' => now(),
+    ];
+
+    $notificationType = 'assigned';
+    // or use:
+    // $notificationType = 'new';
+
+    return view(
+        'emails.complaint_notification',
+        compact(
+            'user',
+            'complaint',
+            'notificationType'
+        )
+    );
+});
+
+
+Route::get('/test-complaint-mail-manager', function () {
+
+    $user = (object)[
+        'full_name' => 'Harsh (Manager)'
+    ];
+
+    $status = (object)[
+        'display_name' => 'Unassigned'
+    ];
+
+    $complaint = (object)[
+        'reference_number' => 'CMP20260525002',
+        'user_name' => 'Rahul Sharma',
+        'room_number' => '305',
+        'intercom' => '7890',
+        'vertical' => 'IT Support',
+        'section' => 'Network',
+        'network_type' => 'Internet Connectivity',
+        'priority' => 'medium',
+
+        // Not assigned
+        'assigned_to' => null,
+        'assignedTo' => null,
+
+        'status' => $status,
+
+        'description' => 'Internet connection is not working in Room 305.',
+        'created_at' => now(),
+    ];
+
+    // Manager sees newly created complaint
+    $notificationType = 'new';
+
+    return view(
+        'emails.complaint_notification',
+        compact(
+            'user',
+            'complaint',
+            'notificationType'
+        )
+    );
 });
 
 
@@ -122,6 +166,8 @@ Route::get('/test-hod-mail', function () {
 Route::get('/complaints/live', [ComplaintController::class, 'live'])->name('complaints.live');
 // Live complaints JSON data endpoint for polling
 Route::get('/complaints/live-data', [ComplaintController::class, 'liveData'])->name('complaints.liveData');
+// Notification data endpoint for logged-in users
+Route::get('/complaints/notification-data', [ComplaintController::class, 'notificationData'])->name('complaints.notificationData');
 
 
 // Public ticket routes

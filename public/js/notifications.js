@@ -1,8 +1,25 @@
 let notificationInterval;
+const NOTIFICATION_INTERVAL = 2 * 60 * 1000; // 2 minutes
+const STORAGE_KEY = 'lastNotificationShown';
 
 // Check if notifications allowed
 function isNotificationAllowed() {
     return window.canShowNotifications === true;
+}
+
+// Check if enough time has passed since last notification
+function canShowNotificationNow() {
+    const lastShown = localStorage.getItem(STORAGE_KEY);
+    if (!lastShown) {
+        return true;
+    }
+    const elapsed = Date.now() - parseInt(lastShown);
+    return elapsed >= NOTIFICATION_INTERVAL;
+}
+
+// Store the time when notification was shown
+function markNotificationShown() {
+    localStorage.setItem(STORAGE_KEY, Date.now().toString());
 }
 
 // Fetch data
@@ -63,11 +80,28 @@ function showNotification(data) {
     }
 
     content.innerHTML = `
-        <p><strong>Unassigned:</strong> ${unassigned}</p>
-        <p><strong>Assigned To Me:</strong> ${assignToMe}</p>
+        <div style="display:flex;align-items:center;gap:12px;margin-bottom:12px;padding:12px;background:#f8f9fa;border-radius:8px;">
+            <div style="width:40px;height:40px;background:#dc3545;border-radius:8px;display:flex;align-items:center;justify-content:center;">
+                <i class="bi bi-exclamation-circle-fill" style="color:#fff;font-size:20px;"></i>
+            </div>
+            <div>
+                <div style="font-size:12px;color:#6c757d;margin-bottom:2px;">Unassigned Complaints</div>
+                <div style="font-size:24px;font-weight:700;color:#dc3545;">${unassigned}</div>
+            </div>
+        </div>
+        <div style="display:flex;align-items:center;gap:12px;padding:12px;background:#f8f9fa;border-radius:8px;">
+            <div style="width:40px;height:40px;background:#0d6efd;border-radius:8px;display:flex;align-items:center;justify-content:center;">
+                <i class="bi bi-person-check-fill" style="color:#fff;font-size:20px;"></i>
+            </div>
+            <div>
+                <div style="font-size:12px;color:#6c757d;margin-bottom:2px;">Assigned To You</div>
+                <div style="font-size:24px;font-weight:700;color:#0d6efd;">${assignToMe}</div>
+            </div>
+        </div>
     `;
 
     popup.style.right = '20px';
+    markNotificationShown();
 }
 
 function hideNotification() {
@@ -89,16 +123,19 @@ async function checkNotifications() {
         return;
     }
 
-    showNotification(data);
+    // Only show if enough time has passed
+    if (canShowNotificationNow()) {
+        showNotification(data);
+    }
 }
 
 // Start polling
 function startNotificationPolling() {
-    checkNotifications();
+    // Don't show immediately on page load - only after interval
     notificationInterval =
         setInterval(
             checkNotifications,
-            2 * 60 * 1000
+            NOTIFICATION_INTERVAL
         );
 }
 

@@ -20,81 +20,130 @@
         </div>
 
         <!-- Content -->
-        <div style="padding: 30px;">
-            <p style="margin: 0 0 20px 0;">Hello <strong>{{ $user->full_name }}</strong>,</p>
-            
-            @if($notificationType === 'assigned')
-                <p style="margin: 0 0 20px 0;">A complaint has been assigned to you. Please review and take appropriate action.</p>
-            @else
-                <p style="margin: 0 0 20px 0;">A new complaint has been created in the system. Please review the details below.</p>
-            @endif
+<!-- Content -->
+<div style="padding:25px;">
 
-            <table style="width: 100%; border-collapse: collapse; margin-bottom: 20px;">
-                <tr>
-                    <td style="padding: 12px; border-bottom: 1px solid #eee; font-weight: bold; color: #667eea; width: 40%;">Reference Number:</td>
-                    <td style="padding: 12px; border-bottom: 1px solid #eee;">{{ $complaint->reference_number }}</td>
-                </tr>
-                <tr>
-                    <td style="padding: 12px; border-bottom: 1px solid #eee; font-weight: bold; color: #667eea;">User Name:</td>
-                    <td style="padding: 12px; border-bottom: 1px solid #eee;">{{ $complaint->user_name }}</td>
-                </tr>
-                <tr>
-                    <td style="padding: 12px; border-bottom: 1px solid #eee; font-weight: bold; color: #667eea;">Room Number:</td>
-                    <td style="padding: 12px; border-bottom: 1px solid #eee;">{{ $complaint->room_number }}</td>
-                </tr>
-                <tr>
-                    <td style="padding: 12px; border-bottom: 1px solid #eee; font-weight: bold; color: #667eea;">Intercom:</td>
-                    <td style="padding: 12px; border-bottom: 1px solid #eee;">{{ $complaint->intercom }}</td>
-                </tr>
-                <tr>
-                    <td style="padding: 12px; border-bottom: 1px solid #eee; font-weight: bold; color: #667eea;">Vertical:</td>
-                    <td style="padding: 12px; border-bottom: 1px solid #eee;">{{ $complaint->vertical }}</td>
-                </tr>
-                <tr>
-                    <td style="padding: 12px; border-bottom: 1px solid #eee; font-weight: bold; color: #667eea;">Section:</td>
-                    <td style="padding: 12px; border-bottom: 1px solid #eee;">{{ $complaint->section }}</td>
-                </tr>
-                <tr>
-                    <td style="padding: 12px; border-bottom: 1px solid #eee; font-weight: bold; color: #667eea;">Issue Type:</td>
-                    <td style="padding: 12px; border-bottom: 1px solid #eee;">{{ $complaint->network_type }}</td>
-                </tr>
-                <tr>
-                    <td style="padding: 12px; border-bottom: 1px solid #eee; font-weight: bold; color: #667eea;">Priority:</td>
-                    <td style="padding: 12px; border-bottom: 1px solid #eee;">
-                        @if($complaint->priority === 'high')
-                            <span style="background-color: #ff6b6b; color: white; padding: 4px 12px; border-radius: 12px; font-size: 12px; font-weight: bold;">HIGH</span>
-                        @else
-                            <span style="background-color: #ffd43b; color: #333; padding: 4px 12px; border-radius: 12px; font-size: 12px; font-weight: bold;">MEDIUM</span>
-                        @endif
-                    </td>
-                </tr>
-                <tr>
-                    <td style="padding: 12px; border-bottom: 1px solid #eee; font-weight: bold; color: #667eea;">Status:</td>
-                    <td style="padding: 12px; border-bottom: 1px solid #eee;">{{ $complaint->status->display_name ?? 'Unassigned' }}</td>
-                </tr>
-                @if($complaint->assigned_to)
-                <tr>
-                    <td style="padding: 12px; border-bottom: 1px solid #eee; font-weight: bold; color: #667eea;">Assigned To:</td>
-                    <td style="padding: 12px; border-bottom: 1px solid #eee;">{{ $complaint->assignedTo->full_name ?? '-' }}</td>
-                </tr>
+    <p style="margin-top:0;">
+        Hello <strong>{{ $user->full_name }}</strong>,
+    </p>
+
+    @if($notificationType === 'assigned')
+        <p style="margin-bottom:20px;color:#555;">
+            A complaint has been assigned to you for review and necessary action.
+        </p>
+    @else
+        <p style="margin-bottom:20px;color:#555;">
+            A new complaint has been registered in the Complaint Redressal Ticketing (CRT) System.
+        </p>
+    @endif
+
+    <!-- Compact Details Table -->
+
+    <table width="100%" cellpadding="8" cellspacing="0"
+        style="border-collapse:collapse;
+               border:1px solid #ddd;
+               font-size:13px;
+               margin-bottom:20px;">
+
+        <tr style="background:#f8f9fa;">
+            <th colspan="4"
+                style="padding:10px;
+                       text-align:left;
+                       color:#667eea;
+                       font-size:15px;">
+                Complaint Details
+            </th>
+        </tr>
+
+        <tr>
+            <td style="font-weight:bold;width:20%;">Ref No.</td>
+            <td>{{ $complaint->reference_number }}</td>
+
+            <td style="font-weight:bold;width:20%;">Status</td>
+            <td>{{ $complaint->status->display_name ?? 'Unassigned' }}</td>
+        </tr>
+
+        <tr style="background:#fafafa;">
+            <td style="font-weight:bold;">User</td>
+            <td>{{ $complaint->user_name }}</td>
+
+            <td style="font-weight:bold;">Room</td>
+            <td>{{ $complaint->room_number }}</td>
+        </tr>
+
+        <tr>
+            <td style="font-weight:bold;">Intercom</td>
+            <td>{{ $complaint->intercom }}</td>
+
+            <td style="font-weight:bold;">Priority</td>
+            <td>
+
+                @if($complaint->priority === 'high')
+                    <span style="color:#dc3545;font-weight:bold;">
+                        HIGH
+                    </span>
+                @else
+                    <span style="color:#ff9800;font-weight:bold;">
+                        MEDIUM
+                    </span>
                 @endif
-                <tr>
-                    <td style="padding: 12px; border-bottom: 1px solid #eee; font-weight: bold; color: #667eea;">Created At:</td>
-                    <td style="padding: 12px; border-bottom: 1px solid #eee;">{{ $complaint->created_at->format('M d, Y H:i') }}</td>
-                </tr>
-            </table>
 
-            <div style="background-color: #f8f9fa; padding: 15px; border-left: 4px solid #667eea; border-radius: 4px; margin-bottom: 20px;">
-                <p style="margin: 0; font-weight: bold; color: #667eea; margin-bottom: 8px;">Description:</p>
-                <p style="margin: 0; color: #555;">{{ $complaint->description }}</p>
-            </div>
+            </td>
+        </tr>
 
-            <p style="margin: 0 0 20px 0;">Please review this complaint and take appropriate action.</p>
+        <tr style="background:#fafafa;">
+            <td style="font-weight:bold;">Vertical</td>
+            <td>{{ $complaint->vertical->name ?? '-' }}</td>
 
-            <div style="text-align: center; margin: 30px 0;">
-                <a href="{{ route('complaints.show', $complaint) }}" style="display: inline-block; background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white; padding: 12px 30px; text-decoration: none; border-radius: 25px; font-weight: bold; box-shadow: 0 4px 6px rgba(102, 126, 234, 0.3);">View Complaint Details</a>
-            </div>
-        </div>
+            <td style="font-weight:bold;">Section</td>
+            <td>{{ $complaint->section->name ?? '-' }}</td>
+        </tr>
+
+        <tr>
+            <td style="font-weight:bold;">Issue Type</td>
+            <td>{{ $complaint->networkType->name ?? '-' }}</td>
+
+            <td style="font-weight:bold;">Assigned To</td>
+            <td>
+                {{ $complaint->assignedTo->full_name ?? '-' }}
+            </td>
+        </tr>
+
+        <tr style="background:#fafafa;">
+            <td style="font-weight:bold;">Created</td>
+            <td colspan="3">
+                {{ $complaint->created_at->format('M d, Y H:i') }}
+            </td>
+        </tr>
+
+        <tr>
+            <td style="font-weight:bold;">Description</td>
+            <td colspan="3">
+                {{ $complaint->description }}
+            </td>
+        </tr>
+
+    </table>
+
+
+    <div style="text-align:center;">
+
+        <a href="#"
+           style="display:inline-block;
+                  background:#667eea;
+                  color:white;
+                  padding:10px 25px;
+                  border-radius:20px;
+                  text-decoration:none;
+                  font-weight:bold;">
+
+            View Complaint Details
+
+        </a>
+
+    </div>
+
+</div>
 
         <!-- Footer -->
         <div style="background-color: #f8f9fa; padding: 20px; text-align: center; border-top: 1px solid #eee;">

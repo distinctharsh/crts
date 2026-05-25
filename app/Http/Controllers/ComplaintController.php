@@ -175,9 +175,6 @@ class ComplaintController extends Controller
                 'room_number' => $validated['room_number'],
                 'file_path' => $request->hasFile('file') ? $request->file('file')->store('complaint_files', 'public') : null,
                 'intercom' => $validated['intercom'],
-                'network_type' => NetworkType::find($validated['network_type_id'])->name,
-                'vertical' => Vertical::find($validated['vertical_id'])->name,
-                'section' => Section::find($validated['section_id'])->name,
                 'created_at' => Carbon::now()->setTimezone(config('app.timezone')),
                 'updated_at' => Carbon::now()->setTimezone(config('app.timezone')),
             ]);

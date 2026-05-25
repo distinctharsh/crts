@@ -172,27 +172,48 @@
         position:fixed;
         bottom:20px;
         right:-400px;
-        width:300px;
-        background:white;
-        padding:15px;
-        border-radius:10px;
-        box-shadow:0 4px 12px rgba(0,0,0,.2);
-        transition:right .5s;
+        width:320px;
+        background:linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        padding:0;
+        border-radius:12px;
+        box-shadow:0 8px 24px rgba(0,0,0,0.15);
+        transition:right 0.5s cubic-bezier(0.4, 0, 0.2, 1);
         z-index:9999;
+        overflow:hidden;
         ">
 
-        <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:10px;">
-            <strong style="font-size:16px;">Today Complaint Summary</strong>
+        <div style="
+            background:rgba(255,255,255,0.15);
+            padding:16px 20px;
+            display:flex;
+            justify-content:space-between;
+            align-items:center;
+            border-bottom:1px solid rgba(255,255,255,0.2);
+        ">
+            <div style="display:flex;align-items:center;gap:10px;">
+                <i class="bi bi-bell-fill" style="color:#fff;font-size:18px;"></i>
+                <strong style="font-size:15px;color:#fff;font-weight:600;">Today Complaint Summary</strong>
+            </div>
 
             <button onclick="hideNotification()"
-            style="border:none;background:none;font-size:24px;cursor:pointer;line-height:1;padding:0;width:24px;height:24px;display:flex;align-items:center;justify-content:center;">
+            style="
+                border:none;
+                background:rgba(255,255,255,0.2);
+                color:#fff;
+                font-size:20px;
+                cursor:pointer;
+                line-height:1;
+                padding:6px 10px;
+                border-radius:6px;
+                transition:background 0.2s;
+            "
+            onmouseover="this.style.background='rgba(255,255,255,0.3)'"
+            onmouseout="this.style.background='rgba(255,255,255,0.2)'">
             ×
             </button>
         </div>
 
-        <hr style="margin:0 0 10px 0;">
-
-        <div id="notificationContent"></div>
+        <div id="notificationContent" style="padding:20px;background:#fff;"></div>
 
         </div>
 
