@@ -24,7 +24,6 @@ class Complaint extends Model
         'assigned_by',
         'resolution',
         'network_type_id',
-        'vertical_id',
         'section_id',
         'room_number',
     ];
@@ -67,9 +66,9 @@ class Complaint extends Model
         return $this->belongsTo(NetworkType::class);
     }
 
-    public function vertical()
+    public function verticals()
     {
-        return $this->belongsTo(Vertical::class);
+        return $this->belongsToMany(Vertical::class, 'complaint_vertical');
     }
 
     public function section()

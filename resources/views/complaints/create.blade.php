@@ -109,10 +109,9 @@
                             @enderror
                         </div>
                         <div class="col-md-6">
-                            <label for="vertical_id" class="form-label">Vertical <span class="text-danger">*</span></label>
-                            <select class="form-select tom-select @error('vertical_id') is-invalid @enderror"
-                                id="vertical_id" name="vertical_id" required>
-                                <option value="">Select --</option>
+                            <label for="vertical_ids" class="form-label">Verticals <span class="text-danger">*</span></label>
+                            <select class="form-select tom-select @error('vertical_ids') is-invalid @enderror"
+                                id="vertical_ids" name="vertical_ids[]" multiple required>
                                 @php
                                     // Separate verticals: those that are not "Other" and the "Other" option
                                     $otherVertical = null;
@@ -126,19 +125,20 @@
                                     }
                                 @endphp
                                 @foreach($regularVerticals as $vertical)
-                                <option value="{{ $vertical->id }}" {{ old('vertical_id', isset($complaint) ? $complaint->vertical_id : '') == $vertical->id ? 'selected' : '' }}>
+                                <option value="{{ $vertical->id }}" {{ in_array($vertical->id, old('vertical_ids', isset($complaint) ? $complaint->verticals->pluck('id')->toArray() : [])) ? 'selected' : '' }}>
                                     {{ $vertical->name }}
                                 </option>
                                 @endforeach
                                 @if($otherVertical)
-                                <option value="{{ $otherVertical->id }}" {{ old('vertical_id', isset($complaint) ? $complaint->vertical_id : '') == $otherVertical->id ? 'selected' : '' }}>
+                                <option value="{{ $otherVertical->id }}" {{ in_array($otherVertical->id, old('vertical_ids', isset($complaint) ? $complaint->verticals->pluck('id')->toArray() : [])) ? 'selected' : '' }}>
                                     {{ $otherVertical->name }}
                                 </option>
                                 @endif
                             </select>
-                            @error('vertical_id')
+                            @error('vertical_ids')
                             <div class="invalid-feedback">{{ $message }}</div>
                             @enderror
+                            <small class="text-muted">Hold Ctrl/Cmd to select multiple verticals</small>
                         </div>
                       
                     </div>
@@ -286,6 +286,16 @@ document.addEventListener('DOMContentLoaded', function () {
             config.create = true;
         } else {
             config.create = false;
+        }
+
+        // Enable multiple selection for verticals
+        if(el.id === 'vertical_ids'){
+            config.maxItems = null;
+            config.plugins = {
+                remove_button:{
+                    title:'Remove',
+                }
+            };
         }
 
         new TomSelect(el, config);

@@ -29,7 +29,7 @@ class ComplaintController extends Controller
     {
         try {
             $user = Auth::user();
-            $query = Complaint::query()->with(['client', 'assignedTo', 'networkType', 'vertical', 'status']);
+            $query = Complaint::query()->with(['client', 'assignedTo', 'networkType', 'verticals', 'status']);
             if ($user) {
                 if ($user->isManager()) {
                     $activeStatusIds = Status::whereIn('name', [
@@ -38,7 +38,9 @@ class ComplaintController extends Controller
                     $query->whereIn('status_id', $activeStatusIds);
                 } elseif ($user->isVM()) {
                     $verticalIds = $user->verticals->pluck('id');
-                    $query->whereIn('vertical_id', $verticalIds);
+                    $query->whereHas('verticals', function($q) use ($verticalIds) {
+                        $q->whereIn('verticals.id', $verticalIds);
+                    });
                 } elseif ($user->isNFO()) {
                     $query->where('assigned_to', $user->id);
                 } else {
@@ -64,7 +66,9 @@ class ComplaintController extends Controller
             }
             if ($request->filled('vertical')) {
                 $searchByVertical = (array) $request->input('vertical');
-                $query->whereIn('vertical_id', $searchByVertical);
+                $query->whereHas('verticals', function($q) use ($searchByVertical) {
+                    $q->whereIn('verticals.id', $searchByVertical);
+                });
             }
             if ($request->filled('networktype')) {
                 $searchBynetworkType = (array) $request->input('networktype');
@@ -143,7 +147,8 @@ class ComplaintController extends Controller
                 'network_type_id' => 'required|exists:network_types,id',
                 'priority' => 'nullable|in:high',
                 'description' => 'required|string',
-                'vertical_id' => 'required|exists:verticals,id',
+                'vertical_ids' => 'required|array|min:1',
+                'vertical_ids.*' => 'exists:verticals,id',
                 'user_name' => 'required|string|max:255',
                 'file' => 'nullable|file|max:2048',
                 'section_id' => 'required|exists:sections,id',
@@ -169,7 +174,6 @@ class ComplaintController extends Controller
                 'priority' => $priority,
                 'status_id' => $unassignedStatus->id,
                 'network_type_id' => $validated['network_type_id'],
-                'vertical_id' => $validated['vertical_id'],
                 'section_id' => $validated['section_id'],
                 'user_name' => $validated['user_name'],
                 'room_number' => $validated['room_number'],
@@ -179,13 +183,21 @@ class ComplaintController extends Controller
                 'updated_at' => Carbon::now()->setTimezone(config('app.timezone')),
             ]);
 
-            // Create initial action record
+            $complaint->verticals()->sync($validated['vertical_ids']);
+
+            $complaint->load('verticals');
+
             ComplaintAction::create([
                 'complaint_id' => $complaint->id,
                 'user_id' => Auth::user()->id ?? 0,
                 'status_id' => $unassignedStatus->id,
                 'description' => 'Complaint created',
-                'changes' => json_encode($complaint->getChanges())
+                'changes' => json_encode([
+                    ...$complaint->getChanges(),
+                    'verticals' => $complaint->verticals
+                        ->pluck('name')
+                        ->toArray()
+                ])
             ]);
 
             // Send email notifications to appropriate users based on roles
@@ -264,7 +276,8 @@ class ComplaintController extends Controller
             $validated = $request->validate([
                 'network_type_id' => 'required|exists:network_types,id',
                 'description' => 'required|string',
-                'vertical_id' => 'required|exists:verticals,id',
+                'vertical_ids' => 'required|array|min:1',
+                'vertical_ids.*' => 'exists:verticals,id',
                 'user_name' => 'required|string|max:255',
                 'section_id' => 'required|exists:sections,id',
                 'intercom' => 'required|string|max:255',
@@ -301,17 +314,46 @@ class ComplaintController extends Controller
                 $validated['assigned_by'] = Auth::user()->id ?? 0;
             }
 
+            // Store vertical ids separately
+            $verticalIds = $validated['vertical_ids'];
+            unset($validated['vertical_ids']);
+
+            // Old verticals
+            $oldVerticals = $complaint->verticals()
+                ->pluck('name')
+                ->toArray();
+
+            // Update complaint fields
             $complaint->update($validated);
 
-            // Create action record
+            // Sync pivot
+            $complaint->verticals()->sync($verticalIds);
+
+            // Force refresh relation
+            $complaint->load('verticals');
+
+            // Model changes
+            $changes = $complaint->getChanges();
+
+            // Add manual vertical changes
+            $newVerticals = $complaint->verticals
+                ->pluck('name')
+                ->toArray();
+
+            if ($oldVerticals != $newVerticals) {
+                $changes['verticals'] = [
+                    'old' => implode(', ', $oldVerticals),
+                    'new' => implode(', ', $newVerticals)
+                ];
+            }
+
             ComplaintAction::create([
                 'complaint_id' => $complaint->id,
                 'user_id' => Auth::user()->id ?? 0,
                 'status_id' => $validated['status_id'],
                 'description' => 'Complaint updated',
-                'changes' => json_encode($complaint->getChanges())
+                'changes' => json_encode($changes)
             ]);
-
             // Send email notification if complaint was assigned
             if (!$wasAssigned && $complaint->assigned_to) {
                 try {
@@ -562,7 +604,7 @@ class ComplaintController extends Controller
     public function show($id)
     {
         try {
-            $complaint = \App\Models\Complaint::with(['client', 'assignedTo', 'actions.user', 'networkType', 'vertical', 'section', 'status'])->find($id);
+            $complaint = \App\Models\Complaint::with(['client', 'assignedTo', 'actions.user', 'networkType', 'verticals', 'section', 'status'])->find($id);
             if (!$complaint) {
                 return redirect('/home')->with('error', 'The complaint you are looking for does not exist.');
             }
@@ -654,7 +696,7 @@ class ComplaintController extends Controller
         try {
             $ref = $request->input('reference_number');
             \Log::info('Looking up complaint', ['ref' => $ref]);
-            $complaint = \App\Models\Complaint::with(['client', 'networkType', 'vertical', 'status'])
+            $complaint = \App\Models\Complaint::with(['client', 'networkType', 'verticals', 'status'])
                 ->whereRaw('LOWER(reference_number) = ?', [strtolower($ref)])
                 ->first();
             if ($complaint) {
@@ -671,7 +713,7 @@ class ComplaintController extends Controller
                         'created_at' => $complaint->created_at->format('M d, Y H:i'),
                         'description' => $complaint->description,
                         'network' => $complaint->networkType?->name ?? 'N/A',
-                        'vertical' => $complaint->vertical?->name ?? 'N/A',
+                        'verticals' => $complaint->verticals->pluck('name')->map(fn($name) => ucfirst($name))->implode(', ') ?? 'N/A',
                         'intercom' => $complaint->intercom ?? 'N/A',
                         'section' => $complaint->section?->name ?? 'N/A',
                     ]

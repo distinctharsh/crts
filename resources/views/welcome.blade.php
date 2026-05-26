@@ -536,8 +536,8 @@
                                                     <div class="fw-semibold text-primary mb-2">Ticket Info</div>
                                                     <div><span class="fw-semibold">Issue:</span> ${data.complaint.network}</div>
                                                     <div><span class="fw-semibold">Section:</span> ${data.complaint.section}</div>
-                                                    <div><span class="fw-semibold">Vertical:</span> ${data.complaint.vertical}</div>
-                                                    <div><span class="fw-semibold">Assigned To:</span> ${data.complaint.ássigned_to}</div>
+                                                    <div><span class="fw-semibold">Verticals:</span> ${data.complaint.verticals}</div>
+                                                    <div><span class="fw-semibold">Assigned To:</span> ${data.complaint.assigned_to}</div>
                                                 </div>
                                             </div>
                                         </div>

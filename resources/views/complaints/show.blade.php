@@ -91,7 +91,7 @@ $breadcrumbs = [
                     <i class="fa-solid fa-network-wired"></i> {{ ucfirst($complaint->networkType->name ?? 'N/A') }}
                 </span>
                 <span class="badge bg-light text-dark">
-                    <i class="fa-solid fa-layer-group"></i> {{ ucfirst($complaint->vertical->name ?? 'N/A') }}
+                    <i class="fa-solid fa-layer-group"></i> {{ $complaint->verticals->pluck('name')->map(fn($name) => ucfirst($name))->implode(', ') ?? 'N/A' }}
                 </span>
             </div>
         </div>
@@ -128,8 +128,8 @@ $breadcrumbs = [
                             <p class="mb-1 fw-semibold"><i class="bi bi-hdd-network"></i> Network Type:</p>
                             <p class="mb-3 ps-3">{{ ucfirst($complaint->networkType->name ?? 'N/A') }}</p>
 
-                            <p class="mb-1 fw-semibold"><i class="bi bi-layers"></i> Vertical:</p>
-                            <p class="mb-3 ps-3">{{ ucfirst($complaint->vertical->name ?? 'N/A' ) }}</p>
+                            <p class="mb-1 fw-semibold"><i class="bi bi-layers"></i> Verticals:</p>
+                            <p class="mb-3 ps-3">{{ $complaint->verticals->pluck('name')->map(fn($name) => ucfirst($name))->implode(', ') ?? 'N/A' }}</p>
 
 
                         </div>

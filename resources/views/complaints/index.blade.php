@@ -67,11 +67,11 @@ $breadcrumbs = [
                                                 </select>
                                             </div>
                                             <div class="col-md-2">
-                                                <label class="form-label mb-1">Vertical</label>
-                                                <select name="vertical" class="form-select tom-select">
-                                                    <option value="">All Vertical</option>
+                                                <label class="form-label mb-1">Verticals</label>
+                                                <select name="vertical[]" class="form-select tom-select" multiple>
+                                                    <option value="">All Verticals</option>
                                                     @foreach($verticals as $vertical)
-                                                    <option value="{{ $vertical->id }}" {{ request('vertical') == $vertical->id ? 'selected' : '' }}>
+                                                    <option value="{{ $vertical->id }}" {{ in_array($vertical->id, (array) request('vertical')) ? 'selected' : '' }}>
                                                         {{ $vertical->name }}
                                                     </option>
                                                     @endforeach
@@ -233,13 +233,25 @@ $breadcrumbs = [
 
         // Tom Select initialization for all .tom-select dropdowns
         document.querySelectorAll('select.tom-select').forEach(function(el) {
-            new TomSelect(el, {
+            let config = {
                 create: false,
                 sortField: {
                     field: 'text',
                     direction: 'asc'
                 }
-            });
+            };
+
+            // Enable multiple selection for verticals filter
+            if(el.name === 'vertical[]'){
+                config.maxItems = null;
+                config.plugins = {
+                    remove_button:{
+                        title:'Remove',
+                    }
+                };
+            }
+
+            new TomSelect(el, config);
         });
     });
 </script>
