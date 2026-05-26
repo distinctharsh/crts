@@ -811,7 +811,7 @@ class ComplaintController extends Controller
                 ->count();
 
             // Get recent complaints for display
-            $recentComplaints = Complaint::with(['assignedTo', 'status', 'vertical'])
+            $recentComplaints = Complaint::with(['assignedTo', 'status', 'verticals'])
     			->whereDate('created_at', today())
     			->where(function ($query) use ($user) {
         			$query->whereNull('assigned_to')->orWhere('assigned_to', $user->id);
@@ -829,7 +829,7 @@ class ComplaintController extends Controller
                     'priority' => ucfirst($c->priority),
                     'assigned_to_name' => $c->assignedTo?->full_name ?? 'Unassigned',
                     'description' => $c->description,
-                    'vertical' => $c->vertical?->name ?? 'N/A',
+                    'verticals' => $c->verticals->pluck('name')->map(fn($name) => ucfirst($name))->implode(', '),
                     'created_at' => $c->created_at->format('M d, Y H:i'),
                 ];
             });

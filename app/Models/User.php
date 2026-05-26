@@ -161,7 +161,7 @@ class User extends Authenticatable
             // 💡 Additional filter: same vertical only if complaint is given
             if ($complaint) {
                 $query->whereHas('verticals', function ($q) use ($complaint) {
-                    $q->where('vertical_id', $complaint->vertical_id);
+                    $q->whereIn('verticals.id', $complaint->verticals->pluck('id'));
                 });
             }
         }
@@ -179,7 +179,7 @@ class User extends Authenticatable
             // 💡 Vertical match only if complaint is given
             if ($complaint) {
                 $query->whereHas('verticals', function ($q) use ($complaint) {
-                    $q->where('vertical_id', $complaint->vertical_id);
+                    $q->whereIn('verticals.id', $complaint->verticals->pluck('id'));
                 });
             }
         }
@@ -191,7 +191,7 @@ class User extends Authenticatable
             // 💡 Vertical match only if complaint is given
             if ($complaint) {
                 $query->whereHas('verticals', function ($q) use ($complaint) {
-                    $q->where('vertical_id', $complaint->vertical_id);
+                    $q->whereIn('verticals.id', $complaint->verticals->pluck('id'));
                 });
             }
         }

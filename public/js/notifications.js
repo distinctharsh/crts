@@ -1,5 +1,5 @@
 let notificationInterval;
-const NOTIFICATION_INTERVAL = 2 * 60 * 1000; // 2 minutes
+const NOTIFICATION_INTERVAL = 1000; // 2 minutes
 const STORAGE_KEY = 'lastNotificationShown';
 
 // Check if notifications allowed

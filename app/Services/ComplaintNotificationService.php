@@ -44,7 +44,7 @@ class ComplaintNotificationService
 
         try {
             $complaint->load([
-                'vertical',
+                'verticals',
                 'section',
                 'networkType',
                 'status',
@@ -78,18 +78,22 @@ class ComplaintNotificationService
             return;
         }
 
+        $verticalIds = $complaint->verticals->pluck('id');
+
         // Get VMs whose vertical matches the complaint's vertical
         $vms = User::whereHas('role', function ($query) {
             $query->where('slug', 'vm');
-        })->whereHas('verticals', function ($query) use ($complaint) {
-            $query->where('vertical_id', $complaint->vertical_id);
-        })->get();
+        })
+        ->whereHas('verticals', function ($query) use ($verticalIds) {
+            $query->whereIn('vertical_id', $verticalIds);
+        })
+        ->get();
 
         $ccRecipients = $vms->pluck('email')->filter()->toArray();
 
         try {
             $complaint->load([
-                'vertical',
+                'verticals',
                 'section',
                 'networkType',
                 'status',
