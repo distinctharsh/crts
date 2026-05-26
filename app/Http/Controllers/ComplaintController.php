@@ -784,43 +784,101 @@ class ComplaintController extends Controller
     public function notificationData()
     {
         try {
-            $user = Auth::user();
+
+            $user = auth()->user();
+
             if (!$user) {
-                return response()->json(['unassigned' => 0, 'assign_to_me' => 0, 'complaints' => []]);
+                return response()->json([
+                    'unassigned' => 0,
+                    'assign_to_me' => 0,
+                    'complaints' => []
+                ]);
             }
 
-            // Only for Manager, VM, NFO
-            if (!$user->isManager() && !$user->isVM() && !$user->isNFO()) {
-                return response()->json(['unassigned' => 0, 'assign_to_me' => 0, 'complaints' => []]);
+            if (
+                !$user->isManager() &&
+                !$user->isVM() &&
+                !$user->isNFO()
+            ) {
+                return response()->json([
+                    'unassigned' => 0,
+                    'assign_to_me' => 0,
+                    'complaints' => []
+                ]);
             }
 
-            // Get unassigned status
-            $unassignedStatus = Status::where('name', 'unassigned')->first();
+            $statusIds = Status::whereIn('name', [
+                'unassigned',
+                'assigned',
+                'pending_with_vendor',
+                'pending_with_user',
+                'assign_to_me',
+                'completed',
+                'closed'
+            ])->pluck('id', 'name');
+            $baseQuery = Complaint::query();
 
-            // Get unassigned complaints (where assigned_to is null)
-           $unassignedCount = Complaint::whereDate('created_at', today())
-            ->whereNull('assigned_to')
-            ->count();
+            if ($user->isVM()) {
+                $verticalIds = $user->verticals->pluck('id');
+                $baseQuery->whereHas('verticals', function ($q) use ($verticalIds) {
+                    $q->whereIn('verticals.id', $verticalIds);
+                });
+            }
 
-            // Get complaints assigned to current user (assign_to_me)
-            $assignToMeCount = Complaint::whereDate('created_at', today())
-                ->where('assigned_to', $user->id)
-                ->whereHas('status', function ($q) {
-                    $q->whereNotIn('name', ['closed', 'completed']);
+            elseif ($user->isNFO()) {
+
+                $verticalIds = $user->verticals->pluck('id');
+
+                $baseQuery->whereHas('verticals', function ($q) use ($verticalIds) {
+                    $q->whereIn('verticals.id', $verticalIds);
                 })
+                ->where('assigned_to', $user->id);
+            }
+
+            if ($user->isNFO()) {
+                $unassignedCount = 0;
+            } else {
+                $unassignedCount = (clone $baseQuery)
+                    ->where('status_id', $statusIds->get('unassigned'))
+                    ->whereDate('created_at', today())
+                    ->count();
+            }
+
+            $assignToMeQuery = Complaint::query();
+
+            if ($user->isVM() || $user->isNFO()) {
+                $verticalIds = $user->verticals->pluck('id');
+                $assignToMeQuery->whereHas('verticals', function ($q) use ($verticalIds) {
+                    $q->whereIn('verticals.id', $verticalIds);
+                });
+            }
+
+            $assignToMeCount = $assignToMeQuery
+                ->where('assigned_to', $user->id)
+                ->whereDate('created_at', today())
+                ->whereNotIn('status_id', [
+                    $statusIds->get('closed'),
+                    $statusIds->get('completed')
+                ])
                 ->count();
 
-            // Get recent complaints for display
-            $recentComplaints = Complaint::with(['assignedTo', 'status', 'verticals'])
-    			->whereDate('created_at', today())
-    			->where(function ($query) use ($user) {
-        			$query->whereNull('assigned_to')->orWhere('assigned_to', $user->id);
-    			})
-    			->whereHas('status', function ($q) {
-        			$q->whereNotIn('name', ['closed', 'completed']);
-    			})->orderByDesc('created_at')->limit(5)->get();
+            $recentComplaints = (clone $baseQuery)
+                ->with([
+                    'assignedTo',
+                    'status',
+                    'verticals'
+                ])
+                ->whereDate('created_at', today())
+                ->whereNotIn('status_id', [
+                    $statusIds->get('closed'),
+                    $statusIds->get('completed')
+                ])
+                ->latest()
+                ->limit(5)
+                ->get();
 
             $complaints = $recentComplaints->map(function ($c) {
+
                 return [
                     'id' => $c->id,
                     'reference_number' => $c->reference_number,
@@ -829,7 +887,10 @@ class ComplaintController extends Controller
                     'priority' => ucfirst($c->priority),
                     'assigned_to_name' => $c->assignedTo?->full_name ?? 'Unassigned',
                     'description' => $c->description,
-                    'verticals' => $c->verticals->pluck('name')->map(fn($name) => ucfirst($name))->implode(', '),
+                    'verticals' => $c->verticals
+                        ->pluck('name')
+                        ->map(fn ($name) => ucfirst($name))
+                        ->implode(', '),
                     'created_at' => $c->created_at->format('M d, Y H:i'),
                 ];
             });
@@ -837,11 +898,30 @@ class ComplaintController extends Controller
             return response()->json([
                 'unassigned' => $unassignedCount,
                 'assign_to_me' => $assignToMeCount,
-                'complaints' => $complaints
+                'complaints' => $complaints,
+                'status_ids' => [
+                    'unassigned' => $statusIds['unassigned'] ?? null,
+                    'assigned' => $statusIds['assigned'] ?? null,
+                    'pending_with_vendor' => $statusIds['pending_with_vendor'] ?? null,
+                    'pending_with_user' => $statusIds['pending_with_user'] ?? null,
+                    'assign_to_me' => $statusIds['assign_to_me'] ?? null,
+                    'completed' => $statusIds['completed'] ?? null,
+                    'closed' => $statusIds['closed'] ?? null,
+                ],
+
+                'user_id' => $user->id,
+                'today_date' => today()->toDateString(),
             ]);
+
         } catch (\Exception $e) {
-            \Log::error('Complaint notificationData error: ' . $e->getMessage());
-            return response()->json(['error' => 'Something went wrong while fetching notification data.'], 500);
+
+            \Log::error(
+                'Complaint notificationData error: ' . $e->getMessage()
+            );
+
+            return response()->json([
+                'error' => 'Something went wrong while fetching notification data.'
+            ], 500);
         }
     }
 }

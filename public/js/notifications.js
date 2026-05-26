@@ -55,12 +55,6 @@ async function fetchNotificationData() {
 // Show popup
 function showNotification(data) {
 
-    // No data → hide and exit
-    if (!data) {
-        hideNotification();
-        return;
-    }
-
     // Safe defaults
     const unassigned = data.unassigned || 0;
     const assignToMe = data.assign_to_me || 0;
@@ -69,10 +63,6 @@ function showNotification(data) {
         unassigned + assignToMe;
 
     // Nothing to show
-    if (totalComplaints <= 0) {
-        hideNotification();
-        return;
-    }
 
     const popup =
         document.getElementById(
@@ -92,21 +82,25 @@ function showNotification(data) {
     content.innerHTML = `
         <div style="display:flex;flex-direction:column;gap:10px">
 
-            <div style="display:flex;align-items:center;justify-content:space-between;padding:12px 15px;background:#f8f9fa;border-radius:8px;">
-                <div style="display:flex;align-items:center;gap:10px;">
-                    <i class="bi bi-exclamation-circle-fill" style="color:#dc3545;font-size:18px;"></i>
-                    <span style="font-size:14px;font-weight:500;">Unassigned Complaints</span>
+            <a href="/complaints?status=${data.status_ids?.unassigned || ''}"  style="text-decoration:none;display:block;">
+                <div style="display:flex;align-items:center;justify-content:space-between;padding:12px 15px;background:#f8f9fa;border-radius:8px;cursor:pointer;transition:background 0.2s;" onmouseover="this.style.background='#e9ecef'" onmouseout="this.style.background='#f8f9fa'">
+                    <div style="display:flex;align-items:center;gap:10px;">
+                        <i class="bi bi-person-check-fill" style="color:#0d6efd;font-size:18px;"></i>
+                        <span style="font-size:14px;font-weight:500;color:#333;">Unassigned Complaints</span>
+                    </div>
+                    <span style="font-size:22px;font-weight:700;color:#0d6efd;">${unassigned}</span>
                 </div>
-                <span style="font-size:22px;font-weight:700;color:#dc3545;">${unassigned}</span>
-            </div>
+            </a>
 
-            <div style="display:flex;align-items:center;justify-content:space-between;padding:12px 15px;background:#f8f9fa;border-radius:8px;">
-                <div style="display:flex;align-items:center;gap:10px;">
-                    <i class="bi bi-person-check-fill" style="color:#0d6efd;font-size:18px;"></i>
-                    <span style="font-size:14px;font-weight:500;">Assigned To You</span>
+            <a href="/complaints?by=${data.user_id || ''}&date_from=${data.today_date}" style="text-decoration:none;display:block;">
+                <div style="display:flex;align-items:center;justify-content:space-between;padding:12px 15px;background:#f8f9fa;border-radius:8px;cursor:pointer;transition:background 0.2s;" onmouseover="this.style.background='#e9ecef'" onmouseout="this.style.background='#f8f9fa'">
+                    <div style="display:flex;align-items:center;gap:10px;">
+                        <i class="bi bi-person-check-fill" style="color:#0d6efd;font-size:18px;"></i>
+                        <span style="font-size:14px;font-weight:500;color:#333;">Assigned To Me</span>
+                    </div>
+                    <span style="font-size:22px;font-weight:700;color:#0d6efd;">${assignToMe}</span>
                 </div>
-                <span style="font-size:22px;font-weight:700;color:#0d6efd;">${assignToMe}</span>
-            </div>
+            </a>
 
         </div>
         `;

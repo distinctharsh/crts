@@ -582,6 +582,149 @@
         display:inline-block;
         animation:pulse 1s infinite;
     }
+
+    /* Modal Styles */
+    .complaint-modal-overlay {
+        position: fixed;
+        top: 0;
+        left: 0;
+        right: 0;
+        bottom: 0;
+        background: rgba(0, 0, 0, 0.6);
+        backdrop-filter: blur(5px);
+        display: none;
+        justify-content: center;
+        align-items: center;
+        z-index: 9999;
+        animation: fadeIn 0.3s ease;
+    }
+
+    .complaint-modal-overlay.active {
+        display: flex;
+    }
+
+    @keyframes fadeIn {
+        from {
+            opacity: 0;
+        }
+        to {
+            opacity: 1;
+        }
+    }
+
+    .complaint-modal {
+        background: white;
+        border-radius: 20px;
+        max-width: 600px;
+        width: 90%;
+        max-height: 80vh;
+        overflow-y: auto;
+        box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+        animation: slideUp 0.4s ease;
+        position: relative;
+    }
+
+    @keyframes slideUp {
+        from {
+            transform: translateY(50px);
+            opacity: 0;
+        }
+        to {
+            transform: translateY(0);
+            opacity: 1;
+        }
+    }
+
+    .modal-header {
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        color: white;
+        padding: 25px 30px;
+        border-radius: 20px 20px 0 0;
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        position: sticky;
+        top: 0;
+        z-index: 10;
+    }
+
+    .modal-title {
+        font-size: 1.5rem;
+        font-weight: 700;
+        margin: 0;
+    }
+
+    .modal-close {
+        background: rgba(255, 255, 255, 0.2);
+        border: none;
+        color: white;
+        font-size: 1.8rem;
+        width: 40px;
+        height: 40px;
+        border-radius: 50%;
+        cursor: pointer;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        transition: all 0.3s ease;
+    }
+
+    .modal-close:hover {
+        background: rgba(255, 255, 255, 0.3);
+        transform: rotate(90deg);
+    }
+
+    .modal-body {
+        padding: 30px;
+    }
+
+    .modal-info-row {
+        display: flex;
+        margin-bottom: 20px;
+        padding-bottom: 15px;
+        border-bottom: 1px solid #eee;
+    }
+
+    .modal-info-row:last-child {
+        border-bottom: none;
+        margin-bottom: 0;
+        padding-bottom: 0;
+    }
+
+    .modal-info-label {
+        font-weight: 600;
+        color: #666;
+        min-width: 120px;
+        font-size: 0.95rem;
+    }
+
+    .modal-info-value {
+        color: #333;
+        font-size: 0.95rem;
+        flex: 1;
+        line-height: 1.5;
+    }
+
+    .modal-description {
+        background: #f8f9fa;
+        padding: 20px;
+        border-radius: 12px;
+        border-left: 4px solid #667eea;
+        margin-top: 15px;
+        line-height: 1.6;
+        color: #444;
+    }
+
+    .modal-badges {
+        display: flex;
+        gap: 10px;
+        flex-wrap: wrap;
+        margin-top: 10px;
+    }
+
+    .complaint-card {
+        cursor: pointer;
+    }
 </style>
 
 <div class="live-dashboard">
@@ -634,6 +777,19 @@
     </div>
 </div>
 
+<!-- Complaint Modal -->
+<div class="complaint-modal-overlay" id="complaintModal">
+    <div class="complaint-modal">
+        <div class="modal-header">
+            <h3 class="modal-title" id="modalTitle">Complaint Details</h3>
+            <button class="modal-close" onclick="closeModal()">×</button>
+        </div>
+        <div class="modal-body" id="modalBody">
+            <!-- Dynamic content will be inserted here -->
+        </div>
+    </div>
+</div>
+
 <audio id="notifySound" src="{{ asset('sounds/notify.mp3') }}" preload="auto"></audio>
 @endsection
 
@@ -647,6 +803,7 @@ let isFirstLoad = true;
 let currentFilter = 'all';
 let allComplaints = [];
 let currentView = localStorage.getItem('complaintView') || 'row';
+let complaintsData = {};
 
 function getStatusBadge(status) {
     const statusLower = status.toLowerCase();
@@ -711,7 +868,7 @@ function renderComplaintCard(complaint, isNew = false) {
     const description = complaint.description || 'No description provided';
 
     return `
-        <div class="complaint-card ${priorityClass}" data-id="${complaint.id}">
+        <div class="complaint-card ${priorityClass}" data-id="${complaint.id}" onclick="showComplaintModal(${complaint.id})">
             ${isNewIndicator}
             <div class="card-ref">#${complaint.reference_number}</div>
             <div class="card-user">${complaint.user_name}</div>
@@ -819,6 +976,69 @@ function playSound() {
     }
 }
 
+function showComplaintModal(complaintId) {
+    const complaint = complaintsData[complaintId];
+    if (!complaint) return;
+
+    const assignedName = complaint.assigned_to_name || 'Not Assigned';
+    const timeAgo = getTimeAgo(complaint.created_at);
+    const description = complaint.description || 'No description provided';
+
+    const modalBody = `
+        <div class="modal-info-row">
+            <div class="modal-info-label">Reference:</div>
+            <div class="modal-info-value">#${complaint.reference_number}</div>
+        </div>
+        <div class="modal-info-row">
+            <div class="modal-info-label">User:</div>
+            <div class="modal-info-value">${complaint.user_name}</div>
+        </div>
+        <div class="modal-info-row">
+            <div class="modal-info-label">Status:</div>
+            <div class="modal-info-value">
+                <div class="modal-badges">
+                    ${getStatusBadge(complaint.status)}
+                    ${getPriorityBadge(complaint.priority)}
+                </div>
+            </div>
+        </div>
+        <div class="modal-info-row">
+            <div class="modal-info-label">Assigned To:</div>
+            <div class="modal-info-value">${assignedName}</div>
+        </div>
+        <div class="modal-info-row">
+            <div class="modal-info-label">Created:</div>
+            <div class="modal-info-value">${timeAgo}</div>
+        </div>
+        <div class="modal-description">
+            <strong>Description:</strong><br>
+            ${description}
+        </div>
+    `;
+
+    $('#modalTitle').text(`Complaint #${complaint.reference_number}`);
+    $('#modalBody').html(modalBody);
+    $('#complaintModal').addClass('active');
+}
+
+function closeModal() {
+    $('#complaintModal').removeClass('active');
+}
+
+// Close modal when clicking outside
+$(document).on('click', '.complaint-modal-overlay', function(e) {
+    if (e.target === this) {
+        closeModal();
+    }
+});
+
+// Close modal on Escape key
+$(document).on('keydown', function(e) {
+    if (e.key === 'Escape') {
+        closeModal();
+    }
+});
+
 function fetchComplaints(manualRefresh = false) {
 
     $.get(DATA_URL, function(data) {
@@ -826,6 +1046,11 @@ function fetchComplaints(manualRefresh = false) {
 
         const complaints = data.complaints;
         allComplaints = complaints;
+
+        // Store complaints data for modal
+        complaints.forEach(c => {
+            complaintsData[c.id] = c;
+        });
 
         const newIds = complaints.map(c => c.id);
         const newComplaintIds = [];

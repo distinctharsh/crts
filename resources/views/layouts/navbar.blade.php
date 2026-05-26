@@ -1,12 +1,14 @@
 <nav class="navbar navbar-expand-lg navbar-light bg-white shadow-sm fixed-top">
   <div class="container">
-    <div class="d-flex align-items-center" style="height: 80px;">
-      <img src="{{ asset('images/emblem-dark.png') }}" alt="Emblem" class="h-100" style="object-fit: contain;">
-      <div class="d-flex flex-column ms-3">
-        <h4 class="bold-font">Cabinet Secretariat</h4>
-        <span lang="hi" class="bold-font">Government of India</span>
+    <a href="{{ route('home') }}" class="text-decoration-none text-dark">
+      <div class="d-flex align-items-center" style="height: 80px;">
+        <img src="{{ asset('images/emblem-dark.png') }}" alt="Emblem" class="h-100" style="object-fit: contain;">
+        <div class="d-flex flex-column ms-3">
+          <h4 class="bold-font">Cabinet Secretariat</h4>
+          <span lang="hi" class="bold-font">Government of India</span>
+        </div>
       </div>
-    </div>
+    </a>
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav">
       <span class="navbar-toggler-icon"></span>
