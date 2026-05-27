@@ -749,10 +749,14 @@ class ComplaintController extends Controller
             // Show only open/assigned complaints (not completed/closed)
             $statuses = Status::whereIn('name', ['unassigned', 'assigned', 'pending_with_vendor', 'pending_with_user', 'assign_to_me', 'in_progress'])
                 ->pluck('id');
-            $twoDaysAgo = now()->subDays(2);
+            $startOfDay = now()->startOfDay();
+            $endOfDay = now()->endOfDay();
             $complaints = Complaint::with(['assignedTo', 'status'])
                 ->whereIn('status_id', $statuses)
-                ->where('created_at', '>=', $twoDaysAgo)
+                ->whereBetween('created_at', [
+                    $startOfDay,
+                    $endOfDay
+                ])
                 ->orderByDesc('created_at')
                 ->get();
 
