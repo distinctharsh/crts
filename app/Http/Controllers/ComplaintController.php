@@ -164,10 +164,15 @@ class ComplaintController extends Controller
             // Get unassigned status
             $unassignedStatus = Status::where('name', 'unassigned')->first();
 
-            // 🔢 Generate CMP-YYYYMMDD### reference number
+            // Generate reference number using vertical short_form (e.g., CS-20260525001)
             $date = Carbon::now()->format('Ymd');
+            
+            $firstVerticalId = $validated['vertical_ids'][0] ?? null;
+            $vertical = $firstVerticalId ? Vertical::find($firstVerticalId) : null;
+            $prefix = $vertical && $vertical->short_form ? strtoupper($vertical->short_form) : 'CMP';
+            
             $complaintsToday = Complaint::whereDate('created_at', Carbon::today())->count();
-            $referenceNumber = 'CMP-' . $date . str_pad($complaintsToday + 1, 3, '0', STR_PAD_LEFT);
+            $referenceNumber = $prefix . '-' . $date . str_pad($complaintsToday + 1, 3, '0', STR_PAD_LEFT);
 
             $complaint = Complaint::create([
                 'reference_number' => $referenceNumber,

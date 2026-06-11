@@ -10,7 +10,7 @@ class Vertical extends Model
 {
     use LogsActivity, SoftDeletes;
 
-    protected $fillable = ['name'];
+    protected $fillable = ['name', 'short_form'];
 
     public static function getNameById($id)
     {

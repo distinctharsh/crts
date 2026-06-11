@@ -106,7 +106,7 @@
                         <div class="col-md-4">
                             <label for="vertical_ids" class="form-label">Verticals <span class="text-danger">*</span></label>
                             <select class="form-select tom-select @error('vertical_ids') is-invalid @enderror"
-                                id="vertical_ids" name="vertical_ids[]" multiple required>
+                                id="vertical_ids" name="vertical_ids[]"  required>
                                 @php
                                     // Separate verticals: those that are not "Other" and the "Other" option
                                     $otherVertical = null;
@@ -120,6 +120,7 @@
                                     }
                                 @endphp
                                 @foreach($regularVerticals as $vertical)
+                                <option value="">Select Vertical</option>
                                 <option value="{{ $vertical->id }}" {{ in_array($vertical->id, old('vertical_ids', isset($complaint) ? $complaint->verticals->pluck('id')->toArray() : [])) ? 'selected' : '' }}>
                                     {{ $vertical->name }}
                                 </option>
@@ -133,7 +134,7 @@
                             @error('vertical_ids')
                             <div class="invalid-feedback">{{ $message }}</div>
                             @enderror
-                            <small class="text-muted">Hold Ctrl/Cmd to select multiple verticals</small>
+                            <!-- <small class="text-muted">Hold Ctrl/Cmd to select multiple verticals</small> -->
                         </div>
                     </div>
 
@@ -242,14 +243,8 @@ document.addEventListener('DOMContentLoaded', function () {
             config.create = false;
         }
 
-        // Enable multiple selection for verticals
         if(el.id === 'vertical_ids'){
-            config.maxItems = null;
-            config.plugins = {
-                remove_button:{
-                    title:'Remove',
-                }
-            };
+            config.maxItems = 1;
         }
 
         new TomSelect(el, config);

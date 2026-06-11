@@ -138,8 +138,14 @@ class MastersController extends Controller
     public function storeVertical(Request $request)
     {
         try {
-            $request->validate(['name' => 'required|string|max:255|unique:verticals,name']);
-            Vertical::create(['name' => $request->name]);
+            $request->validate([
+                'name' => 'required|string|max:255|unique:verticals,name',
+                'short_form' => 'nullable|string|max:10|unique:verticals,short_form',
+            ]);
+            Vertical::create([
+                'name' => $request->name,
+                'short_form' => $request->short_form ? strtoupper($request->short_form) : null,
+            ]);
             return redirect()->route('masters.index')->with('success', 'Vertical added successfully.');
         } catch (\Exception $e) {
             return redirect()->route('masters.index')->with('error', 'Vertical add failed: ' . $e->getMessage());
@@ -149,8 +155,14 @@ class MastersController extends Controller
     public function updateVertical(Request $request, Vertical $vertical)
     {
         try {
-            $request->validate(['name' => 'required|string|max:255|unique:verticals,name,' . $vertical->id]);
-            $vertical->update(['name' => $request->name]);
+            $request->validate([
+                'name' => 'required|string|max:255|unique:verticals,name,' . $vertical->id,
+                'short_form' => 'nullable|string|max:10|unique:verticals,short_form,' . $vertical->id,
+            ]);
+            $vertical->update([
+                'name' => $request->name,
+                'short_form' => $request->short_form ? strtoupper($request->short_form) : null,
+            ]);
             return redirect()->route('masters.index')->with('success', 'Vertical updated successfully.');
         } catch (\Exception $e) {
             return redirect()->route('masters.index')->with('error', 'Vertical update failed: ' . $e->getMessage());
