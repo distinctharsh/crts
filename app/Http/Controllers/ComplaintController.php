@@ -17,6 +17,8 @@ use App\Models\Comment;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Pagination\LengthAwarePaginator;
 use App\Services\ComplaintNotificationService;
+use App\Mail\HODReportMail;
+use Illuminate\Support\Facades\Mail;
 
 class ComplaintController extends Controller
 {
@@ -424,6 +426,15 @@ class ComplaintController extends Controller
                 'description' => $validated['description']
             ]);
 
+            // Send email notification to assigned user with managers and VMs in CC
+            try {
+                $notificationService = new ComplaintNotificationService();
+                $notificationService->sendAssignedComplaintNotifications($complaint);
+            } catch (\Exception $e) {
+                \Log::error('Email notification failed: ' . $e->getMessage());
+                // Continue with redirect even if email fails
+            }
+
             $previousUrl = url()->previous();
             $dashboardUrl = route('dashboard');
 
@@ -695,7 +706,6 @@ class ComplaintController extends Controller
     {
         try {
             $ref = $request->input('reference_number');
-            \Log::info('Looking up complaint', ['ref' => $ref]);
             $complaint = \App\Models\Complaint::with(['client', 'networkType', 'verticals', 'status'])
                 ->whereRaw('LOWER(reference_number) = ?', [strtolower($ref)])
                 ->first();
@@ -925,6 +935,77 @@ class ComplaintController extends Controller
 
             return response()->json([
                 'error' => 'Something went wrong while fetching notification data.'
+            ], 500);
+        }
+    }
+
+    public function sendHODReport()
+    {
+        try {
+            $today = now()->format('M d, Y');
+
+            // Get complaint statistics
+            $totalComplaints = Complaint::whereDate('created_at', today())->count();
+            $unassigned = Complaint::whereDate('created_at', today())
+                ->whereHas('status', function($q) {
+                    $q->where('name', 'unassigned');
+                })->count();
+            $completed = Complaint::whereDate('created_at', today())
+                ->whereHas('status', function($q) {
+                    $q->where('name', 'completed');
+                })->count();
+            $actionPending = Complaint::whereDate('created_at', today())
+                ->whereHas('status', function($q) {
+                    $q->whereIn('name', ['assigned', 'in_progress', 'pending_with_vendor', 'pending_with_user']);
+                })->count();
+
+            // Get usage report data (VMs and NFOs)
+            $users = User::whereHas('role', function($query) {
+                $query->whereIn('slug', ['vm', 'nfo']);
+            })->with(['role'])->get();
+
+            $usageData = [];
+            $completedStatusIds = Status::whereIn('name', ['completed', 'closed'])->pluck('id');
+            $pendingStatusIds = Status::whereNotIn('name', ['completed', 'closed'])->pluck('id');
+
+            foreach ($users as $user) {
+                $query = $user->assignedComplaints()->whereDate('created_at', today());
+                $assignedComplaints = $query->get();
+
+                $userCompleted = $assignedComplaints->whereIn('status_id', $completedStatusIds)->count();
+                $userPending = $assignedComplaints->whereIn('status_id', $pendingStatusIds)->count();
+                $userTotal = $assignedComplaints->count();
+
+                $usageData[] = [
+                    'name' => $user->full_name ?: $user->username,
+                    'pending' => $userPending,
+                    'completed' => $userCompleted,
+                    'total' => $userTotal,
+                    'completion_rate' => $userTotal > 0 ? round(($userCompleted / $userTotal) * 100, 2) : 0,
+                ];
+            }
+
+            $reportData = [
+                'date' => $today,
+                'total_complaints' => $totalComplaints,
+                'unassigned' => $unassigned,
+                'completed' => $completed,
+                'action_pending' => $actionPending,
+                'usage_data' => $usageData,
+            ];
+
+            Mail::to(env('HOD_EMAIL'))->send(new HODReportMail($reportData));
+
+            return response()->json([
+                'success' => true,
+                'message' => 'HOD report sent successfully'
+            ]);
+
+        } catch (\Exception $e) {
+            \Log::error('Send HOD Report error: ' . $e->getMessage());
+            return response()->json([
+                'success' => false,
+                'message' => 'Failed to send HOD report: ' . $e->getMessage()
             ], 500);
         }
     }

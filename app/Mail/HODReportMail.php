@@ -28,6 +28,7 @@ class HODReportMail extends Mailable
     public function envelope(): Envelope
     {
         return new Envelope(
+            to: [env('HOD_EMAIL')],
             subject: 'Daily Complaint Report - ' . ($this->reportData['date'] ?? now()->format('M d, Y')),
         );
     }
