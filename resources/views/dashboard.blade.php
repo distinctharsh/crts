@@ -21,7 +21,7 @@
                         @if(auth()->user()->isManager())
                         As a Manager, you can view and assign all complaints.
                         @elseif(auth()->user()->isVM())
-                        As a Vendor Manager, you can self-assign complaints and assign them to NFOs.
+                        As a Team Lead, you can self-assign complaints and assign them to NFOs.
                         @elseif(auth()->user()->isNFO())
                         As a Network Field Officer, you can resolve complaints and reassign them.
                         @endif

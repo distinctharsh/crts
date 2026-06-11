@@ -52,9 +52,15 @@ class ComplaintNotificationService
                 'assignedTo'
             ]);
 
-            Mail::to($toRecipients)
-            ->cc($ccRecipients)
-            ->send(new ComplaintNotificationMail($managers->first(), $complaint, 'new'));
+            if (!empty($toRecipients)) {
+                Mail::to($toRecipients)
+                    ->cc($ccRecipients)
+                    ->send(new ComplaintNotificationMail($managers->first(), $complaint, 'new'));
+
+            } elseif (!empty($ccRecipients)) {
+                Mail::to($ccRecipients)
+                    ->send(new ComplaintNotificationMail($managers->first(), $complaint, 'new'));
+            }
 
         } catch (\Exception $e) {
             \Log::error('Failed to send new complaint email: ' . $e->getMessage(), [
