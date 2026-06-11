@@ -316,6 +316,7 @@
                             <tr>
                                 <th class="ps-4">Name</th>
                                 <th class="ps-4">Short Form</th>
+                                <th class="ps-4">Send Email</th>
                                 <th class="text-end pe-4">Actions</th>
                             </tr>
                         </thead>
@@ -324,6 +325,13 @@
                             <tr>
                                 <td class="ps-4">{{ $vertical->name }}</td>
                                 <td class="ps-4"><span class="badge bg-secondary">{{ $vertical->short_form ?? '-' }}</span></td>
+                                <td class="ps-4">
+                                    @if($vertical->send_email ?? true)
+                                        <span class="badge bg-success"><i class="fas fa-check"></i> Yes</span>
+                                    @else
+                                        <span class="badge bg-danger"><i class="fas fa-times"></i> No</span>
+                                    @endif
+                                </td>
                                 <td class="text-end pe-4">
                                     <button class="btn btn-outline-warning btn-sm me-1" data-bs-toggle="tooltip" title="Edit" data-bs-target="#editVerticalModal{{ $vertical->id }}" onclick="$('#editVerticalModal{{ $vertical->id }}').modal('show')"><i class="fas fa-pen"></i></button>
                                     <button class="btn btn-outline-danger btn-sm" data-bs-toggle="tooltip" title="Delete" data-bs-toggle="modal" data-bs-target="#deleteVerticalModal{{ $vertical->id }}" data-bs-toggle2="modal" onclick="$('#deleteVerticalModal{{ $vertical->id }}').modal('show')"><i class="fas fa-trash"></i></button>
@@ -349,6 +357,12 @@
                                                     <label class="form-label">Short Form</label>
                                                     <input type="text" name="short_form" class="form-control" value="{{ $vertical->short_form ?? '' }}" placeholder="e.g., CS for Cyber Security" maxlength="10">
                                                     <small class="text-muted">Used for ticket reference number generation (e.g., CS-20260525001)</small>
+                                                </div>
+                                                <div class="form-check mb-3">
+                                                    <input class="form-check-input" type="checkbox" name="send_email" id="send_email_{{ $vertical->id }}" value="1" {{ ($vertical->send_email ?? true) ? 'checked' : '' }}>
+                                                    <label class="form-check-label" for="send_email_{{ $vertical->id }}">
+                                                        Send email notifications for this vertical?
+                                                    </label>
                                                 </div>
                                             </div>
                                             <div class="modal-footer">
@@ -383,7 +397,7 @@
                             </div>
                             @empty
                             <tr>
-                                <td colspan="3" class="text-center text-muted">No Verticals found.</td>
+                                <td colspan="4" class="text-center text-muted">No Verticals found.</td>
                             </tr>
                             @endforelse
                         </tbody>
@@ -576,6 +590,12 @@
                             <input type="text" name="short_form" class="form-control" placeholder="e.g., CS for Cyber Security" maxlength="10">
                             <small class="text-muted">Used for ticket reference number generation (e.g., CS-20260525001)</small>
                         </div>
+                        <div class="form-check mb-3">
+                            <input class="form-check-input" type="checkbox" name="send_email" id="send_email_new" value="1" checked>
+                            <label class="form-check-label" for="send_email_new">
+                                Send email notifications for this vertical?
+                            </label>
+                        </div>
                     </div>
                     <div class="modal-footer">
                         <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
@@ -603,6 +623,12 @@
                         <div class="mb-3">
                             <label class="form-label">Short Form</label>
                             <input type="text" class="form-control" placeholder="e.g., CS for Cyber Security" maxlength="10">
+                        </div>
+                        <div class="form-check mb-3">
+                            <input class="form-check-input" type="checkbox" name="send_email" id="send_email_edit" value="1" checked>
+                            <label class="form-check-label" for="send_email_edit">
+                                Send email notifications for this vertical?
+                            </label>
                         </div>
                     </div>
                     <div class="modal-footer">

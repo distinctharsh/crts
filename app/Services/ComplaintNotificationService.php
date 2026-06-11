@@ -18,19 +18,27 @@ class ComplaintNotificationService
      */
     public function sendNewComplaintNotifications(Complaint $complaint)
     {
+        $verticalIds = $complaint->verticals->pluck('id');
+
+        $verticalsWithEmailEnabled = \App\Models\Vertical::whereIn('id', $verticalIds)
+            ->where('send_email', true)
+            ->pluck('id')
+            ->toArray();
+
+        if (empty($verticalsWithEmailEnabled)) {
+            return;
+        }
+
         // Get all Managers
         $managers = User::whereHas('role', function ($query) {
             $query->where('slug', 'manager');
         })->get();
 
-        // Get vertical IDs from complaint (multiple verticals)
-        $verticalIds = $complaint->verticals->pluck('id');
-
-        // Get VMs whose vertical matches any of the complaint's verticals
+        // Get VMs whose vertical matches any of the complaint's verticals AND vertical has email enabled
         $vms = User::whereHas('role', function ($query) {
             $query->where('slug', 'vm');
-        })->whereHas('verticals', function ($query) use ($verticalIds) {
-            $query->whereIn('vertical_id', $verticalIds);
+        })->whereHas('verticals', function ($query) use ($verticalsWithEmailEnabled) {
+            $query->whereIn('vertical_id', $verticalsWithEmailEnabled);
         })->get();
 
 
@@ -91,12 +99,23 @@ class ComplaintNotificationService
 
         $verticalIds = $complaint->verticals->pluck('id');
 
-        // Get VMs whose vertical matches any of the complaint's verticals
+        // Filter verticals that have send_email enabled
+        $verticalsWithEmailEnabled = \App\Models\Vertical::whereIn('id', $verticalIds)
+            ->where('send_email', true)
+            ->pluck('id')
+            ->toArray();
+
+        // If no verticals have email enabled, skip sending
+        if (empty($verticalsWithEmailEnabled)) {
+            return;
+        }
+
+        // Get VMs whose vertical matches any of the complaint's verticals AND vertical has email enabled
         $vms = User::whereHas('role', function ($query) {
             $query->where('slug', 'vm');
         })
-        ->whereHas('verticals', function ($query) use ($verticalIds) {
-            $query->whereIn('vertical_id', $verticalIds);
+        ->whereHas('verticals', function ($query) use ($verticalsWithEmailEnabled) {
+            $query->whereIn('vertical_id', $verticalsWithEmailEnabled);
         })
         ->get();
 

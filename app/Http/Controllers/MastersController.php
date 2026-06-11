@@ -141,10 +141,12 @@ class MastersController extends Controller
             $request->validate([
                 'name' => 'required|string|max:255|unique:verticals,name',
                 'short_form' => 'nullable|string|max:10|unique:verticals,short_form',
+                'send_email' => 'nullable|boolean',
             ]);
             Vertical::create([
                 'name' => $request->name,
                 'short_form' => $request->short_form ? strtoupper($request->short_form) : null,
+                'send_email' => $request->has('send_email'),
             ]);
             return redirect()->route('masters.index')->with('success', 'Vertical added successfully.');
         } catch (\Exception $e) {
@@ -158,10 +160,12 @@ class MastersController extends Controller
             $request->validate([
                 'name' => 'required|string|max:255|unique:verticals,name,' . $vertical->id,
                 'short_form' => 'nullable|string|max:10|unique:verticals,short_form,' . $vertical->id,
+                'send_email' => 'nullable|boolean',
             ]);
             $vertical->update([
                 'name' => $request->name,
                 'short_form' => $request->short_form ? strtoupper($request->short_form) : null,
+                'send_email' => $request->has('send_email'),
             ]);
             return redirect()->route('masters.index')->with('success', 'Vertical updated successfully.');
         } catch (\Exception $e) {
