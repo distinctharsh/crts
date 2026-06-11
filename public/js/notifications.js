@@ -82,7 +82,7 @@ function showNotification(data) {
     content.innerHTML = `
         <div style="display:flex;flex-direction:column;gap:10px">
 
-            <a href="/complaints?status=${data.status_ids?.unassigned || ''}"  style="text-decoration:none;display:block;">
+            <a href="/complaints?status=${data.status_ids?.unassigned || ''}&date_from=${data.today_date}"  style="text-decoration:none;display:block;">
                 <div style="display:flex;align-items:center;justify-content:space-between;padding:12px 15px;background:#f8f9fa;border-radius:8px;cursor:pointer;transition:background 0.2s;" onmouseover="this.style.background='#e9ecef'" onmouseout="this.style.background='#f8f9fa'">
                     <div style="display:flex;align-items:center;gap:10px;">
                         <i class="bi bi-person-check-fill" style="color:#0d6efd;font-size:18px;"></i>

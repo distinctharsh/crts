@@ -15,159 +15,23 @@ use Illuminate\Support\Str;
 // Redirect root URL to /home
 Route::redirect('/', '/home');
 
-
-
-Route::get('/test-report', function () {
-
-    $reportData = [
-        'date' => now()->format('M d, Y'),
-        'today_complaints' => 50,
-        'unassigned' => 12,
-        'completed' => 30,
-        'action_pending' => 8,
-    ];
-
-    return view(
-        'emails.hod_report',
-        compact('reportData')
-    );
-});
-
-
 // Show welcome view at /home
 Route::get('/home', function () {
-    // Get public IP (check for proxy headers first)
     $publicIp = request()->header('X-Forwarded-For') ?? request()->ip();
-    // If X-Forwarded-For has multiple IPs, take the first one
     if (strpos($publicIp, ',') !== false) {
         $publicIp = trim(explode(',', $publicIp)[0]);
     }
     return view('welcome', ['user_ip' => $publicIp]);
 })->name('home');
 
-
-// Force override GET /login to always redirect to /home (for Laravel 12+)
 Route::get('/login', function () {
     return redirect('/home');
 })->name('login-override');
-
-
-
-use App\Mail\HODReportMail;
-
-Route::get('/test-hod-mail', function () {
-
-    $reportData = [
-        'date' => now()->format('M d, Y'),
-
-        'total_complaints' => 50,
-        'unassigned' => 8,
-        'completed' => 30,
-        'action_pending' => 12,
-    ];
-
-    return (new HODReportMail($reportData))->render();
-});
-
-Route::get('/test-complaint-mail', function () {
-
-    // Dummy User
-    $user = (object)[
-        'full_name' => 'Harsh Kumar'
-    ];
-
-    // Dummy Status object
-    $status = (object)[
-        'display_name' => 'Assigned'
-    ];
-
-    // Dummy Assigned User
-    $assignedTo = (object)[
-        'full_name' => 'Yogesh Sir'
-    ];
-
-    // Dummy Complaint object
-    $complaint = (object)[
-        'reference_number' => 'CMP20260525001',
-        'user_name' => 'Rahul Sharma',
-        'room_number' => '201',
-        'intercom' => '4567',
-        'vertical' => 'Electrical',
-        'section' => 'Maintenance',
-        'network_type' => 'Power Failure',
-        'priority' => 'high',
-        'assigned_to' => 1,
-        'assignedTo' => $assignedTo,
-        'status' => $status,
-        'description' => 'Power supply issue in Room 201. Lights and AC are not functioning properly.',
-        'created_at' => now(),
-    ];
-
-    $notificationType = 'assigned';
-    // or use:
-    // $notificationType = 'new';
-
-    return view(
-        'emails.complaint_notification',
-        compact(
-            'user',
-            'complaint',
-            'notificationType'
-        )
-    );
-});
-
-
-Route::get('/test-complaint-mail-manager', function () {
-
-    $user = (object)[
-        'full_name' => 'Harsh (Manager)'
-    ];
-
-    $status = (object)[
-        'display_name' => 'Unassigned'
-    ];
-
-    $complaint = (object)[
-        'reference_number' => 'CMP20260525002',
-        'user_name' => 'Rahul Sharma',
-        'room_number' => '305',
-        'intercom' => '7890',
-        'vertical' => 'IT Support',
-        'section' => 'Network',
-        'network_type' => 'Internet Connectivity',
-        'priority' => 'medium',
-
-        // Not assigned
-        'assigned_to' => null,
-        'assignedTo' => null,
-
-        'status' => $status,
-
-        'description' => 'Internet connection is not working in Room 305.',
-        'created_at' => now(),
-    ];
-
-    // Manager sees newly created complaint
-    $notificationType = 'new';
-
-    return view(
-        'emails.complaint_notification',
-        compact(
-            'user',
-            'complaint',
-            'notificationType'
-        )
-    );
-});
-
 
 // Live complaints dashboard (TV/room display)
 Route::get('/complaints/live', [ComplaintController::class, 'live'])->name('complaints.live');
 // Live complaints JSON data endpoint for polling
 Route::get('/complaints/live-data', [ComplaintController::class, 'liveData'])->name('complaints.liveData');
-// Notification data endpoint for logged-in users
-Route::get('/complaints/notification-data', [ComplaintController::class, 'notificationData'])->name('complaints.notificationData');
 
 
 // Public ticket routes
@@ -202,6 +66,7 @@ Route::middleware(['auth', 'force.password.change'])->group(function () {
     // Complaint routes
     Route::get('/complaints', [ComplaintController::class, 'index'])->name('complaints.index');
     Route::get('/complaints/data', [ComplaintController::class, 'data'])->name('complaints.data');
+    Route::get('/complaints/notification-data', [ComplaintController::class, 'notificationData'])->name('complaints.notificationData');
     Route::get('/complaints/{complaint}/edit', [ComplaintController::class, 'edit'])->name('complaints.edit');
     Route::put('/complaints/{complaint}', [ComplaintController::class, 'update'])->name('complaints.update');
     Route::delete('/complaints/{complaint}', [ComplaintController::class, 'destroy'])->name('complaints.destroy');
@@ -216,6 +81,7 @@ Route::middleware(['auth', 'force.password.change'])->group(function () {
 });
 
 Route::get('/api/complaints/lookup', [App\Http\Controllers\ComplaintController::class, 'lookup'])->name('api.complaints.lookup');
+Route::get('/send-hod-report', [ComplaintController::class, 'sendHODReport'])->name('send-hod-report');
 Route::get('/complaints/track', [App\Http\Controllers\ComplaintController::class, 'track'])->name('complaints.track');
 
 // Redirect any GET or POST /register access to /home
@@ -258,10 +124,6 @@ Route::middleware(['auth', 'can:isManager'])->group(function () {
 
     Route::get('/usage-report', [UsageReportController::class, 'index'])->name('usage-report.index');
 });
-
-
-
-
 
 // Fallback route for all unknown URLs
 Route::fallback(function () {

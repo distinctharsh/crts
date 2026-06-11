@@ -23,21 +23,22 @@ class ComplaintNotificationService
             $query->where('slug', 'manager');
         })->get();
 
-        // Get VMs whose vertical matches the complaint's vertical
+        // Get vertical IDs from complaint (multiple verticals)
+        $verticalIds = $complaint->verticals->pluck('id');
+
+        // Get VMs whose vertical matches any of the complaint's verticals
         $vms = User::whereHas('role', function ($query) {
             $query->where('slug', 'vm');
-        })->whereHas('verticals', function ($query) use ($complaint) {
-            $query->where('vertical_id', $complaint->vertical_id);
+        })->whereHas('verticals', function ($query) use ($verticalIds) {
+            $query->whereIn('vertical_id', $verticalIds);
         })->get();
 
-        // If no managers, send to first VM as primary recipient
-        if ($managers->isEmpty() && !$vms->isEmpty()) {
-            $primaryRecipient = $vms->first();
-            $ccRecipients = $vms->slice(1)->pluck('email')->filter()->toArray();
-        } elseif (!$managers->isEmpty()) {
-            $primaryRecipient = $managers->first();
-            $ccRecipients = $vms->pluck('email')->filter()->toArray();
-        } else {
+
+        $toRecipients = $vms->pluck('email')->filter()->unique()->toArray();
+
+        $ccRecipients = $managers->pluck('email')->filter()->unique()->toArray();
+
+        if (empty($toRecipients) && empty($ccRecipients)) {
             // No recipients
             return;
         }
@@ -49,13 +50,17 @@ class ComplaintNotificationService
                 'networkType',
                 'status',
                 'assignedTo'
-                ]);
-            $recipient = $primaryRecipient->email ?? $primaryRecipient->username;
-            Mail::to($recipient)
-                ->cc($ccRecipients)
-                ->send(new ComplaintNotificationMail($primaryRecipient, $complaint, 'new'));
+            ]);
+
+            Mail::to($toRecipients)
+            ->cc($ccRecipients)
+            ->send(new ComplaintNotificationMail($managers->first(), $complaint, 'new'));
+
         } catch (\Exception $e) {
-            \Log::error('Failed to send new complaint email: ' . $e->getMessage());
+            \Log::error('Failed to send new complaint email: ' . $e->getMessage(), [
+                'complaint_id' => $complaint->id,
+                'error' => $e->getMessage()
+            ]);
         }
     }
 
@@ -80,7 +85,7 @@ class ComplaintNotificationService
 
         $verticalIds = $complaint->verticals->pluck('id');
 
-        // Get VMs whose vertical matches the complaint's vertical
+        // Get VMs whose vertical matches any of the complaint's verticals
         $vms = User::whereHas('role', function ($query) {
             $query->where('slug', 'vm');
         })
@@ -89,7 +94,23 @@ class ComplaintNotificationService
         })
         ->get();
 
-        $ccRecipients = $vms->pluck('email')->filter()->toArray();
+        // Get all Managers
+        $managers = User::whereHas('role', function ($query) {
+            $query->where('slug', 'manager');
+        })->get();
+
+        // Combine VMs and Managers for CC
+        $ccRecipients = array_merge(
+            $vms->pluck('email')->filter()->toArray(),
+            $managers->pluck('email')->filter()->toArray()
+        );
+
+        // Remove duplicates and assigned user from CC (to avoid duplicate)
+        $assignedUserEmail = $assignedUser->email ?? $assignedUser->username;
+        $ccRecipients = array_unique($ccRecipients);
+        $ccRecipients = array_filter($ccRecipients, function($email) use ($assignedUserEmail) {
+            return $email !== $assignedUserEmail;
+        });
 
         try {
             $complaint->load([
@@ -99,12 +120,16 @@ class ComplaintNotificationService
                 'status',
                 'assignedTo'
             ]);
-            $recipient = $assignedUser->email ?? $assignedUser->username;
-            Mail::to($recipient)
+
+            Mail::to($assignedUserEmail)
                 ->cc($ccRecipients)
                 ->send(new ComplaintNotificationMail($assignedUser, $complaint, 'assigned'));
+
         } catch (\Exception $e) {
-            \Log::error('Failed to send assigned complaint email: ' . $e->getMessage());
+            \Log::error('Failed to send assigned complaint email: ' . $e->getMessage(), [
+                'complaint_id' => $complaint->id,
+                'error' => $e->getMessage()
+            ]);
         }
     }
 }
