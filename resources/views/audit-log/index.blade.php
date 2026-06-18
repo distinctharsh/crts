@@ -187,12 +187,6 @@
                         @endforeach
                     </tbody>
                 </table>
-
-                @if($logs->hasPages())
-                <div class="d-flex justify-content-center mt-3">
-                    {{ $logs->appends(request()->except('page'))->links() }}
-                </div>
-                @endif
             </div>
         </div>
     </div>

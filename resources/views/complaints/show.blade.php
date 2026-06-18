@@ -106,7 +106,7 @@ $breadcrumbs = [
                 <div class="card-header bg-light d-flex justify-content-between align-items-center">
                     <h5 class="mb-0">Ticket Details</h5>
                     @auth
-                    @if((auth()->user()->isManager() || auth()->user()->isVM()) && $complaint->status->name != 'closed')
+                    @if((auth()->user()->isManager() || auth()->user()->isVM()) && $complaint->status->name != 'closed' && $complaint->status->name != 'completed')
                     <a href="{{ route('complaints.edit', $complaint) }}" class="btn btn-sm btn-outline-primary">
                         <i class="fa-solid fa-pencil"></i>
                     </a>
@@ -231,7 +231,7 @@ $breadcrumbs = [
                     </form>
                     @elseif($complaint->isCompleted() && !$isManager)
                     <textarea class="form-control" rows="3" placeholder="Comments are disabled for this ticket as it is completed." disabled></textarea>
-                    <button class="btn btn-primary mt-2" disabled>Add Comment</button>
+                    <button class="btn btn-primary mt-2 mb-2" disabled>Add Comment</button>
 
                     @elseif($complaint->canUserComment(auth()->user()) || $isManager)
 
