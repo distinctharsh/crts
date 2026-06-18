@@ -149,7 +149,7 @@ class User extends Authenticatable
     /**
      * Get users that can be assigned to complaints based on current user's role
      */
-    public function getAssignableUsers($complaint = null)
+    public function getAssignableUsers($complaint = null, $verticalIds = null)
     {
         $query = User::query()->with('role');
 
@@ -158,14 +158,7 @@ class User extends Authenticatable
             $query->whereHas('role', function ($q) {
                 $q->whereIn('slug', ['vm', 'nfo']);
             });
-            // 💡 Additional filter: same vertical only if complaint is given
-            if ($complaint) {
-                $query->whereHas('verticals', function ($q) use ($complaint) {
-                    $q->whereIn('verticals.id', $complaint->verticals->pluck('id'));
-                });
-            }
-        }
-        // VM
+        } 
         elseif ($this->isVM()) {
             $query->where(function ($q) use ($complaint) {
                 // Only include self if not already assigned
@@ -176,25 +169,25 @@ class User extends Authenticatable
                     $r->where('slug', 'nfo');
                 });
             });
-            // 💡 Vertical match only if complaint is given
-            if ($complaint) {
-                $query->whereHas('verticals', function ($q) use ($complaint) {
-                    $q->whereIn('verticals.id', $complaint->verticals->pluck('id'));
-                });
-            }
-        }
-        // NFO
+        } 
         elseif ($this->isNFO()) {
             $query->whereHas('role', function ($q) {
                 $q->where('slug', 'vm');
             });
-            // 💡 Vertical match only if complaint is given
-            if ($complaint) {
-                $query->whereHas('verticals', function ($q) use ($complaint) {
-                    $q->whereIn('verticals.id', $complaint->verticals->pluck('id'));
-                });
-            }
+        } else {
+            return collect();
         }
+
+        if (!empty($verticalIds)) {
+            $query->whereHas('verticals', function ($q) use ($verticalIds) {
+                $q->whereIn('verticals.id', $verticalIds);
+            });
+        } elseif ($complaint) {
+            $query->whereHas('verticals', function ($q) use ($complaint) {
+                $q->whereIn('verticals.id', $complaint->verticals->pluck('id'));
+            });
+        }
+
         return $query->get(['id', 'username', 'full_name', 'role_id']);
     }
 

@@ -138,7 +138,7 @@ class ComplaintController extends Controller
         $intercoms = Complaint::whereNotNull('intercom')
         ->distinct()
         ->pluck('intercom');
-
+        
         return view('complaints.create', compact('networkTypes', 'verticals', 'sections', 'intercoms'));
     }
 
@@ -156,6 +156,7 @@ class ComplaintController extends Controller
                 'section_id' => 'required|exists:sections,id',
                 'intercom' => 'required|string|max:255',
                 'room_number' => 'required|integer',
+                'assigned_to' => 'nullable|exists:users,id',
             ]);
 
             // Set default priority to 'medium' if 'high' checkbox is not checked
@@ -174,18 +175,24 @@ class ComplaintController extends Controller
             $complaintsToday = Complaint::whereDate('created_at', Carbon::today())->count();
             $referenceNumber = $prefix . '-' . $date . str_pad($complaintsToday + 1, 3, '0', STR_PAD_LEFT);
 
+            $assignedStatus = Status::where('name','assigned')->first();
+            $statusId = $request->filled('assigned_to')
+                ? $assignedStatus->id
+                : $unassignedStatus->id;
+
             $complaint = Complaint::create([
                 'reference_number' => $referenceNumber,
                 'client_id' => Auth::user()->id ?? 0,
                 'description' => $validated['description'],
                 'priority' => $priority,
-                'status_id' => $unassignedStatus->id,
+                'status_id' => $statusId,
                 'network_type_id' => $validated['network_type_id'],
                 'section_id' => $validated['section_id'],
                 'user_name' => $validated['user_name'],
                 'room_number' => $validated['room_number'],
                 'file_path' => $request->hasFile('file') ? $request->file('file')->store('complaint_files', 'public') : null,
                 'intercom' => $validated['intercom'],
+                'assigned_to' => $request->assigned_to ?: null,
                 'created_at' => Carbon::now()->setTimezone(config('app.timezone')),
                 'updated_at' => Carbon::now()->setTimezone(config('app.timezone')),
             ]);
@@ -315,9 +322,13 @@ class ComplaintController extends Controller
                 $validated['file_path'] = $request->file('file')->store('complaint_files', 'public');
             }
 
-            // Check if assigned_to is being changed
-            $wasAssigned = $complaint->assigned_to;
-            if (isset($validated['assigned_to']) && $validated['assigned_to'] != $complaint->assigned_to) {
+            $oldAssignedTo = $complaint->assigned_to;
+            $oldStatusId   = $complaint->status_id;
+
+            if (
+                array_key_exists('assigned_to', $validated)
+                && $validated['assigned_to'] != $oldAssignedTo
+            ) {
                 $validated['assigned_by'] = Auth::user()->id ?? 0;
             }
 
@@ -354,6 +365,34 @@ class ComplaintController extends Controller
                 ];
             }
 
+            $changes = [];
+            // Status Changed
+            if ($oldStatusId != $validated['status_id']) {
+                $changes['status'] = [
+                    'old' => $oldStatusId,
+                    'new' => $validated['status_id']
+                ];
+            }
+
+            // Assignment Changed
+            if ($oldAssignedTo != ($validated['assigned_to'] ?? null)) {
+                $changes['assigned_to'] = [
+                    'old' => $oldAssignedTo,
+                    'new' => $validated['assigned_to'] ?? null
+                ];
+            }
+
+            $newVerticals = $complaint->verticals
+                ->pluck('name')
+                ->toArray();
+
+            if ($oldVerticals != $newVerticals) {
+                $changes['verticals'] = [
+                    'old' => implode(', ', $oldVerticals),
+                    'new' => implode(', ', $newVerticals)
+                ];
+            }
+
             ComplaintAction::create([
                 'complaint_id' => $complaint->id,
                 'user_id' => Auth::user()->id ?? 0,
@@ -362,7 +401,7 @@ class ComplaintController extends Controller
                 'changes' => json_encode($changes)
             ]);
             // Send email notification if complaint was assigned
-            if (!$wasAssigned && $complaint->assigned_to) {
+            if ($oldAssignedTo != $complaint->assigned_to && $complaint->assigned_to ) {
                 try {
                     $notificationService = new ComplaintNotificationService();
                     $notificationService->sendAssignedComplaintNotifications($complaint);
@@ -550,12 +589,21 @@ class ComplaintController extends Controller
         try {
             $user = Auth::user();
             $complaint = null;
+            $verticalIds = null;
 
             if ($request->has('complaint_id')) {
                 $complaint = Complaint::find($request->complaint_id);
             }
 
-            $assignableUsers = $user->getAssignableUsers($complaint);
+            if ($request->has('vertical_ids')) {
+                $verticalIds = $request->input('vertical_ids');
+                // Handle both array and comma-separated string
+                if (is_string($verticalIds)) {
+                    $verticalIds = explode(',', $verticalIds);
+                }
+            }
+
+            $assignableUsers = $user->getAssignableUsers($complaint, $verticalIds);
 
             return response()->json($assignableUsers);
         } catch (\Exception $e) {

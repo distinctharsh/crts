@@ -33,4 +33,9 @@ class ComplaintAction extends Model
         return $this->belongsTo(Status::class);
     }
 
+    public function assignedTo()
+    {
+        return $this->belongsTo(User::class, 'assigned_to');
+    }
+
 }

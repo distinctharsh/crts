@@ -175,6 +175,23 @@
                             @endif
                         </div>
 
+
+                        @auth 
+                        @if(!auth()->user()->isNFO())
+                        <div class="col-md-4 mb-3" id="assignToWrapper" style="display:none;">
+                            <label for="assigned_to" class="form-label">
+                                Assign To
+                            </label>
+
+                            <select id="assigned_to"
+                                    name="assigned_to"
+                                    class="form-select">
+                                <option value="">-- Leave Unassigned --</option>
+                            </select>
+                        </div>
+                        @endif
+                        @endauth
+
                         <div class="col-md-12">
                             <label for="description" class="form-label">Ticket Description <span class="text-danger">*</span></label>
                             <textarea class="form-control @error('description') is-invalid @enderror" placeholder="Enter the Issue.. "
@@ -220,38 +237,97 @@
 </div>
 
 <script>
-document.addEventListener('DOMContentLoaded', function () {
+    document.addEventListener('DOMContentLoaded', () => {
+        const assignWrapper = document.getElementById('assignToWrapper');
+        const assignSelect = document.getElementById('assigned_to');
+        const selectedVertical =
+            @json(old('vertical_ids.0', isset($complaint) ? $complaint->verticals->first()?->id : null));
+        const selectedUser =
+            @json(old('assigned_to', isset($complaint) ? $complaint->assigned_to : null));
 
-    document.querySelectorAll('select.tom-select').forEach(function(el){
+        let verticalTom;
+        document.querySelectorAll('.tom-select').forEach(el => {
 
-        let config = {
-            searchField:['text'],
-            maxOptions:100,
-            persist:false,
+            const config = {
+                searchField: ['text'],
+                maxOptions: 100,
+                persist: false
+            };
 
-            render:{
-                no_results:function(){
-                    return '<div class="no-results">No result found</div>';
-                }
+            if (el.id === 'intercom') {
+                config.create = true;
             }
-        };
 
-        // Only intercom allows new entries
-        if(el.id === 'intercom'){
-            config.create = true;
-        } else {
-            config.create = false;
+            if (el.id === 'vertical_ids') {
+                config.maxItems = 1;
+            }
+
+            const instance = new TomSelect(el, config);
+
+            if (el.id === 'vertical_ids') {
+                verticalTom = instance;
+            }
+        });
+
+        const assignTom = assignSelect
+            ? new TomSelect(assignSelect, {
+                valueField: 'id',
+                labelField: 'full_name',
+                searchField: 'full_name'
+            })
+            : null;
+
+        async function loadAssignableUsers(verticalId, selectedUserId = null) {
+            if (!assignTom || !assignWrapper) {
+                return;
+            }
+            assignTom.clear();
+            assignTom.clearOptions();
+            if (!verticalId) {
+                assignWrapper.style.display = 'none';
+                return;
+            }
+            try {
+                const response = await fetch(
+                    `{{ route('api.assignable-users') }}?vertical_ids=${verticalId}`
+                );
+                const users = await response.json();
+                if (!users.length) {
+                    assignWrapper.style.display = 'none';
+                    return;
+                }
+                assignWrapper.style.display = 'block';
+                assignTom.addOption({
+                    id: '',
+                    full_name: '-- Leave Unassigned --'
+                });
+                users.forEach(user => {
+                    assignTom.addOption({
+                        id: user.id,
+                        full_name: `${user.full_name} (${user.role?.name?.toUpperCase() ?? ''})`
+                    });
+                });
+                if (selectedUserId) {
+                    assignTom.setValue(selectedUserId, true);
+                }
+                assignTom.refreshOptions(false);
+
+            } catch (error) {
+                console.error('Failed to load assignable users:', error);
+                assignWrapper.style.display = 'none';
+            }
         }
 
-        if(el.id === 'vertical_ids'){
-            config.maxItems = 1;
+        if (verticalTom) {
+            verticalTom.on('change', value => {
+                loadAssignableUsers(value);
+            });
+            if (selectedVertical) {
+                loadAssignableUsers(selectedVertical, selectedUser);
+            }
         }
-
-        new TomSelect(el, config);
 
     });
-
-});
 </script>
 
 @endsection
