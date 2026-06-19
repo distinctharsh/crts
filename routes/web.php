@@ -48,7 +48,6 @@ Route::get('/complaints/history', [ComplaintController::class, 'history'])
     ->name('complaints.history')
     ->middleware(\App\Http\Middleware\CheckIPAccess::class);
 
-Route::get('/complaints/{complaint}', [ComplaintController::class, 'show'])->name('complaints.show');
 
 // Authentication routes
 Route::middleware('guest')->group(function () {
@@ -79,7 +78,7 @@ Route::middleware(['auth', 'force.password.change'])->group(function () {
     Route::resource('users', UserController::class);
     Route::post('/users/restore/{id}', [UserController::class, 'restore'])->name('users.restore');
 });
-
+Route::get('/complaints/{complaint}', [ComplaintController::class, 'show'])->name('complaints.show');
 Route::get('/api/complaints/lookup', [App\Http\Controllers\ComplaintController::class, 'lookup'])->name('api.complaints.lookup');
 Route::get('/send-hod-report', [ComplaintController::class, 'sendHODReport'])->name('send-hod-report');
 Route::get('/complaints/track', [App\Http\Controllers\ComplaintController::class, 'track'])->name('complaints.track');
