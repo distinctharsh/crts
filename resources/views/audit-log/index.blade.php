@@ -166,10 +166,10 @@
                                 @elseif(isset($log->properties['old_vertical_ids']) || isset($log->properties['new_vertical_ids']))
                                     <ul class="list-unstyled mb-0 small">
                                         @if(isset($log->properties['old_vertical_ids']))
-                                        <li><strong>Verticals:</strong> <span class="text-danger bg-light px-1 rounded">{{ collect($log->properties['old_vertical_ids'])->map(fn($id) => $verticalMap[$id] ?? $id)->implode(', ') }}</span></li>
+                                        <li><strong>Category:</strong> <span class="text-danger bg-light px-1 rounded">{{ collect($log->properties['old_vertical_ids'])->map(fn($id) => $verticalMap[$id] ?? $id)->implode(', ') }}</span></li>
                                         @endif
                                         @if(isset($log->properties['new_vertical_ids']))
-                                        <li><strong>Verticals:</strong> <span class="text-success bg-light px-1 rounded">{{ collect($log->properties['new_vertical_ids'])->map(fn($id) => $verticalMap[$id] ?? $id)->implode(', ') }}</span></li>
+                                        <li><strong>Category:</strong> <span class="text-success bg-light px-1 rounded">{{ collect($log->properties['new_vertical_ids'])->map(fn($id) => $verticalMap[$id] ?? $id)->implode(', ') }}</span></li>
                                         @endif
                                     </ul>
                                 @elseif($log->properties['comment'] ?? null)

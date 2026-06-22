@@ -8,6 +8,7 @@ use App\Models\ComplaintAction;
 use App\Models\NetworkType;
 use App\Models\Section;
 use App\Models\Vertical;
+use App\Models\SubCategory;
 use App\Models\Status;
 use Carbon\Carbon;
 use Illuminate\Http\Request;
@@ -19,12 +20,13 @@ use Illuminate\Pagination\LengthAwarePaginator;
 use App\Services\ComplaintNotificationService;
 use App\Mail\HODReportMail;
 use Illuminate\Support\Facades\Mail;
+use Illuminate\Support\Facades\Validator;
 
 class ComplaintController extends Controller
 {
     public function __construct()
     {
-        $this->middleware('auth')->except(['create', 'store', 'show', 'history', 'track', 'lookup', 'live', 'liveData', 'intercomSuggestions']);
+        $this->middleware('auth')->except(['create', 'store', 'show', 'history', 'track', 'lookup', 'live', 'liveData', 'intercomSuggestions', 'getSubCategories']);
     }
 
     public function index(Request $request)
@@ -157,6 +159,7 @@ class ComplaintController extends Controller
                 'intercom' => 'required|string|max:255',
                 'room_number' => 'required|integer',
                 'assigned_to' => 'nullable|exists:users,id',
+                'sub_category_id' => 'required|exists:sub_categories,id',
             ]);
 
             // Set default priority to 'medium' if 'high' checkbox is not checked
@@ -197,7 +200,14 @@ class ComplaintController extends Controller
                 'updated_at' => Carbon::now()->setTimezone(config('app.timezone')),
             ]);
 
-            $complaint->verticals()->sync($validated['vertical_ids']);
+
+            $pivotData = [];
+            foreach ($validated['vertical_ids'] as $verticalId) {
+                $pivotData[$verticalId] = [
+                    'sub_category_id' => $validated['sub_category_id']
+                ];
+            }
+            $complaint->verticals()->sync($pivotData);
 
             $complaint->load('verticals');
 
@@ -244,9 +254,12 @@ class ComplaintController extends Controller
                 ->distinct()
                 ->pluck('intercom');
 
-            $complaint->load(['client', 'assignedTo', 'status']);
+            $complaint->load(['client', 'assignedTo', 'status', 'verticals']);
 
-            // Use the unified create view for both add and edit
+            $complaint->sub_category_id = $complaint->verticals->first() && $complaint->verticals->first()->pivot 
+                ? $complaint->verticals->first()->pivot->sub_category_id 
+                : null;
+
             return view('complaints.create', compact('complaint', 'networkTypes', 'verticals', 'sections', 'statuses', 'intercoms'));
         } catch (\Exception $e) {
             \Log::error('Complaint edit error: ' . $e->getMessage());
@@ -301,6 +314,7 @@ class ComplaintController extends Controller
                 'file' => 'nullable|file|max:2048',
                 'delete_file' => 'sometimes|boolean',
                 'assigned_to' => 'nullable|exists:users,id',
+                'sub_category_id' => 'required|exists:sub_categories,id',
             ]);
 
             // Set default priority to 'medium' if 'high' checkbox is not checked
@@ -335,6 +349,8 @@ class ComplaintController extends Controller
             // Store vertical ids separately
             $verticalIds = $validated['vertical_ids'];
             unset($validated['vertical_ids']);
+            $subCategoryId = $validated['sub_category_id'];
+            unset($validated['sub_category_id']);
 
             // Old verticals
             $oldVerticals = $complaint->verticals()
@@ -344,8 +360,14 @@ class ComplaintController extends Controller
             // Update complaint fields
             $complaint->update($validated);
 
-            // Sync pivot
-            $complaint->verticals()->sync($verticalIds);
+            $pivotData = [];
+            foreach ($verticalIds as $verticalId) {
+                $pivotData[$verticalId] = [
+                    'sub_category_id' => $subCategoryId
+                ];
+            }
+
+            $complaint->verticals()->sync($pivotData);
 
             // Force refresh relation
             $complaint->load('verticals');
@@ -1059,6 +1081,37 @@ class ComplaintController extends Controller
             return response()->json([
                 'success' => false,
                 'message' => 'Failed to send HOD report: ' . $e->getMessage()
+            ], 500);
+        }
+    }
+
+    public function getSubCategories(Request $request)
+    {
+        $validator = Validator::make($request->all(), [
+            'vertical_id' => 'required|integer'
+        ]);
+
+        if ($validator->fails()) {
+            return response()->json([
+                'success' => false, 
+                'errors' => $validator->errors()
+            ], 422);
+        }
+
+        try {
+            $subCategories = SubCategory::where('vertical_id', $request->vertical_id)
+                ->select('id', 'name')
+                ->orderBy('name')
+                ->get();
+
+            return response()->json($subCategories);
+
+        } catch (\Exception $e) {
+            \Log::error('AJAX SubCategories Fetch Error: ' . $e->getMessage());
+
+            return response()->json([
+                'success' => false,
+                'message' => $e->getMessage()
             ], 500);
         }
     }

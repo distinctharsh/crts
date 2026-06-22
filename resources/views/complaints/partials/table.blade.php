@@ -10,7 +10,7 @@
             <th>User</th>
             <th>Section</th>
             <th>Network</th>
-            <th>Vertical</th>
+            <th>Category</th>
             <th>Status</th>
             <th>Priority</th>
             <th>Assigned To</th>
@@ -26,7 +26,18 @@
             <td>{{ $complaint->user_name }}</td>
             <td>{{ $complaint->section->name }}</td>
             <td>{{ $complaint->networkType->name ?? 'N/A' }}</td>
-            <td>{{ $complaint->verticals->pluck('name')->map(fn($name) => ucfirst($name))->implode(', ') ?? 'N/A' }}</td>
+            <td>{{ $complaint->verticals->pluck('name')->map(fn($name) => ucfirst($name))->implode(', ') ?? 'N/A' }} -
+                @if($complaint->verticals->first() && $complaint->verticals->first()->pivot->sub_category_id)
+                    @php
+                        $subCategory = \App\Models\SubCategory::find($complaint->verticals->first()->pivot->sub_category_id);
+                    @endphp
+                    <span class="badge bg-light text-dark border border-secondary">
+                        {{ $subCategory->sub_category_name ?? $subCategory->name ?? 'N/A' }}
+                    </span>
+                @else
+                    <span class="text-muted">N/A</span>
+                @endif
+            </td>
             <td>
                 <span class="badge bg-{{ $complaint->status_color }}">
                     {{ $complaint->status->display_name ?? 'Unknown' }}
@@ -42,6 +53,12 @@
             <td>
                 <div class="btn-group">
                     <a href="{{ route('complaints.show', $complaint) }}" class="btn btn-sm btn-info me-1">View</a>
+                    @auth
+                    @if((auth()->user()->isManager() || auth()->user()->isVM()) && $complaint->status->name != 'closed' && $complaint->status->name != 'completed')
+                    <a href="{{ route('complaints.edit', $complaint) }}" class="btn btn-sm btn-primary me-1">Edit</a>
+                    @endif
+                    @endauth
+                    
                     @auth
                     @if(auth()->user()->isManager())
                     @if($complaint->status->name != 'completed' && $complaint->status->name != 'closed')

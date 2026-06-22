@@ -7,6 +7,7 @@ use App\Models\NetworkType;
 use App\Models\Section;
 use App\Models\Status;
 use App\Models\Vertical;
+use App\Models\SubCategory;
 use Illuminate\Support\Str;
 
 class MastersController extends Controller
@@ -20,7 +21,8 @@ class MastersController extends Controller
         ->get();
     
         $verticals = \App\Models\Vertical::orderBy('name')->get();
-        return view('masters.index', compact('networkTypes', 'sections', 'statuses', 'verticals'));
+        $subCategories = \App\Models\SubCategory::with('vertical')->orderBy('name')->get();
+        return view('masters.index', compact('networkTypes', 'sections', 'statuses', 'verticals', 'subCategories'));
     }
 
     public function storeNetworkType(Request $request)
@@ -180,6 +182,58 @@ class MastersController extends Controller
             return redirect()->route('masters.index')->with('success', 'Vertical deleted successfully.');
         } catch (\Exception $e) {
             return redirect()->route('masters.index')->with('error', 'Vertical delete failed: ' . $e->getMessage());
+        }
+    }
+
+    public function storeSubCategory(Request $request)
+    {
+        try {
+            $request->validate([
+                'vertical_id' => 'required|exists:verticals,id',
+                'name' => 'required|string|max:255',
+                'short_form' => 'nullable|string|max:10',
+            ]);
+
+            SubCategory::create([
+                'vertical_id' => $request->vertical_id,
+                'name' => $request->name,
+                'short_form' => $request->short_form ? strtoupper($request->short_form) : null,
+            ]);
+
+            return redirect()->route('masters.index')->with('success', 'Sub Category added successfully.');
+        } catch (\Exception $e) {
+            return redirect()->route('masters.index')->with('error', 'Sub Category add failed: ' . $e->getMessage());
+        }
+    }
+
+    public function updateSubCategory(Request $request, SubCategory $subCategory)
+    {
+        try {
+            $request->validate([
+                'vertical_id' => 'required|exists:verticals,id',
+                'name' => 'required|string|max:255',
+                'short_form' => 'nullable|string|max:10',
+            ]);
+
+            $subCategory->update([
+                'vertical_id' => $request->vertical_id,
+                'name' => $request->name,
+                'short_form' => $request->short_form ? strtoupper($request->short_form) : null,
+            ]);
+
+            return redirect()->route('masters.index')->with('success', 'Sub Category updated successfully.');
+        } catch (\Exception $e) {
+            return redirect()->route('masters.index')->with('error', 'Sub Category update failed: ' . $e->getMessage());
+        }
+    }
+
+    public function destroySubCategory(SubCategory $subCategory)
+    {
+        try {
+            $subCategory->delete();
+            return redirect()->route('masters.index')->with('success', 'Sub Category deleted successfully.');
+        } catch (\Exception $e) {
+            return redirect()->route('masters.index')->with('error', 'Sub Category delete failed: ' . $e->getMessage());
         }
     }
 

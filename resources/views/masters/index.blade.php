@@ -23,7 +23,10 @@
             <button class="nav-link" id="statuses-tab" data-bs-toggle="tab" data-bs-target="#statuses" type="button" role="tab">Status</button>
         </li>
         <li class="nav-item" role="presentation">
-            <button class="nav-link" id="verticals-tab" data-bs-toggle="tab" data-bs-target="#verticals" type="button" role="tab">Verticals</button>
+            <button class="nav-link" id="verticals-tab" data-bs-toggle="tab" data-bs-target="#verticals" type="button" role="tab">Category</button>
+        </li>
+        <li class="nav-item" role="presentation">
+            <button class="nav-link" id="sub-categories-tab" data-bs-toggle="tab" data-bs-target="#sub-categories" type="button" role="tab">Sub Category</button>
         </li>
     </ul>
     <div class="tab-content" id="masterTabsContent">
@@ -306,7 +309,7 @@
         <div class="tab-pane fade" id="verticals" role="tabpanel">
             <div class="card mb-4 shadow rounded-4 border-0">
                 <div class="card-header d-flex justify-content-between align-items-center bg-warning text-dark rounded-top-4">
-                    <h5 class="mb-0 fw-bold"><i class="fas fa-building me-2"></i>Verticals</h5>
+                    <h5 class="mb-0 fw-bold"><i class="fas fa-building me-2"></i>Category</h5>
                     <button class="btn btn-light btn-sm fw-semibold px-3 py-1" data-bs-toggle="modal" data-bs-target="#addVerticalModal"><i class="fas fa-plus"></i> </button>
                 </div>
                 <div class="card-body p-0">
@@ -345,7 +348,7 @@
                                             @csrf
                                             @method('PUT')
                                             <div class="modal-header bg-warning text-dark rounded-top-4">
-                                                <h5 class="modal-title"><i class="fas fa-pen me-2"></i>Edit Vertical</h5>
+                                                <h5 class="modal-title"><i class="fas fa-pen me-2"></i>Edit Category</h5>
                                                 <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
                                             </div>
                                             <div class="modal-body">
@@ -361,7 +364,7 @@
                                                 <div class="form-check mb-3">
                                                     <input class="form-check-input" type="checkbox" name="send_email" id="send_email_{{ $vertical->id }}" value="1" {{ ($vertical->send_email ?? true) ? 'checked' : '' }}>
                                                     <label class="form-check-label" for="send_email_{{ $vertical->id }}">
-                                                        Send email notifications for this vertical?
+                                                        Send email notifications for this category?
                                                     </label>
                                                 </div>
                                             </div>
@@ -381,7 +384,7 @@
                                             @csrf
                                             @method('DELETE')
                                             <div class="modal-header bg-danger text-white rounded-top-4">
-                                                <h5 class="modal-title"><i class="fas fa-exclamation-triangle me-2"></i>Delete Vertical</h5>
+                                                <h5 class="modal-title"><i class="fas fa-exclamation-triangle me-2"></i>Delete Category</h5>
                                                 <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
                                             </div>
                                             <div class="modal-body">
@@ -397,7 +400,106 @@
                             </div>
                             @empty
                             <tr>
-                                <td colspan="4" class="text-center text-muted">No Verticals found.</td>
+                                <td colspan="4" class="text-center text-muted">No Category found.</td>
+                            </tr>
+                            @endforelse
+                        </tbody>
+                    </table>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <!-- Sub Category -->
+        <div class="tab-pane fade" id="sub-categories" role="tabpanel">
+            <div class="card mb-4 shadow rounded-4 border-0">
+                <div class="card-header d-flex justify-content-between align-items-center bg-purple text-white rounded-top-4" style="background-color: #6f42c1;">
+                    <h5 class="mb-0 fw-bold"><i class="fas fa-sitemap me-2"></i>Sub Category</h5>
+                    <button class="btn btn-light btn-sm fw-semibold px-3 py-1" data-bs-toggle="modal" data-bs-target="#addSubCategoryModal"><i class="fas fa-plus"></i></button>
+                </div>
+                <div class="card-body p-0">
+                    <div class="table-responsive">
+                    <table class="table table-hover align-middle mb-0">
+                        <thead class="table-light">
+                            <tr>
+                                <th class="ps-4">Main Category</th>
+                                <th>Sub Category Name</th>
+                                <th>Short Form</th>
+                                <th class="text-end pe-4">Actions</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            @forelse($subCategories as $subCategory)
+                            <tr>
+                                <td class="ps-4"><span class="badge bg-info text-dark">{{ $subCategory->vertical->name ?? 'N/A' }}</span></td>
+                                <td>{{ $subCategory->name }}</td>
+                                <td><span class="badge bg-secondary">{{ $subCategory->short_form ?? '-' }}</span></td>
+                                <td class="text-end pe-4">
+                                    <button class="btn btn-outline-purple btn-sm me-1" style="color: #6f42c1; border-color: #6f42c1;" data-bs-toggle="tooltip" title="Edit" data-bs-target="#editSubCategoryModal{{ $subCategory->id }}" onclick="$('#editSubCategoryModal{{ $subCategory->id }}').modal('show')"><i class="fas fa-pen"></i></button>
+                                    <button class="btn btn-outline-danger btn-sm" data-bs-toggle="tooltip" title="Delete" data-bs-toggle="modal" data-bs-target="#deleteSubCategoryModal{{ $subCategory->id }}" onclick="$('#deleteSubCategoryModal{{ $subCategory->id }}').modal('show')"><i class="fas fa-trash"></i></button>
+                                </td>
+                            </tr>
+
+                            <div class="modal fade" id="editSubCategoryModal{{ $subCategory->id }}" tabindex="-1">
+                                <div class="modal-dialog">
+                                    <div class="modal-content rounded-4">
+                                        <form action="{{ route('masters.sub-categories.update', $subCategory) }}" method="POST">
+                                            @csrf
+                                            @method('PUT')
+                                            <div class="modal-header bg-purple text-white rounded-top-4" style="background-color: #6f42c1;">
+                                                <h5 class="modal-title"><i class="fas fa-pen me-2"></i>Edit Sub Category</h5>
+                                                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+                                            </div>
+                                            <div class="modal-body text-start">
+                                                <div class="mb-3">
+                                                    <label class="form-label">Main Category</label>
+                                                    <select name="vertical_id" class="form-select" required>
+                                                        @foreach($verticals as $vertical)
+                                                            <option value="{{ $vertical->id }}" {{ $subCategory->vertical_id == $vertical->id ? 'selected' : '' }}>{{ $vertical->name }}</option>
+                                                        @endforeach
+                                                    </select>
+                                                </div>
+                                                <div class="mb-3">
+                                                    <label class="form-label">Sub Category Name</label>
+                                                    <input type="text" name="name" class="form-control" value="{{ $subCategory->name }}" required>
+                                                </div>
+                                                <div class="mb-3">
+                                                    <label class="form-label">Short Form</label>
+                                                    <input type="text" name="short_form" class="form-control" value="{{ $subCategory->short_form ?? '' }}" maxlength="10">
+                                                </div>
+                                            </div>
+                                            <div class="modal-footer">
+                                                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                                                <button type="submit" class="btn text-white" style="background-color: #6f42c1;">Update</button>
+                                            </div>
+                                        </form>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <div class="modal fade" id="deleteSubCategoryModal{{ $subCategory->id }}" tabindex="-1">
+                                <div class="modal-dialog modal-dialog-centered">
+                                    <div class="modal-content rounded-4">
+                                        <form action="{{ route('masters.sub-categories.destroy', $subCategory) }}" method="POST">
+                                            @csrf
+                                            @method('DELETE')
+                                            <div class="modal-header bg-danger text-white rounded-top-4">
+                                                <h5 class="modal-title"><i class="fas fa-exclamation-triangle me-2"></i>Delete Sub Category</h5>
+                                                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+                                            </div>
+                                            <div class="modal-body text-start">
+                                                <p class="mb-0">Are you sure you want to delete sub category <strong>{{ $subCategory->name }}</strong>?</p>
+                                            </div>
+                                            <div class="modal-footer">
+                                                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                                                <button type="submit" class="btn btn-danger">Yes, Delete</button>
+                                            </div>
+                                        </form>
+                                    </div>
+                                </div>
+                            </div>
+                            @empty
+                            <tr>
+                                <td colspan="4" class="text-center text-muted py-3">No Sub Categories found.</td>
                             </tr>
                             @endforelse
                         </tbody>
@@ -577,7 +679,7 @@
                 <form action="{{ route('masters.verticals.store') }}" method="POST">
                     @csrf
                     <div class="modal-header">
-                        <h5 class="modal-title">Add Vertical</h5>
+                        <h5 class="modal-title">Add Category</h5>
                         <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
                     </div>
                     <div class="modal-body">
@@ -593,7 +695,7 @@
                         <div class="form-check mb-3">
                             <input class="form-check-input" type="checkbox" name="send_email" id="send_email_new" value="1" checked>
                             <label class="form-check-label" for="send_email_new">
-                                Send email notifications for this vertical?
+                                Send email notifications for this category?
                             </label>
                         </div>
                     </div>
@@ -605,35 +707,38 @@
             </div>
         </div>
     </div>
-    <div class="modal fade" id="editVerticalModal" tabindex="-1">
+    <!-- Sub Category -->
+    <div class="modal fade" id="addSubCategoryModal" tabindex="-1">
         <div class="modal-dialog">
-            <div class="modal-content">
-                  <form action="{{ route('masters.verticals.update', $vertical) }}"  method="POST">
+            <div class="modal-content rounded-4">
+                <form action="{{ route('masters.sub-categories.store') }}" method="POST">
                     @csrf
-                    @method('PUT')
-                    <div class="modal-header">
-                        <h5 class="modal-title">Edit Vertical</h5>
-                        <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                    <div class="modal-header bg-purple text-white rounded-top-4" style="background-color: #6f42c1;">
+                        <h5 class="modal-title"><i class="fas fa-plus me-2"></i>Add Sub Category</h5>
+                        <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
                     </div>
                     <div class="modal-body">
                         <div class="mb-3">
-                            <label class="form-label">Name</label>
-                            <input type="text" class="form-control tom-select" required>
+                            <label class="form-label">Select Main Category</label>
+                            <select name="vertical_id" class="form-select" required>
+                                <option value="">-- Choose Category --</option>
+                                @foreach($verticals as $vertical)
+                                    <option value="{{ $vertical->id }}">{{ $vertical->name }}</option>
+                                @endforeach
+                            </select>
+                        </div>
+                        <div class="mb-3">
+                            <label class="form-label">Sub Category Name</label>
+                            <input type="text" name="name" class="form-control" required placeholder="e.g., Phishing, Printer Issue">
                         </div>
                         <div class="mb-3">
                             <label class="form-label">Short Form</label>
-                            <input type="text" class="form-control" placeholder="e.g., CS for Cyber Security" maxlength="10">
-                        </div>
-                        <div class="form-check mb-3">
-                            <input class="form-check-input" type="checkbox" name="send_email" id="send_email_edit" value="1" checked>
-                            <label class="form-check-label" for="send_email_edit">
-                                Send email notifications for this vertical?
-                            </label>
+                            <input type="text" name="short_form" class="form-control" placeholder="e.g., PH" maxlength="10">
                         </div>
                     </div>
                     <div class="modal-footer">
                         <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
-                        <button type="submit" class="btn btn-primary">Update</button>
+                        <button type="submit" class="btn text-white" style="background-color: #6f42c1;">Save</button>
                     </div>
                 </form>
             </div>

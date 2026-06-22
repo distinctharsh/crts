@@ -104,7 +104,7 @@
                             @enderror
                         </div>
                         <div class="col-md-4">
-                            <label for="vertical_ids" class="form-label">Verticals <span class="text-danger">*</span></label>
+                            <label for="vertical_ids" class="form-label">Category <span class="text-danger">*</span></label>
                             <select class="form-select tom-select @error('vertical_ids') is-invalid @enderror"
                                 id="vertical_ids" name="vertical_ids[]"  required>
                                 @php
@@ -120,7 +120,7 @@
                                     }
                                 @endphp
                                 @foreach($regularVerticals as $vertical)
-                                <option value="">Select Vertical</option>
+                                <option value="">Select Category</option>
                                 <option value="{{ $vertical->id }}" {{ in_array($vertical->id, old('vertical_ids', isset($complaint) ? $complaint->verticals->pluck('id')->toArray() : [])) ? 'selected' : '' }}>
                                     {{ $vertical->name }}
                                 </option>
@@ -140,6 +140,31 @@
 
                     <!-- Priority Field - Checkbox instead of Radio -->
                     <div class="row mb-3">
+                        <div class="col-md-4" id="subCategoryWrapper" style="display:none;">
+                            <label for="sub_category_id" class="form-label">Sub Category <span class="text-danger">*</span></label>
+                            <select class="form-select" id="sub_category_id" name="sub_category_id">
+                                <option value="">Select Sub Category</option>
+                            </select>
+                        </div>
+
+                        @auth 
+                        @if(!auth()->user()->isNFO())
+                        <div class="col-md-4 mb-3" id="assignToWrapper" style="display:none;">
+                            <label for="assigned_to" class="form-label">
+                                Assign To
+                            </label>
+
+                            <select id="assigned_to"
+                                    name="assigned_to"
+                                    class="form-select">
+                                <option value="">-- Leave Unassigned --</option>
+                            </select>
+                        </div>
+                        @endif
+                        @endauth
+
+
+
                         <div class="col-md-4">
                             <label class="form-label">Priority <span class="text-danger">*</span></label>
                             <div class="d-flex gap-3">
@@ -176,21 +201,7 @@
                         </div>
 
 
-                        @auth 
-                        @if(!auth()->user()->isNFO())
-                        <div class="col-md-4 mb-3" id="assignToWrapper" style="display:none;">
-                            <label for="assigned_to" class="form-label">
-                                Assign To
-                            </label>
-
-                            <select id="assigned_to"
-                                    name="assigned_to"
-                                    class="form-select">
-                                <option value="">-- Leave Unassigned --</option>
-                            </select>
-                        </div>
-                        @endif
-                        @endauth
+                        
 
                         <div class="col-md-12">
                             <label for="description" class="form-label">Ticket Description <span class="text-danger">*</span></label>
@@ -315,6 +326,76 @@
             } catch (error) {
                 console.error('Failed to load assignable users:', error);
                 assignWrapper.style.display = 'none';
+            }
+        }
+
+        // Sub Category
+        const subCategoryWrapper = document.getElementById('subCategoryWrapper');
+        const subCategorySelect = document.getElementById('sub_category_id');
+
+        const subCategoryTom = subCategorySelect
+            ? new TomSelect(subCategorySelect, {
+                valueField: 'id',
+                labelField: 'name',
+                searchField: 'name',
+                persist: false
+            })
+            : null;
+
+        async function loadSubCategories(verticalId, selectedSubCategoryId = null) {
+            if (!subCategoryTom || !subCategoryWrapper) return;
+            
+            subCategoryTom.clear();
+            subCategoryTom.clearOptions();
+            
+            if (!verticalId) {
+                subCategoryWrapper.style.display = 'none';
+                subCategorySelect.removeAttribute('required');
+                return;
+            }
+            
+            try {
+                const response = await fetch(`/api/sub-categories?vertical_id=${verticalId}`);
+                const subCategories = await response.json();
+                
+                if (!subCategories.length) {
+                    subCategoryWrapper.style.display = 'none';
+                    subCategorySelect.removeAttribute('required');
+                    return;
+                }
+                
+                subCategoryWrapper.style.display = 'block';
+                subCategorySelect.setAttribute('required', 'required');
+                
+                subCategories.forEach(subCat => {
+                    subCategoryTom.addOption({
+                        id: subCat.id,
+                        name: subCat.name
+                    });
+                });
+                
+                if (selectedSubCategoryId) {
+                    subCategoryTom.setValue(selectedSubCategoryId, true);
+                }
+                
+                subCategoryTom.refreshOptions(false);
+            } catch (error) {
+                console.error('Failed to load sub categories:', error);
+                subCategoryWrapper.style.display = 'none';
+            }
+        }
+
+        const selectedSubCategory = @json(old('sub_category_id', isset($complaint) ? $complaint->sub_category_id : null));
+
+        if (verticalTom) {
+            verticalTom.on('change', value => {
+                loadAssignableUsers(value);
+                loadSubCategories(value);
+            });
+            
+            if (selectedVertical) {
+                loadAssignableUsers(selectedVertical, selectedUser);
+                loadSubCategories(selectedVertical, selectedSubCategory);
             }
         }
 

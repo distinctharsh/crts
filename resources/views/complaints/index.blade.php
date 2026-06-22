@@ -67,9 +67,9 @@ $breadcrumbs = [
                                                 </select>
                                             </div>
                                             <div class="col-md-2">
-                                                <label class="form-label mb-1">Verticals</label>
+                                                <label class="form-label mb-1">Category</label>
                                                 <select name="vertical[]" class="form-select tom-select" multiple>
-                                                    <option value="">All Verticals</option>
+                                                    <option value="">All Categories</option>
                                                     @foreach($verticals as $vertical)
                                                     <option value="{{ $vertical->id }}" {{ in_array($vertical->id, (array) request('vertical')) ? 'selected' : '' }}>
                                                         {{ $vertical->name }}

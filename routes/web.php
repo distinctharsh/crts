@@ -38,6 +38,8 @@ Route::get('/complaints/live-data', [ComplaintController::class, 'liveData'])->n
 Route::get('/complaints/create', [ComplaintController::class, 'create'])->name('complaints.create');
 Route::post('/complaints', [ComplaintController::class, 'store'])->name('complaints.store');
 
+
+
 // History route is public but protected by IP
 Route::get('/complaints/history', [ComplaintController::class, 'history'])
     ->name('complaints.history')
@@ -80,6 +82,7 @@ Route::middleware(['auth', 'force.password.change'])->group(function () {
 });
 Route::get('/complaints/{complaint}', [ComplaintController::class, 'show'])->name('complaints.show');
 Route::get('/api/complaints/lookup', [App\Http\Controllers\ComplaintController::class, 'lookup'])->name('api.complaints.lookup');
+Route::get('/api/sub-categories', [ComplaintController::class, 'getSubCategories'])->name('api.sub-categories');
 Route::get('/send-hod-report', [ComplaintController::class, 'sendHODReport'])->name('send-hod-report');
 Route::get('/complaints/track', [App\Http\Controllers\ComplaintController::class, 'track'])->name('complaints.track');
 
@@ -119,6 +122,11 @@ Route::middleware(['auth', 'can:isManager'])->group(function () {
     Route::post('/masters/verticals', [MastersController::class, 'storeVertical'])->name('masters.verticals.store');
     Route::put('/masters/verticals/{vertical}', [MastersController::class, 'updateVertical'])->name('masters.verticals.update');
     Route::delete('/masters/verticals/{vertical}', [MastersController::class, 'destroyVertical'])->name('masters.verticals.destroy');
+
+    Route::post('/masters/sub-categories', [MastersController::class, 'storeSubCategory'])->name('masters.sub-categories.store');
+    Route::put('/masters/sub-categories/{subCategory}', [MastersController::class, 'updateSubCategory'])->name('masters.sub-categories.update');
+    Route::delete('/masters/sub-categories/{subCategory}', [MastersController::class, 'destroySubCategory'])->name('masters.sub-categories.destroy');
+
     Route::get('/audit-log', [AuditLogController::class, 'index'])->name('audit-log.index');
 
     Route::get('/usage-report', [UsageReportController::class, 'index'])->name('usage-report.index');

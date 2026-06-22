@@ -92,7 +92,7 @@
         </tr>
 
         <tr style="background:#fafafa;">
-            <td style="font-weight:bold;">Verticals</td>
+            <td style="font-weight:bold;">Category</td>
             <td>{{ $complaint->verticals->pluck('name')->map(fn($name) => ucfirst($name))->implode(', ') ?? '-' }}</td>
 
             <td style="font-weight:bold;">Section</td>

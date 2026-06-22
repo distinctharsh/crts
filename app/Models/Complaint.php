@@ -26,6 +26,7 @@ class Complaint extends Model
         'network_type_id',
         'section_id',
         'room_number',
+        'sub_category_id',
     ];
 
     protected $casts = [
@@ -68,7 +69,9 @@ class Complaint extends Model
 
     public function verticals()
     {
-        return $this->belongsToMany(Vertical::class, 'complaint_vertical');
+        return $this->belongsToMany(Vertical::class, 'complaint_vertical')
+                ->withPivot('sub_category_id')
+                ->withTimestamps();
     }
 
     public function section()
@@ -174,5 +177,13 @@ class Complaint extends Model
         return \Spatie\Activitylog\LogOptions::defaults()
             ->logAll()
             ->logOnlyDirty();
+    }
+
+    public function subCategoryPivot()
+    {
+        $pivotSubCatId = $this->verticals->first()?->pivot?->sub_category_id;
+        return $this->belongsTo(SubCategory::class, 'sub_category_id')->withDefault([
+            'name' => \App\Models\SubCategory::find($pivotSubCatId)?->name ?? 'N/A'
+        ]);
     }
 }

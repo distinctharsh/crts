@@ -128,9 +128,20 @@ $breadcrumbs = [
                             <p class="mb-1 fw-semibold"><i class="bi bi-hdd-network"></i> Network Type:</p>
                             <p class="mb-3 ps-3">{{ ucfirst($complaint->networkType->name ?? 'N/A') }}</p>
 
-                            <p class="mb-1 fw-semibold"><i class="bi bi-layers"></i> Verticals:</p>
+                            <p class="mb-1 fw-semibold"><i class="bi bi-layers"></i> Category:</p>
                             <p class="mb-3 ps-3">{{ $complaint->verticals->pluck('name')->map(fn($name) => ucfirst($name))->implode(', ') ?? 'N/A' }}</p>
 
+                            <p class="mb-1 fw-semibold"><i class="bi bi-tag"></i> Sub Category:</p>
+                            <p class="mb-3 ps-3 text-secondary">
+                                @if($complaint->verticals->first() && $complaint->verticals->first()->pivot->sub_category_id)
+                                    @php
+                                        $subCategoryData = \App\Models\SubCategory::find($complaint->verticals->first()->pivot->sub_category_id);
+                                    @endphp
+                                    {{ $subCategoryData->sub_category_name ?? $subCategoryData->name ?? 'N/A' }}
+                                @else
+                                    N/A
+                                @endif
+                            </p>
 
                         </div>
                         <div class="col-md-6">

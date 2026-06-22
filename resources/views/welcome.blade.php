@@ -536,7 +536,7 @@
                                                     <div class="fw-semibold text-primary mb-2">Ticket Info</div>
                                                     <div><span class="fw-semibold">Issue:</span> ${data.complaint.network}</div>
                                                     <div><span class="fw-semibold">Section:</span> ${data.complaint.section}</div>
-                                                    <div><span class="fw-semibold">Verticals:</span> ${data.complaint.verticals}</div>
+                                                    <div><span class="fw-semibold">Category:</span> ${data.complaint.verticals}</div>
                                                     <div><span class="fw-semibold">Assigned To:</span> ${data.complaint.assigned_to}</div>
                                                 </div>
                                             </div>
@@ -605,23 +605,12 @@
                 });
             }
 
-            // Fallback for login button if Bootstrap modal fails
-            const loginBtn = document.querySelector('[data-bs-target="#loginModal"]');
-            if (loginBtn) {
-                loginBtn.addEventListener('click', function(e) {
-                    e.preventDefault();
-                    const loginModal = document.getElementById('loginModal');
-                    if (loginModal && typeof bootstrap !== 'undefined' && bootstrap.Modal) {
-                        const modal = new bootstrap.Modal(loginModal);
-                        modal.show();
-                    } else if (loginModal) {
-                        // Fallback: manually show modal if Bootstrap fails
-                        loginModal.classList.add('show');
-                        loginModal.style.display = 'block';
-                        document.body.classList.add('modal-open');
-                        const backdrop = document.createElement('div');
-                        backdrop.className = 'modal-backdrop fade show';
-                        document.body.appendChild(backdrop);
+            const loginModalElement = document.getElementById('loginModal');
+            if (loginModalElement) {
+                loginModalElement.addEventListener('hidden.bs.modal', function() {
+                    const backdrop = document.querySelector('.modal-backdrop');
+                    if (backdrop) {
+                        backdrop.remove();
                     }
                 });
             }

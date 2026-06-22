@@ -32,7 +32,7 @@ $breadcrumbs = [
                             <th>Full Name</th>
                             <th>Username</th>
                             <th>Role</th>
-                            <th>Verticals</th>
+                            <th>Category</th>
                             <th>Status</th>
                             <th>Actions</th>
                         </tr>
@@ -206,7 +206,7 @@ $breadcrumbs = [
                             @enderror
                         </div>
                         <div class="col-md-6" id="verticalBox" style="display: {{ (old('role_id') && (App\Models\Role::find(old('role_id'))->slug == 'vm' || App\Models\Role::find(old('role_id'))->slug == 'nfo')) ? 'block' : 'none' }};">
-                            <label for="vertical_ids" class="form-label">Verticals</label>
+                            <label for="vertical_ids" class="form-label">Category</label>
                             <div class="input-group">
                                 <span class="input-group-text"><i class="bi bi-diagram-3"></i></span>
                                 <select name="vertical_ids[]" id="vertical_ids" class="form-select tom-select" multiple>
@@ -412,7 +412,7 @@ $breadcrumbs = [
                 create: false,
                 persist: false,
                 maxItems: null,
-                placeholder: 'Select vertical(s)'
+                placeholder: 'Select category(s)'
             });
         }
     });
