@@ -386,25 +386,43 @@
         }
 
         const selectedSubCategory = @json(old('sub_category_id', isset($complaint) ? $complaint->sub_category_id : null));
+        const statusSelect = document.getElementById('status_id');
+        const assignToSelect = document.getElementById('assigned_to');
+        const ASSIGNED_STATUS_ID = {{ $statuses->firstWhere('name', 'assigned')?->id ?? 0 }};
+        const UNASSIGNED_STATUS_ID = {{ $statuses->firstWhere('name', 'unassigned')?->id ?? 0 }};
 
-        if (verticalTom) {
-            verticalTom.on('change', value => {
-                loadAssignableUsers(value);
-                loadSubCategories(value);
+        if (assignToSelect) {
+            assignToSelect.addEventListener('change', function () {
+                if (!statusSelect) return;
+                if (this.value) {
+                    statusSelect.tomselect
+                        ? statusSelect.tomselect.setValue(ASSIGNED_STATUS_ID)
+                        : statusSelect.value = ASSIGNED_STATUS_ID;
+                } else {
+                    statusSelect.tomselect
+                        ? statusSelect.tomselect.setValue(UNASSIGNED_STATUS_ID)
+                        : statusSelect.value = UNASSIGNED_STATUS_ID;
+                }
             });
-            
-            if (selectedVertical) {
-                loadAssignableUsers(selectedVertical, selectedUser);
-                loadSubCategories(selectedVertical, selectedSubCategory);
-            }
         }
 
         if (verticalTom) {
             verticalTom.on('change', value => {
                 loadAssignableUsers(value);
+                loadSubCategories(value);
+                if (assignTom) {
+                    assignTom.clear(true);
+                }
+                if (statusSelect) {
+                    statusSelect.tomselect
+                        ? statusSelect.tomselect.setValue(UNASSIGNED_STATUS_ID)
+                        : statusSelect.value = UNASSIGNED_STATUS_ID;
+                }
             });
+
             if (selectedVertical) {
                 loadAssignableUsers(selectedVertical, selectedUser);
+                loadSubCategories(selectedVertical, selectedSubCategory);
             }
         }
 
