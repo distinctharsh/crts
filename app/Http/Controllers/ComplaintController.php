@@ -167,9 +167,17 @@ class ComplaintController extends Controller
 
             $date = Carbon::now()->format('Ymd');
             
-            $lastVerticalId = end($validated['vertical_ids']); 
-            $vertical = $lastVerticalId ? Vertical::find($lastVerticalId) : null;
-            $prefix = $vertical && $vertical->short_form ? strtoupper($vertical->short_form) : 'CMP';
+            $verticalsChain = Vertical::whereIn('id', $validated['vertical_ids'])
+                ->orderByRaw('FIELD(id, ' . implode(',', $validated['vertical_ids']) . ')')
+                ->get();
+
+            $prefixParts = [];
+            foreach ($verticalsChain as $v) {
+                if ($v->short_form) {
+                    $prefixParts[] = strtoupper($v->short_form);
+                }
+            }
+            $prefix = !empty($prefixParts) ? implode('-', $prefixParts) : 'CMP';
             
             $complaintsToday = Complaint::whereDate('created_at', Carbon::today())->count();
             $referenceNumber = $prefix . '-' . $date . str_pad($complaintsToday + 1, 3, '0', STR_PAD_LEFT);
@@ -232,59 +240,42 @@ class ComplaintController extends Controller
             $this->authorize('update', $complaint);
 
             $networkTypes = NetworkType::all();
-            $verticals = Vertical::all();
+            $verticals = Vertical::whereNull('parent_id')->get();
             $sections = Section::all();
             $statuses = Status::query()->ordered()->get();
-            $intercoms = Complaint::whereNotNull('intercom')
-                ->distinct()
-                ->pluck('intercom');
-
+            $intercoms = Complaint::whereNotNull('intercom')->distinct()->pluck('intercom');
             $complaint->load(['client', 'assignedTo', 'status', 'verticals']);
+            $savedVerticals = $complaint->verticals->pluck('id')->toArray();
 
-            $complaint->sub_category_id = $complaint->verticals->first() && $complaint->verticals->first()->pivot 
-                ? $complaint->verticals->first()->pivot->sub_category_id 
-                : null;
-
-            return view('complaints.create', compact('complaint', 'networkTypes', 'verticals', 'sections', 'statuses', 'intercoms'));
+            return view('complaints.create', compact('complaint', 'networkTypes', 'verticals', 'sections', 'statuses', 'intercoms', 'savedVerticals'));
         } catch (\Exception $e) {
             \Log::error('Complaint edit error: ' . $e->getMessage());
-            return redirect()->back()->with('error', 'Something went wrong while editing complaint. Please try again.');
+            return redirect()->back()->with('error', 'Something went wrong while editing complaint.');
         }
     }
-
-
 
     public function update(Request $request, Complaint $complaint)
     {
         try {
             $this->authorize('update', $complaint);
-
-            // If this is a close request (only status_id and description are present)
             if ($request->has('status_id') && $request->has('description') && count($request->all()) <= 5) {
                 $validated = $request->validate([
                     'status_id' => 'required|exists:statuses,id',
                     'description' => 'nullable|string',
                 ]);
-                if (empty($validated['description'])) {
-                    $validated['description'] = 'checked';
-                }
-                $complaint->update([
-                    'status_id' => $validated['status_id'],
-                ]);
+                
+                $complaint->update(['status_id' => $validated['status_id']]);
 
-                // Create action record
                 ComplaintAction::create([
                     'complaint_id' => $complaint->id,
-                    'user_id' => Auth::user()->id ?? 0,
+                    'user_id' => Auth::id() ?? 0,
                     'status_id' => $validated['status_id'],
-                    'description' => $validated['description'],
+                    'description' => $validated['description'] ?? 'checked',
                 ]);
 
-                return redirect()->route('complaints.index')
-                    ->with('success', 'Complaint closed successfully.');
+                return redirect()->route('complaints.index')->with('success', 'Complaint closed successfully.');
             }
 
-            // Default: full update (edit page)
             $validated = $request->validate([
                 'network_type_id' => 'required|exists:network_types,id',
                 'description' => 'required|string',
@@ -293,136 +284,96 @@ class ComplaintController extends Controller
                 'user_name' => 'required|string|max:255',
                 'section_id' => 'required|exists:sections,id',
                 'intercom' => 'required|string|max:255',
-                'room_number' => 'required|numeric|min:0|max:999999|digits_between:1,6',
+                'room_number' => 'required|numeric|min:0|max:999999',
                 'priority' => 'nullable|in:high',
                 'status_id' => 'required|exists:statuses,id',
                 'file' => 'nullable|file|max:2048',
-                'delete_file' => 'sometimes|boolean',
+                'delete_file' => 'nullable|boolean',
                 'assigned_to' => 'nullable|exists:users,id',
-                'sub_category_id' => 'required|exists:sub_categories,id',
             ]);
 
-            // Set default priority to 'medium' if 'high' checkbox is not checked
-            $priority = $validated['priority'] ?? 'medium';
-            $validated['priority'] = $priority;
+            $validated['priority'] = $validated['priority'] ?? 'medium';
 
-            // Handle file deletion
-            if ($request->input('delete_file') && $complaint->file_path) {
-                Storage::delete($complaint->file_path);
-                $validated['file_path'] = null;
+            if ($request->boolean('delete_file') && $complaint->file_path) {
+                Storage::disk('public')->delete($complaint->file_path);
+                $complaint->file_path = null;
             }
 
-            // Handle file upload if new file is provided
             if ($request->hasFile('file')) {
-                // Delete old file if exists
                 if ($complaint->file_path) {
-                    Storage::delete($complaint->file_path);
+                    Storage::disk('public')->delete($complaint->file_path);
                 }
-                $validated['file_path'] = $request->file('file')->store('complaint_files', 'public');
+                $complaint->file_path = $request->file('file')->store('complaint_files', 'public');
             }
 
             $oldAssignedTo = $complaint->assigned_to;
-            $oldStatusId   = $complaint->status_id;
+            $oldStatusId = $complaint->status_id;
 
-            if (
-                array_key_exists('assigned_to', $validated)
-                && $validated['assigned_to'] != $oldAssignedTo
-            ) {
-                $validated['assigned_by'] = Auth::user()->id ?? 0;
+            if (array_key_exists('assigned_to', $validated) && $validated['assigned_to'] != $oldAssignedTo) {
+                $complaint->assigned_by = Auth::id() ?? 0;
             }
 
-            // Store vertical ids separately
             $verticalIds = $validated['vertical_ids'];
-            unset($validated['vertical_ids']);
-            $subCategoryId = $validated['sub_category_id'];
-            unset($validated['sub_category_id']);
+            
+            $oldVerticals = $complaint->verticals->pluck('name')->toArray();
 
-            // Old verticals
-            $oldVerticals = $complaint->verticals()
-                ->pluck('name')
-                ->toArray();
-
-            // Update complaint fields
-            $complaint->update($validated);
+            $complaint->user_name = $validated['user_name'];
+            $complaint->network_type_id = $validated['network_type_id'];
+            $complaint->description = $validated['description'];
+            $complaint->section_id = $validated['section_id'];
+            $complaint->intercom = $validated['intercom'];
+            $complaint->room_number = $validated['room_number'];
+            $complaint->priority = $validated['priority'];
+            $complaint->status_id = $validated['status_id'];
+            if(isset($validated['assigned_to'])) {
+                $complaint->assigned_to = $validated['assigned_to'];
+            }
+            $complaint->save();
 
             $pivotData = [];
-            foreach ($verticalIds as $verticalId) {
+            $lastIndex = count($verticalIds) - 1;
+            foreach ($verticalIds as $index => $verticalId) {
                 $pivotData[$verticalId] = [
-                    'sub_category_id' => $subCategoryId
+                    'sub_category_id' => $verticalIds[$lastIndex]
                 ];
             }
-
             $complaint->verticals()->sync($pivotData);
 
-            // Force refresh relation
             $complaint->load('verticals');
-
-            // Model changes
-            $changes = $complaint->getChanges();
-
-            // Add manual vertical changes
-            $newVerticals = $complaint->verticals
-                ->pluck('name')
-                ->toArray();
-
-            if ($oldVerticals != $newVerticals) {
-                $changes['verticals'] = [
-                    'old' => implode(', ', $oldVerticals),
-                    'new' => implode(', ', $newVerticals)
-                ];
-            }
+            $newVerticals = $complaint->verticals->pluck('name')->toArray();
 
             $changes = [];
-            // Status Changed
-            if ($oldStatusId != $validated['status_id']) {
-                $changes['status'] = [
-                    'old' => $oldStatusId,
-                    'new' => $validated['status_id']
-                ];
+            if ($oldStatusId != $complaint->status_id) {
+                $changes['status'] = ['old' => $oldStatusId, 'new' => $complaint->status_id];
             }
-
-            // Assignment Changed
-            if ($oldAssignedTo != ($validated['assigned_to'] ?? null)) {
-                $changes['assigned_to'] = [
-                    'old' => $oldAssignedTo,
-                    'new' => $validated['assigned_to'] ?? null
-                ];
+            if ($oldAssignedTo != $complaint->assigned_to) {
+                $changes['assigned_to'] = ['old' => $oldAssignedTo, 'new' => $complaint->assigned_to];
             }
-
-            $newVerticals = $complaint->verticals
-                ->pluck('name')
-                ->toArray();
-
             if ($oldVerticals != $newVerticals) {
-                $changes['verticals'] = [
-                    'old' => implode(', ', $oldVerticals),
-                    'new' => implode(', ', $newVerticals)
-                ];
+                $changes['verticals'] = ['old' => implode(', ', $oldVerticals), 'new' => implode(', ', $newVerticals)];
             }
 
             ComplaintAction::create([
                 'complaint_id' => $complaint->id,
-                'user_id' => Auth::user()->id ?? 0,
-                'status_id' => $validated['status_id'],
+                'user_id' => Auth::id() ?? 0,
+                'status_id' => $complaint->status_id,
                 'description' => 'Complaint updated',
                 'changes' => json_encode($changes)
             ]);
-            // Send email notification if complaint was assigned
-            if ($oldAssignedTo != $complaint->assigned_to && $complaint->assigned_to ) {
+
+            if ($oldAssignedTo != $complaint->assigned_to && $complaint->assigned_to) {
                 try {
                     $notificationService = new ComplaintNotificationService();
                     $notificationService->sendAssignedComplaintNotifications($complaint);
                 } catch (\Exception $e) {
                     \Log::error('Email notification failed: ' . $e->getMessage());
-                    // Continue with redirect even if email fails
                 }
             }
 
-            return redirect()->route('complaints.index') // or another existing route
-                ->with('success', 'Complaint updated successfully.');
+            return redirect()->route('complaints.index')->with('success', 'Complaint updated successfully.');
         } catch (\Exception $e) {
             \Log::error('Complaint update error: ' . $e->getMessage());
-            return redirect()->back()->with('error', 'Something went wrong while updating complaint. Please try again. (कुछ गलत हो गया, कृपया फिर से कोशिश करें.)');
+            return redirect()->back()->with('error', 'Something went wrong while updating complaint. Please try again.');
         }
     }
 

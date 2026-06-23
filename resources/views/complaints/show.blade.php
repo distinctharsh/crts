@@ -131,18 +131,6 @@ $breadcrumbs = [
                             <p class="mb-1 fw-semibold"><i class="bi bi-layers"></i> Category:</p>
                             <p class="mb-3 ps-3">{{ $complaint->verticals->pluck('name')->map(fn($name) => ucfirst($name))->implode(' - ') ?? 'N/A' }}</p>
 
-                            <p class="mb-1 fw-semibold"><i class="bi bi-tag"></i> Sub Category:</p>
-                            <p class="mb-3 ps-3 text-secondary">
-                                @if($complaint->verticals->first() && $complaint->verticals->first()->pivot->sub_category_id)
-                                    @php
-                                        $subCategoryData = \App\Models\SubCategory::find($complaint->verticals->first()->pivot->sub_category_id);
-                                    @endphp
-                                    {{ $subCategoryData->sub_category_name ?? $subCategoryData->name ?? 'N/A' }}
-                                @else
-                                    N/A
-                                @endif
-                            </p>
-
                         </div>
                         <div class="col-md-6">
                             <p class="mb-1 fw-semibold"><i class="bi bi-geo-alt"></i> Section:</p>
