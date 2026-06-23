@@ -33,7 +33,6 @@
                         @method('PUT')
                     @endif
 
-                    <!-- First Row - User Name and Intercom -->
                     <div class="row mb-3">
                         <div class="col-md-4">
                             <label for="user_name" class="form-label">Name <span class="text-danger">*</span></label>
@@ -55,7 +54,6 @@
                                     </option>
                                 @endforeach
                             </select>
-
                             @error('intercom')
                             <div class="invalid-feedback">{{ $message }}</div>
                             @enderror
@@ -67,13 +65,11 @@
                             @error('room_number')
                             <div class="invalid-feedback">{{ $message }}</div>
                             @enderror
-                            <!-- <small class="text-muted">Max 6 digits</small> -->
                         </div>
                     </div>
 
-                    <!-- Second Row - Network Type and Priority -->
-                    <div class="row mb-3">
-                        <div class="col-md-4">
+                    <div class="row mb-3 align-items-end" id="vertical-chain-container">
+                        <div class="col-md-4 mb-3">
                             <label for="section_id" class="form-label">Section <span class="text-danger">*</span></label>
                             <select class="form-select tom-select @error('section_id') is-invalid @enderror"
                                 id="section_id" name="section_id" required>
@@ -88,7 +84,8 @@
                             <div class="invalid-feedback">{{ $message }}</div>
                             @enderror
                         </div>
-                        <div class="col-md-4">
+
+                        <div class="col-md-4 mb-3">
                             <label for="network_type_id" class="form-label">Issue Type <span class="text-danger">*</span></label>
                             <select class="form-select tom-select @error('network_type_id') is-invalid @enderror"
                                 id="network_type_id" name="network_type_id" required>
@@ -103,69 +100,31 @@
                             <div class="invalid-feedback">{{ $message }}</div>
                             @enderror
                         </div>
-                        <div class="col-md-4">
-                            <label for="vertical_ids" class="form-label">Category <span class="text-danger">*</span></label>
-                            <select class="form-select tom-select @error('vertical_ids') is-invalid @enderror"
-                                id="vertical_ids" name="vertical_ids[]"  required>
-                                @php
-                                    // Separate verticals: those that are not "Other" and the "Other" option
-                                    $otherVertical = null;
-                                    $regularVerticals = [];
-                                    foreach($verticals as $vertical) {
-                                        if(strtolower($vertical->name) === 'other') {
-                                            $otherVertical = $vertical;
-                                        } else {
-                                            $regularVerticals[] = $vertical;
-                                        }
-                                    }
-                                @endphp
-                                @foreach($regularVerticals as $vertical)
-                                <option value="">Select Category</option>
-                                <option value="{{ $vertical->id }}" {{ in_array($vertical->id, old('vertical_ids', isset($complaint) ? $complaint->verticals->pluck('id')->toArray() : [])) ? 'selected' : '' }}>
-                                    {{ $vertical->name }}
-                                </option>
-                                @endforeach
-                                @if($otherVertical)
-                                <option value="{{ $otherVertical->id }}" {{ in_array($otherVertical->id, old('vertical_ids', isset($complaint) ? $complaint->verticals->pluck('id')->toArray() : [])) ? 'selected' : '' }}>
-                                    {{ $otherVertical->name }}
-                                </option>
-                                @endif
-                            </select>
-                            @error('vertical_ids')
-                            <div class="invalid-feedback">{{ $message }}</div>
-                            @enderror
-                            <!-- <small class="text-muted">Hold Ctrl/Cmd to select multiple verticals</small> -->
-                        </div>
-                    </div>
 
-                    <!-- Priority Field - Checkbox instead of Radio -->
-                    <div class="row mb-3">
-                        <div class="col-md-4" id="subCategoryWrapper" style="display:none;">
-                            <label for="sub_category_id" class="form-label">Sub Category <span class="text-danger">*</span></label>
-                            <select class="form-select" id="sub_category_id" name="sub_category_id">
-                                <option value="">Select Sub Category</option>
+                        <div class="col-md-4 mb-3 hierarchy-wrapper">
+                            <label class="form-label">Category</label>
+                            <select class="form-select hierarchy-select" data-level="1" name="vertical_ids[]" required>
+                                <option value="">Select Category</option>
+                                @foreach($verticals as $category)
+                                    <option value="{{ $category->id }}">{{ $category->name }}</option>
+                                @endforeach
                             </select>
                         </div>
 
                         @auth 
                         @if(!auth()->user()->isNFO())
                         <div class="col-md-4 mb-3" id="assignToWrapper" style="display:none;">
-                            <label for="assigned_to" class="form-label">
-                                Assign To
-                            </label>
-
-                            <select id="assigned_to"
-                                    name="assigned_to"
-                                    class="form-select">
+                            <label for="assigned_to" class="form-label">Assign To</label>
+                            <select id="assigned_to" name="assigned_to" class="form-select">
                                 <option value="">-- Leave Unassigned --</option>
                             </select>
                         </div>
                         @endif
                         @endauth
+                    </div>
 
-
-
-                        <div class="col-md-4">
+                    <div class="row mb-3">
+                        <div class="col-md-4 mb-3">
                             <label class="form-label">Priority <span class="text-danger">*</span></label>
                             <div class="d-flex gap-3">
                                 <div class="form-check">
@@ -180,29 +139,25 @@
                             @enderror
                         </div>
 
-                        
-                        <div class="col-md-4 mb-4">
+                        <div class="col-md-4 mb-3">
                             <label for="file" class="form-label">File Upload</label>
                             <input type="file" class="form-control @error('file') is-invalid @enderror"
                                 id="file" name="file" accept=".pdf,image/*">
                             @error('file')
                             <div class="invalid-feedback">{{ $message }}</div>
                             @enderror
-                            <small class="text-danger">Allowed: PDF, Images (jpg, jpeg, png). Max file size: 2MB</small>
+                            <small class="text-danger">Allowed: PDF, Images. Max size: 2MB</small>
                             @if(isset($complaint) && $complaint->file_path)
                             <div class="mt-2">
                                 <small>Current file: </small>
-                                <a href="{{ Storage::url($complaint->file_path) }}" target="_blank">
-                                    {{ basename($complaint->file_path) }}
-                                </a>
+                                <a href="{{ Storage::url($complaint->file_path) }}" target="_blank">{{ basename($complaint->file_path) }}</a>
                                 <input type="hidden" name="delete_file" id="delete_file" value="0">
                             </div>
                             @endif
                         </div>
+                    </div>
 
-
-                        
-
+                    <div class="row mb-3">
                         <div class="col-md-12">
                             <label for="description" class="form-label">Ticket Description <span class="text-danger">*</span></label>
                             <textarea class="form-control @error('description') is-invalid @enderror" placeholder="Enter the Issue.. "
@@ -211,53 +166,50 @@
                             <div class="invalid-feedback">{{ $message }}</div>
                             @enderror
                         </div>
-
                     </div>
 
-                    <!-- File Upload (Full Width) -->
                     @if(isset($complaint))
-                    <!-- Status (Full Width) -->
                     <div class="mb-3">
                         <label for="status_id" class="form-label">Status *</label>
-                        <select class="form-select tom-select @error('status_id') is-invalid @enderror"
-                            id="status_id" name="status_id" required>
+                        <select class="form-select tom-select @error('status_id') is-invalid @enderror" id="status_id" name="status_id" required>
                             @foreach($statuses as $status)
                                 <option value="{{ $status->id }}" {{ old('status_id', $complaint->status_id) == $status->id ? 'selected' : '' }}>
                                     {{ $status->display_name }}
                                 </option>
                             @endforeach
                         </select>
-                        @error('status_id')
-                        <div class="invalid-feedback">{{ $message }}</div>
-                        @enderror
                     </div>
                     @endif
 
-                    <div class="d-grid">
+                    <div class="d-grid mt-4">
                         <button type="submit" class="btn btn-primary shadow-sm" id="submitTicketBtn" style="border-radius: 12px;">
                             <span id="submitBtnText">{{ isset($complaint) ? 'Update Ticket' : 'Submit Ticket' }}</span>
                             <span id="submitBtnSpinner" class="spinner-border spinner-border-sm d-none" role="status" aria-hidden="true"></span>
                         </button>
                     </div>
                 </form>
-                
             </div>
         </div>
     </div>
-
 </div>
-
 <script>
     document.addEventListener('DOMContentLoaded', () => {
         const assignWrapper = document.getElementById('assignToWrapper');
         const assignSelect = document.getElementById('assigned_to');
-        const selectedVertical =
-            @json(old('vertical_ids.0', isset($complaint) ? $complaint->verticals->first()?->id : null));
-        const selectedUser =
-            @json(old('assigned_to', isset($complaint) ? $complaint->assigned_to : null));
+        const container = document.getElementById('vertical-chain-container');
+        const statusSelect = document.getElementById('status_id');
 
-        let verticalTom;
+        const oldVerticals = @json(old('vertical_ids', isset($complaint) ? $complaint->verticals->pluck('id')->toArray() : []));
+        const selectedVertical = oldVerticals.length ? oldVerticals[oldVerticals.length - 1] : null;
+        const selectedUser = @json(old('assigned_to', isset($complaint) ? $complaint->assigned_to : null));
+
+        @if(isset($complaint))
+            const ASSIGNED_STATUS_ID = {{ $statuses->firstWhere('name', 'assigned')?->id ?? 0 }};
+            const UNASSIGNED_STATUS_ID = {{ $statuses->firstWhere('name', 'unassigned')?->id ?? 0 }};
+        @endif
+
         document.querySelectorAll('.tom-select').forEach(el => {
+            if (el.id === 'vertical_ids') return; 
 
             const config = {
                 searchField: ['text'],
@@ -265,53 +217,40 @@
                 persist: false
             };
 
-            if (el.id === 'intercom') {
-                config.create = true;
-            }
-
-            if (el.id === 'vertical_ids') {
-                config.maxItems = 1;
-            }
-
-            const instance = new TomSelect(el, config);
-
-            if (el.id === 'vertical_ids') {
-                verticalTom = instance;
-            }
+            if (el.id === 'intercom') config.create = true;
+            new TomSelect(el, config);
         });
 
         const assignTom = assignSelect
             ? new TomSelect(assignSelect, {
                 valueField: 'id',
                 labelField: 'full_name',
-                searchField: 'full_name'
+                searchField: 'full_name',
+                persist: false
             })
             : null;
 
         async function loadAssignableUsers(verticalId, selectedUserId = null) {
-            if (!assignTom || !assignWrapper) {
-                return;
-            }
-            assignTom.clear();
-            assignTom.clearOptions();
+            if (!assignTom || !assignWrapper) return;
+            
             if (!verticalId) {
+                assignTom.clear();
+                assignTom.clearOptions();
                 assignWrapper.style.display = 'none';
                 return;
             }
             try {
-                const response = await fetch(
-                    `{{ route('api.assignable-users') }}?vertical_ids=${verticalId}`
-                );
+                const response = await fetch(`{{ route('api.assignable-users') }}?vertical_ids=${verticalId}`);
                 const users = await response.json();
                 if (!users.length) {
-                    assignWrapper.style.display = 'none';
                     return;
                 }
+
+                assignTom.clear();
+                assignTom.clearOptions();
+                
                 assignWrapper.style.display = 'block';
-                assignTom.addOption({
-                    id: '',
-                    full_name: '-- Leave Unassigned --'
-                });
+                assignTom.addOption({ id: '', full_name: '-- Leave Unassigned --' });
                 users.forEach(user => {
                     assignTom.addOption({
                         id: user.id,
@@ -322,111 +261,101 @@
                     assignTom.setValue(selectedUserId, true);
                 }
                 assignTom.refreshOptions(false);
-
             } catch (error) {
                 console.error('Failed to load assignable users:', error);
-                assignWrapper.style.display = 'none';
             }
         }
 
-        // Sub Category
-        const subCategoryWrapper = document.getElementById('subCategoryWrapper');
-        const subCategorySelect = document.getElementById('sub_category_id');
-
-        const subCategoryTom = subCategorySelect
-            ? new TomSelect(subCategorySelect, {
-                valueField: 'id',
-                labelField: 'name',
-                searchField: 'name',
-                persist: false
-            })
-            : null;
-
-        async function loadSubCategories(verticalId, selectedSubCategoryId = null) {
-            if (!subCategoryTom || !subCategoryWrapper) return;
-            
-            subCategoryTom.clear();
-            subCategoryTom.clearOptions();
-            
-            if (!verticalId) {
-                subCategoryWrapper.style.display = 'none';
-                subCategorySelect.removeAttribute('required');
-                return;
+        function triggerDependentAPIs() {
+            const allSelects = container.querySelectorAll('.hierarchy-select');
+            let lastSelectedValue = '';
+            for (let i = allSelects.length - 1; i >= 0; i--) {
+                if (allSelects[i].value) {
+                    lastSelectedValue = allSelects[i].value;
+                    break;
+                }
             }
             
-            try {
-                const response = await fetch(`/api/sub-categories?vertical_id=${verticalId}`);
-                const subCategories = await response.json();
-                
-                if (!subCategories.length) {
-                    subCategoryWrapper.style.display = 'none';
-                    subCategorySelect.removeAttribute('required');
+            loadAssignableUsers(lastSelectedValue, selectedUser);
+
+            if (!lastSelectedValue && statusSelect) {
+                @if(isset($complaint))
+                    statusSelect.tomselect ? statusSelect.tomselect.setValue(UNASSIGNED_STATUS_ID) : statusSelect.value = UNASSIGNED_STATUS_ID;
+                @endif
+            }
+        }
+
+        if (container) {
+            container.addEventListener('change', async function(e) {
+                if (!e.target.classList.contains('hierarchy-select')) return;
+
+                const currentSelect = e.target;
+                const currentWrapper = currentSelect.closest('.hierarchy-wrapper');
+                const currentLevel = parseInt(currentSelect.getAttribute('data-level'));
+                const parentId = currentSelect.value;
+
+                let nextEl = currentWrapper.nextElementSibling;
+                while (nextEl) {
+                    const toRemove = nextEl;
+                    nextEl = nextEl.nextElementSibling;
+                    if (toRemove.id !== 'assignToWrapper') {
+                        toRemove.remove();
+                    }
+                }
+
+                if (!parentId) {
+                    triggerDependentAPIs();
                     return;
                 }
-                
-                subCategoryWrapper.style.display = 'block';
-                subCategorySelect.setAttribute('required', 'required');
-                
-                subCategories.forEach(subCat => {
-                    subCategoryTom.addOption({
-                        id: subCat.id,
-                        name: subCat.name
-                    });
-                });
-                
-                if (selectedSubCategoryId) {
-                    subCategoryTom.setValue(selectedSubCategoryId, true);
+
+                try {
+                    const response = await fetch(`/api/get-child-verticals?parent_id=${parentId}`);
+                    const children = await response.json();
+
+                    if (children && children.length > 0) {
+                        const nextLevel = currentLevel + 1;
+                        let labelText = 'Sub-Category';
+
+                        const selectHtml = `
+                            <div class="col-md-4 mb-3 hierarchy-wrapper">
+                                <label class="form-label">${labelText}</label>
+                                <select class="form-select hierarchy-select" data-level="${nextLevel}" name="vertical_ids[]" required>
+                                    <option value="">Select ${labelText}</option>
+                                    ${children.map(child => `<option value="${child.id}">${child.name}</option>`).join('')}
+                                </select>
+                            </div>
+                        `;
+                        
+                        if (assignWrapper) {
+                            assignWrapper.insertAdjacentHTML('beforebegin', selectHtml);
+                        } else {
+                            container.insertAdjacentHTML('beforeend', selectHtml);
+                        }
+                    }
+                } catch (error) {
+                    console.error('Failed to load deep hierarchy levels:', error);
                 }
-                
-                subCategoryTom.refreshOptions(false);
-            } catch (error) {
-                console.error('Failed to load sub categories:', error);
-                subCategoryWrapper.style.display = 'none';
-            }
+
+                triggerDependentAPIs();
+            });
         }
 
-        const selectedSubCategory = @json(old('sub_category_id', isset($complaint) ? $complaint->sub_category_id : null));
-        const statusSelect = document.getElementById('status_id');
-        const assignToSelect = document.getElementById('assigned_to');
-        const ASSIGNED_STATUS_ID = {{ $statuses->firstWhere('name', 'assigned')?->id ?? 0 }};
-        const UNASSIGNED_STATUS_ID = {{ $statuses->firstWhere('name', 'unassigned')?->id ?? 0 }};
-
-        if (assignToSelect) {
-            assignToSelect.addEventListener('change', function () {
+        if (assignSelect) {
+            assignSelect.addEventListener('change', function () {
                 if (!statusSelect) return;
-                if (this.value) {
-                    statusSelect.tomselect
-                        ? statusSelect.tomselect.setValue(ASSIGNED_STATUS_ID)
-                        : statusSelect.value = ASSIGNED_STATUS_ID;
-                } else {
-                    statusSelect.tomselect
-                        ? statusSelect.tomselect.setValue(UNASSIGNED_STATUS_ID)
-                        : statusSelect.value = UNASSIGNED_STATUS_ID;
-                }
+                @if(isset($complaint))
+                    if (this.value) {
+                        statusSelect.tomselect ? statusSelect.tomselect.setValue(ASSIGNED_STATUS_ID) : statusSelect.value = ASSIGNED_STATUS_ID;
+                    } else {
+                        statusSelect.tomselect ? statusSelect.tomselect.setValue(UNASSIGNED_STATUS_ID) : statusSelect.value = UNASSIGNED_STATUS_ID;
+                    }
+                @endif
             });
         }
 
-        if (verticalTom) {
-            verticalTom.on('change', value => {
-                loadAssignableUsers(value);
-                loadSubCategories(value);
-                if (assignTom) {
-                    assignTom.clear(true);
-                }
-                if (statusSelect) {
-                    statusSelect.tomselect
-                        ? statusSelect.tomselect.setValue(UNASSIGNED_STATUS_ID)
-                        : statusSelect.value = UNASSIGNED_STATUS_ID;
-                }
-            });
-
-            if (selectedVertical) {
-                loadAssignableUsers(selectedVertical, selectedUser);
-                loadSubCategories(selectedVertical, selectedSubCategory);
-            }
+        if (selectedVertical) {
+            loadAssignableUsers(selectedVertical, selectedUser);
         }
-
     });
 </script>
-
 @endsection

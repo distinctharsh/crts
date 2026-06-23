@@ -10,6 +10,8 @@ use App\Http\Controllers\MastersController;
 use App\Http\Controllers\ProfileController;
 use App\Http\Controllers\AuditLogController;
 use App\Http\Controllers\UsageReportController;
+use Illuminate\Http\Request;
+use App\Models\Vertical;
 use Illuminate\Support\Str;
 
 // Redirect root URL to /home
@@ -67,7 +69,6 @@ Route::middleware(['auth', 'force.password.change'])->group(function () {
     // Complaint routes
     Route::get('/complaints', [ComplaintController::class, 'index'])->name('complaints.index');
     Route::get('/complaints/data', [ComplaintController::class, 'data'])->name('complaints.data');
-    Route::get('/complaints/notification-data', [ComplaintController::class, 'notificationData'])->name('complaints.notificationData');
     Route::get('/complaints/{complaint}/edit', [ComplaintController::class, 'edit'])->name('complaints.edit');
     Route::put('/complaints/{complaint}', [ComplaintController::class, 'update'])->name('complaints.update');
     Route::delete('/complaints/{complaint}', [ComplaintController::class, 'destroy'])->name('complaints.destroy');
@@ -79,10 +80,18 @@ Route::middleware(['auth', 'force.password.change'])->group(function () {
     Route::get('/api/assignable-users', [ComplaintController::class, 'getAssignableUsers'])->name('api.assignable-users');
     Route::resource('users', UserController::class);
     Route::post('/users/restore/{id}', [UserController::class, 'restore'])->name('users.restore');
+    Route::get('/complaints/notification-data', [ComplaintController::class, 'notificationData'])->name('complaints.notificationData');
 });
 Route::get('/complaints/{complaint}', [ComplaintController::class, 'show'])->name('complaints.show');
 Route::get('/api/complaints/lookup', [App\Http\Controllers\ComplaintController::class, 'lookup'])->name('api.complaints.lookup');
-Route::get('/api/sub-categories', [ComplaintController::class, 'getSubCategories'])->name('api.sub-categories');
+Route::get('/api/get-child-verticals', function (Request $request) {
+    $parentId = $request->query('parent_id');
+    if (!$parentId) {
+        return response()->json([]);
+    }
+    $children = Vertical::where('parent_id', $parentId)->get(['id', 'name']);
+    return response()->json($children);
+});
 Route::get('/send-hod-report', [ComplaintController::class, 'sendHODReport'])->name('send-hod-report');
 Route::get('/complaints/track', [App\Http\Controllers\ComplaintController::class, 'track'])->name('complaints.track');
 

@@ -10,7 +10,7 @@ class Vertical extends Model
 {
     use LogsActivity, SoftDeletes;
 
-    protected $fillable = ['name', 'short_form', 'send_email'];
+    protected $fillable = ['name', 'short_form', 'parent_id', 'send_email'];
 
     public static function getNameById($id)
     {
@@ -32,5 +32,15 @@ class Vertical extends Model
         return \Spatie\Activitylog\LogOptions::defaults()
             ->logAll()
             ->logOnlyDirty();
+    }
+
+    public function parent()
+    {
+        return $this->belongsTo(Vertical::class, 'parent_id');
+    }
+
+    public function children()
+    {
+        return $this->hasMany(Vertical::class, 'parent_id');
     }
 }

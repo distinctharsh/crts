@@ -26,7 +26,6 @@ class Complaint extends Model
         'network_type_id',
         'section_id',
         'room_number',
-        'sub_category_id',
     ];
 
     protected $casts = [
@@ -179,11 +178,4 @@ class Complaint extends Model
             ->logOnlyDirty();
     }
 
-    public function subCategoryPivot()
-    {
-        $pivotSubCatId = $this->verticals->first()?->pivot?->sub_category_id;
-        return $this->belongsTo(SubCategory::class, 'sub_category_id')->withDefault([
-            'name' => \App\Models\SubCategory::find($pivotSubCatId)?->name ?? 'N/A'
-        ]);
-    }
 }

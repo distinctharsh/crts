@@ -26,7 +26,7 @@ class ComplaintController extends Controller
 {
     public function __construct()
     {
-        $this->middleware('auth')->except(['create', 'store', 'show', 'history', 'track', 'lookup', 'live', 'liveData', 'intercomSuggestions', 'getSubCategories']);
+        $this->middleware('auth')->except(['create', 'store', 'show', 'history', 'track', 'lookup', 'live', 'liveData', 'intercomSuggestions']);
     }
 
     public function index(Request $request)
@@ -135,7 +135,7 @@ class ComplaintController extends Controller
     public function create()
     {
         $networkTypes = NetworkType::all();
-        $verticals = Vertical::all();
+        $verticals = Vertical::whereNull('parent_id')->get();
         $sections = Section::all();
         $intercoms = Complaint::whereNotNull('intercom')
         ->distinct()
@@ -159,20 +159,16 @@ class ComplaintController extends Controller
                 'intercom' => 'required|string|max:255',
                 'room_number' => 'required|integer',
                 'assigned_to' => 'nullable|exists:users,id',
-                'sub_category_id' => 'required|exists:sub_categories,id',
             ]);
 
-            // Set default priority to 'medium' if 'high' checkbox is not checked
             $priority = $validated['priority'] ?? 'medium';
 
-            // Get unassigned status
             $unassignedStatus = Status::where('name', 'unassigned')->first();
 
-            // Generate reference number using vertical short_form (e.g., CS-20260525001)
             $date = Carbon::now()->format('Ymd');
             
-            $firstVerticalId = $validated['vertical_ids'][0] ?? null;
-            $vertical = $firstVerticalId ? Vertical::find($firstVerticalId) : null;
+            $lastVerticalId = end($validated['vertical_ids']); 
+            $vertical = $lastVerticalId ? Vertical::find($lastVerticalId) : null;
             $prefix = $vertical && $vertical->short_form ? strtoupper($vertical->short_form) : 'CMP';
             
             $complaintsToday = Complaint::whereDate('created_at', Carbon::today())->count();
@@ -200,14 +196,7 @@ class ComplaintController extends Controller
                 'updated_at' => Carbon::now()->setTimezone(config('app.timezone')),
             ]);
 
-
-            $pivotData = [];
-            foreach ($validated['vertical_ids'] as $verticalId) {
-                $pivotData[$verticalId] = [
-                    'sub_category_id' => $validated['sub_category_id']
-                ];
-            }
-            $complaint->verticals()->sync($pivotData);
+            $complaint->verticals()->sync($validated['vertical_ids']);
 
             $complaint->load('verticals');
 
@@ -218,19 +207,15 @@ class ComplaintController extends Controller
                 'description' => 'Complaint created',
                 'changes' => json_encode([
                     ...$complaint->getChanges(),
-                    'verticals' => $complaint->verticals
-                        ->pluck('name')
-                        ->toArray()
+                    'verticals' => $complaint->verticals->pluck('name')->toArray()
                 ])
             ]);
 
-            // Send email notifications to appropriate users based on roles
             try {
                 $notificationService = new ComplaintNotificationService();
                 $notificationService->sendNewComplaintNotifications($complaint);
             } catch (\Exception $e) {
                 \Log::error('Email notification failed: ' . $e->getMessage());
-                // Continue with redirect even if email fails
             }
 
             return redirect()->route('complaints.show', $complaint)
@@ -263,7 +248,7 @@ class ComplaintController extends Controller
             return view('complaints.create', compact('complaint', 'networkTypes', 'verticals', 'sections', 'statuses', 'intercoms'));
         } catch (\Exception $e) {
             \Log::error('Complaint edit error: ' . $e->getMessage());
-            return redirect()->back()->with('error', 'Something went wrong while editing complaint. Please try again. (कुछ गलत हो गया, कृपया फिर से कोशिश करें.)');
+            return redirect()->back()->with('error', 'Something went wrong while editing complaint. Please try again.');
         }
     }
 
@@ -275,7 +260,7 @@ class ComplaintController extends Controller
             $this->authorize('update', $complaint);
 
             // If this is a close request (only status_id and description are present)
-            if ($request->has('status_id') && $request->has('description') && count($request->all()) <= 5) { // 5: _method, _token, status_id, description, (optionally assigned_to)
+            if ($request->has('status_id') && $request->has('description') && count($request->all()) <= 5) {
                 $validated = $request->validate([
                     'status_id' => 'required|exists:statuses,id',
                     'description' => 'nullable|string',
@@ -1085,34 +1070,4 @@ class ComplaintController extends Controller
         }
     }
 
-    public function getSubCategories(Request $request)
-    {
-        $validator = Validator::make($request->all(), [
-            'vertical_id' => 'required|integer'
-        ]);
-
-        if ($validator->fails()) {
-            return response()->json([
-                'success' => false, 
-                'errors' => $validator->errors()
-            ], 422);
-        }
-
-        try {
-            $subCategories = SubCategory::where('vertical_id', $request->vertical_id)
-                ->select('id', 'name')
-                ->orderBy('name')
-                ->get();
-
-            return response()->json($subCategories);
-
-        } catch (\Exception $e) {
-            \Log::error('AJAX SubCategories Fetch Error: ' . $e->getMessage());
-
-            return response()->json([
-                'success' => false,
-                'message' => $e->getMessage()
-            ], 500);
-        }
-    }
 }

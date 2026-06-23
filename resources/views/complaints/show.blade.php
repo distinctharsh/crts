@@ -129,7 +129,7 @@ $breadcrumbs = [
                             <p class="mb-3 ps-3">{{ ucfirst($complaint->networkType->name ?? 'N/A') }}</p>
 
                             <p class="mb-1 fw-semibold"><i class="bi bi-layers"></i> Category:</p>
-                            <p class="mb-3 ps-3">{{ $complaint->verticals->pluck('name')->map(fn($name) => ucfirst($name))->implode(', ') ?? 'N/A' }}</p>
+                            <p class="mb-3 ps-3">{{ $complaint->verticals->pluck('name')->map(fn($name) => ucfirst($name))->implode(' - ') ?? 'N/A' }}</p>
 
                             <p class="mb-1 fw-semibold"><i class="bi bi-tag"></i> Sub Category:</p>
                             <p class="mb-3 ps-3 text-secondary">

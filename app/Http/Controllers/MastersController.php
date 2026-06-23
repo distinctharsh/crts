@@ -21,8 +21,7 @@ class MastersController extends Controller
         ->get();
     
         $verticals = \App\Models\Vertical::orderBy('name')->get();
-        $subCategories = \App\Models\SubCategory::with('vertical')->orderBy('name')->get();
-        return view('masters.index', compact('networkTypes', 'sections', 'statuses', 'verticals', 'subCategories'));
+        return view('masters.index', compact('networkTypes', 'sections', 'statuses', 'verticals'));
     }
 
     public function storeNetworkType(Request $request)
@@ -143,11 +142,13 @@ class MastersController extends Controller
             $request->validate([
                 'name' => 'required|string|max:255|unique:verticals,name',
                 'short_form' => 'nullable|string|max:10|unique:verticals,short_form',
+                'parent_id' => 'nullable',
                 'send_email' => 'nullable|boolean',
             ]);
             Vertical::create([
                 'name' => $request->name,
                 'short_form' => $request->short_form ? strtoupper($request->short_form) : null,
+                'parent_id' => $request['parent_id'] ? $request['parent_id'] : null,
                 'send_email' => $request->has('send_email'),
             ]);
             return redirect()->route('masters.index')->with('success', 'Vertical added successfully.');
