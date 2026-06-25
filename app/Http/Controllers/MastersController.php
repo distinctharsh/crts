@@ -20,8 +20,15 @@ class MastersController extends Controller
         ->ordered()
         ->get();
     
-        $verticals = \App\Models\Vertical::orderBy('name')->get();
-        return view('masters.index', compact('networkTypes', 'sections', 'statuses', 'verticals'));
+        $verticals = Vertical::whereNull('parent_id')
+            ->with('children')
+            ->orderBy('name')
+            ->get();
+
+        $allVerticals = Vertical::with('parent')
+        ->orderBy('name')
+        ->get();
+        return view('masters.index', compact('networkTypes', 'sections', 'statuses', 'verticals', 'allVerticals'));
     }
 
     public function storeNetworkType(Request $request)
@@ -163,11 +170,13 @@ class MastersController extends Controller
             $request->validate([
                 'name' => 'required|string|max:255|unique:verticals,name,' . $vertical->id,
                 'short_form' => 'nullable|string|max:10|unique:verticals,short_form,' . $vertical->id,
+                'parent_id' => 'nullable|exists:verticals,id', 
                 'send_email' => 'nullable|boolean',
             ]);
             $vertical->update([
                 'name' => $request->name,
                 'short_form' => $request->short_form ? strtoupper($request->short_form) : null,
+                'parent_id' => $request->parent_id ?: null,
                 'send_email' => $request->has('send_email'),
             ]);
             return redirect()->route('masters.index')->with('success', 'Vertical updated successfully.');

@@ -321,68 +321,12 @@
                                 <th class="text-end pe-4">Actions</th>
                             </tr>
                         </thead>
-                            <tbody>
-                                @php
-                                    // Separate top-level parents and child categories
-                                    $parentCategories = $verticals->whereNull('parent_id');
-                                @endphp
-
-                                @forelse($parentCategories as $parent)
-                                    <!-- Parent Row -->
-                                    <tr class="table-light fw-semibold">
-                                        <td class="ps-4 text-primary">
-                                            <i class="fas fa-folder me-2 text-warning"></i>{{ $parent->name }}
-                                        </td>
-                                        <td class="ps-4"><span class="badge bg-secondary">{{ $parent->short_form ?? '-' }}</span></td>
-                                        <td class="ps-4"><span class="text-muted small">— (Main Category)</span></td>
-                                        <td class="ps-4">
-                                            @if($parent->send_email ?? true)
-                                                <span class="badge bg-success"><i class="fas fa-check"></i> Yes</span>
-                                            @else
-                                                <span class="badge bg-danger"><i class="fas fa-times"></i> No</span>
-                                            @endif
-                                        </td>
-                                        <td class="text-end pe-4">
-                                            <button class="btn btn-outline-warning btn-sm me-1" data-bs-toggle="tooltip" title="Edit" onclick="$('#editVerticalModal{{ $parent->id }}').modal('show')"><i class="fas fa-pen"></i></button>
-                                            <button class="btn btn-outline-danger btn-sm" data-bs-toggle="tooltip" title="Delete" onclick="$('#deleteVerticalModal{{ $parent->id }}').modal('show')"><i class="fas fa-trash"></i></button>
-                                        </td>
-                                    </tr>
-
-                                    <!-- Render Its Children Immediately Below It -->
-                                    @php
-                                        $children = $verticals->where('parent_id', $parent->id);
-                                    @endphp
-                                    @foreach($children as $child)
-                                    <tr>
-                                        <td class="ps-5 text-dark">
-                                            <span class="text-muted me-2">↳</span><i class="fas fa-file-alt me-2 text-muted"></i>{{ $child->name }}
-                                        </td>
-                                        <td class="ps-4"><span class="badge bg-outline-secondary text-secondary border border-secondary">{{ $child->short_form ?? '-' }}</span></td>
-                                        <td class="ps-4">
-                                            <span class="badge bg-light text-primary border border-primary-subtle">
-                                                <i class="fas fa-arrow-up me-1 small"></i>{{ $parent->name }}
-                                            </span>
-                                        </td>
-                                        <td class="ps-4">
-                                            @if($child->send_email ?? true)
-                                                <span class="badge bg-success"><i class="fas fa-check"></i> Yes</span>
-                                            @else
-                                                <span class="badge bg-danger"><i class="fas fa-times"></i> No</span>
-                                            @endif
-                                        </td>
-                                        <td class="text-end pe-4">
-                                            <button class="btn btn-outline-warning btn-sm me-1" data-bs-toggle="tooltip" title="Edit" onclick="$('#editVerticalModal{{ $child->id }}').modal('show')"><i class="fas fa-pen"></i></button>
-                                            <button class="btn btn-outline-danger btn-sm" data-bs-toggle="tooltip" title="Delete" onclick="$('#deleteVerticalModal{{ $child->id }}').modal('show')"><i class="fas fa-trash"></i></button>
-                                        </td>
-                                    </tr>
-                                    @endforeach
-
-                                @empty
-                                <tr>
-                                    <td colspan="5" class="text-center text-muted">No Category found.</td>
-                                </tr>
-                                @endforelse
-                            </tbody>
+<tbody>
+    @include('masters.partials.category-row', [
+        'categories' => $verticals,
+        'level' => 0
+    ])
+</tbody>
                     </table>
                     </div>
                 </div>
@@ -570,13 +514,17 @@
                             <input type="text" name="short_form" class="form-control" placeholder="e.g., CS for Cyber Security" maxlength="10">
                             <small class="text-muted">Used for ticket reference number generation (e.g., CS-20260525001)</small>
                         </div>
-                        @if(isset($verticals))
+                        @if(isset($allVerticals))
                         <div class="mb-3">
-                            <label for="parent_id" class="form-label">Select Parent *</label>
+                            <!-- Label se * hata diya gaya hai -->
+                            <label id="parent_id_label" for="parent_id" class="form-label">Select Parent (Optional)</label>
                             <select class="form-select tom-select @error('parent_id') is-invalid @enderror"
                                 id="parent_id" name="parent_id">
-                                @foreach($verticals as $vertical)
-                                    <option value="{{ $vertical->id }}" {{ old('parent_id', $vertical->parent_id) == $vertical->id ? 'selected' : '' }}>
+                                <!-- Naya root-level blank selection option -->
+                                <option value="">None (Make it a Main Category)</option>
+                            @foreach($allVerticals as $vertical)
+                                    <option value="{{ $vertical->id }}">
+                                        {{ $vertical->parent ? $vertical->parent->name . ' → ' : '' }}
                                         {{ $vertical->name }}
                                     </option>
                                 @endforeach
@@ -616,8 +564,10 @@
                             <label class="form-label">Select Main Category</label>
                             <select name="vertical_id" class="form-select" required>
                                 <option value="">-- Choose Category --</option>
-                                @foreach($verticals as $vertical)
-                                    <option value="{{ $vertical->id }}">{{ $vertical->name }}</option>
+                                @foreach($allVerticals as $vertical)
+                                    <option value="{{ $vertical->id }}">
+                                        {{ $vertical->name }}
+                                    </option>
                                 @endforeach
                             </select>
                         </div>
@@ -654,6 +604,7 @@
         document.querySelectorAll('select.tom-select').forEach(function(el) {
             new TomSelect(el, {
                 create: false,
+                allowEmptyOption: true,
                 sortField: {
                     field: 'text',
                     direction: 'asc'

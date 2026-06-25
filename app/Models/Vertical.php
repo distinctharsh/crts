@@ -41,6 +41,6 @@ class Vertical extends Model
 
     public function children()
     {
-        return $this->hasMany(Vertical::class, 'parent_id');
+        return $this->hasMany(Vertical::class, 'parent_id')->with('children');
     }
 }
