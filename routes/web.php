@@ -47,12 +47,6 @@ Route::get('/complaints/history', [ComplaintController::class, 'history'])
     ->name('complaints.history')
     ->middleware(\App\Http\Middleware\CheckIPAccess::class);
 
-
-Route::get('/complaints/history', [ComplaintController::class, 'history'])
-    ->name('complaints.history')
-    ->middleware(\App\Http\Middleware\CheckIPAccess::class);
-
-
 // Authentication routes
 Route::middleware('guest')->group(function () {
     Route::post('/login', [AuthController::class, 'login'])->name('login');
