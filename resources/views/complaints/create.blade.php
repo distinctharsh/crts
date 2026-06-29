@@ -259,7 +259,6 @@
                     });
                 });
 
-                // If selected user exists but is not in the API response, add them manually
                 if (selectedUserId && !users.find(u => u.id == selectedUserId) && assignedUserData) {
                     assignTom.addOption({
                         id: assignedUserData.id,
