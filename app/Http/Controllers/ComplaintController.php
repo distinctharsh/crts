@@ -244,10 +244,11 @@ class ComplaintController extends Controller
             $sections = Section::all();
             $statuses = Status::query()->ordered()->get();
             $intercoms = Complaint::whereNotNull('intercom')->distinct()->pluck('intercom');
-            $complaint->load(['client', 'assignedTo', 'status', 'verticals']);
+            $complaint->load(['client', 'assignedTo.role', 'status', 'verticals']);
             $savedVerticals = $complaint->verticals->pluck('id')->toArray();
+            $assignedUser = $complaint->assignedTo;
 
-            return view('complaints.create', compact('complaint', 'networkTypes', 'verticals', 'sections', 'statuses', 'intercoms', 'savedVerticals'));
+            return view('complaints.create', compact('complaint', 'networkTypes', 'verticals', 'sections', 'statuses', 'intercoms', 'savedVerticals', 'assignedUser'));
         } catch (\Exception $e) {
             \Log::error('Complaint edit error: ' . $e->getMessage());
             return redirect()->back()->with('error', 'Something went wrong while editing complaint.');

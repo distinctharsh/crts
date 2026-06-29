@@ -106,7 +106,9 @@
                             <select class="form-select hierarchy-select" data-level="1" name="vertical_ids[]" required>
                                 <option value="">Select Category</option>
                                 @foreach($verticals as $category)
-                                    <option value="{{ $category->id }}">{{ $category->name }}</option>
+                                    <option value="{{ $category->id }}" {{ old('vertical_ids.0', isset($complaint) && isset($savedVerticals[0]) ? $savedVerticals[0] : '') == $category->id ? 'selected' : '' }}>
+                                        {{ $category->name }}
+                                    </option>
                                 @endforeach
                             </select>
                         </div>
@@ -193,7 +195,7 @@
     </div>
 </div>
 <script>
-    document.addEventListener('DOMContentLoaded', () => {
+    document.addEventListener('DOMContentLoaded', async () => {
         const assignWrapper = document.getElementById('assignToWrapper');
         const assignSelect = document.getElementById('assigned_to');
         const container = document.getElementById('vertical-chain-container');
@@ -201,7 +203,9 @@
 
         const oldVerticals = @json(old('vertical_ids', isset($complaint) ? $complaint->verticals->pluck('id')->toArray() : []));
         const selectedVertical = oldVerticals.length ? oldVerticals[oldVerticals.length - 1] : null;
-        const selectedUser = @json(old('assigned_to', isset($complaint) ? $complaint->assigned_to : null));
+        const selectedUser = @json(old('assigned_to', isset($assignedUser) ? $assignedUser->id : null));
+        const savedVerticals = @json(isset($complaint) && isset($savedVerticals) ? $savedVerticals : []);
+        const assignedUserData = @json(isset($assignedUser) ? $assignedUser : null);
 
         @if(isset($complaint))
             const ASSIGNED_STATUS_ID = {{ $statuses->firstWhere('name', 'assigned')?->id ?? 0 }};
@@ -232,7 +236,7 @@
 
         async function loadAssignableUsers(verticalId, selectedUserId = null) {
             if (!assignTom || !assignWrapper) return;
-            
+
             if (!verticalId) {
                 assignTom.clear();
                 assignTom.clearOptions();
@@ -242,13 +246,10 @@
             try {
                 const response = await fetch(`{{ route('api.assignable-users') }}?vertical_ids=${verticalId}`);
                 const users = await response.json();
-                if (!users.length) {
-                    return;
-                }
 
                 assignTom.clear();
                 assignTom.clearOptions();
-                
+
                 assignWrapper.style.display = 'block';
                 assignTom.addOption({ id: '', full_name: '-- Leave Unassigned --' });
                 users.forEach(user => {
@@ -257,28 +258,42 @@
                         full_name: `${user.full_name} (${user.role?.name?.toUpperCase() ?? ''})`
                     });
                 });
-                if (selectedUserId) {
-                    assignTom.setValue(selectedUserId, true);
+
+                // If selected user exists but is not in the API response, add them manually
+                if (selectedUserId && !users.find(u => u.id == selectedUserId) && assignedUserData) {
+                    assignTom.addOption({
+                        id: assignedUserData.id,
+                        full_name: `${assignedUserData.full_name} (${assignedUserData.role?.name?.toUpperCase() ?? ''})`
+                    });
                 }
+
                 assignTom.refreshOptions(false);
+
+                if (selectedUserId) {
+                    assignTom.setValue(String(selectedUserId), true);
+                } else {
+                    // If no user selected, ensure the default empty option is selected
+                    assignTom.setValue('', true);
+                }
             } catch (error) {
                 console.error('Failed to load assignable users:', error);
             }
         }
 
-        function triggerDependentAPIs() {
+        function triggerDependentAPIs(userId = null) {
             const allSelects = container.querySelectorAll('.hierarchy-select');
-            let lastSelectedValue = '';
-            for (let i = allSelects.length - 1; i >= 0; i--) {
+            let firstSelectedValue = '';
+            for (let i = 0; i < allSelects.length; i++) {
                 if (allSelects[i].value) {
-                    lastSelectedValue = allSelects[i].value;
+                    firstSelectedValue = allSelects[i].value;
                     break;
                 }
             }
-            
-            loadAssignableUsers(lastSelectedValue, selectedUser);
 
-            if (!lastSelectedValue && statusSelect) {
+            const userToSelect = userId !== null ? userId : selectedUser;
+            loadAssignableUsers(firstSelectedValue, userToSelect);
+
+            if (!firstSelectedValue && statusSelect) {
                 @if(isset($complaint))
                     statusSelect.tomselect ? statusSelect.tomselect.setValue(UNASSIGNED_STATUS_ID) : statusSelect.value = UNASSIGNED_STATUS_ID;
                 @endif
@@ -353,9 +368,57 @@
             });
         }
 
-        if (selectedVertical) {
-            loadAssignableUsers(selectedVertical, selectedUser);
+        async function buildHierarchyChain() {
+            if (!savedVerticals.length) return;
+
+            let currentSelect = container.querySelector('.hierarchy-select[data-level="1"]');
+            let currentLevel = 1;
+
+            for (let i = 0; i < savedVerticals.length; i++) {
+                const verticalId = savedVerticals[i];
+
+                if (currentSelect) {
+                    currentSelect.value = verticalId;
+                }
+
+                if (i < savedVerticals.length - 1) {
+                    try {
+                        const response = await fetch(`/api/get-child-verticals?parent_id=${verticalId}`);
+                        const children = await response.json();
+
+                        if (children && children.length > 0) {
+                            currentLevel = currentLevel + 1;
+                            let labelText = 'Sub-Category';
+
+                            const selectHtml = `
+                                <div class="col-md-4 mb-3 hierarchy-wrapper">
+                                    <label class="form-label">${labelText}</label>
+                                    <select class="form-select hierarchy-select" data-level="${currentLevel}" name="vertical_ids[]" required>
+                                        <option value="">Select ${labelText}</option>
+                                        ${children.map(child => `<option value="${child.id}">${child.name}</option>`).join('')}
+                                    </select>
+                                </div>
+                            `;
+
+                            if (assignWrapper) {
+                                assignWrapper.insertAdjacentHTML('beforebegin', selectHtml);
+                            } else {
+                                container.insertAdjacentHTML('beforeend', selectHtml);
+                            }
+
+                            currentSelect = container.querySelector(`.hierarchy-select[data-level="${currentLevel}"]`);
+                        }
+                    } catch (error) {
+                        console.error('Failed to load child verticals:', error);
+                        break;
+                    }
+                }
+            }
+
+            triggerDependentAPIs(selectedUser);
         }
+
+        await buildHierarchyChain();
     });
 </script>
 @endsection
