@@ -315,7 +315,7 @@ class ComplaintController extends Controller
             }
 
             $verticalIds = $validated['vertical_ids'];
-            
+
             $oldVerticals = $complaint->verticals->pluck('name')->toArray();
 
             $complaint->user_name = $validated['user_name'];
@@ -331,14 +331,7 @@ class ComplaintController extends Controller
             }
             $complaint->save();
 
-            $pivotData = [];
-            $lastIndex = count($verticalIds) - 1;
-            foreach ($verticalIds as $index => $verticalId) {
-                $pivotData[$verticalId] = [
-                    'sub_category_id' => $verticalIds[$lastIndex]
-                ];
-            }
-            $complaint->verticals()->sync($pivotData);
+            $complaint->verticals()->sync($verticalIds);
 
             $complaint->load('verticals');
             $newVerticals = $complaint->verticals->pluck('name')->toArray();

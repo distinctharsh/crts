@@ -69,7 +69,6 @@ class Complaint extends Model
     public function verticals()
     {
         return $this->belongsToMany(Vertical::class, 'complaint_vertical')
-                ->withPivot('sub_category_id')
                 ->withTimestamps();
     }
 
