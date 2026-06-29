@@ -269,7 +269,7 @@ class ComplaintController extends Controller
 
                 ComplaintAction::create([
                     'complaint_id' => $complaint->id,
-                    'user_id' => Auth::id() ?? 0,
+                    'user_id' => Auth::user()->id ?? 0,
                     'status_id' => $validated['status_id'],
                     'description' => $validated['description'] ?? 'checked',
                 ]);
@@ -311,7 +311,7 @@ class ComplaintController extends Controller
             $oldStatusId = $complaint->status_id;
 
             if (array_key_exists('assigned_to', $validated) && $validated['assigned_to'] != $oldAssignedTo) {
-                $complaint->assigned_by = Auth::id() ?? 0;
+                $complaint->assigned_by = Auth::user()->id ?? 0;
             }
 
             $verticalIds = $validated['vertical_ids'];
@@ -356,7 +356,7 @@ class ComplaintController extends Controller
 
             ComplaintAction::create([
                 'complaint_id' => $complaint->id,
-                'user_id' => Auth::id() ?? 0,
+                'user_id' => Auth::user()->id ?? 0,
                 'status_id' => $complaint->status_id,
                 'description' => 'Complaint updated',
                 'changes' => json_encode($changes)
