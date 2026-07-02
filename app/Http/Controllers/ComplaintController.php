@@ -1052,7 +1052,7 @@ class ComplaintController extends Controller
 
             // Add sample data row
             $sampleData = [
-                'John Doe',
+                'Test User',
                 '1234',
                 '101',
                 '1',
