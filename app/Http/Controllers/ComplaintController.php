@@ -1025,13 +1025,20 @@ class ComplaintController extends Controller
         }
     }
 
-    public function downloadFormat()
+public function downloadFormat()
     {
         try {
             $sections = Section::all(['id', 'name']);
             $networkTypes = NetworkType::all(['id', 'name']);
-            $verticals = Vertical::all(['id', 'name']);
             $users = User::whereHas('role')->get(['id', 'full_name']);
+
+            // 1. Build Hierarchical Verticals text (e.g., "Hardware -> Mouse")
+            $verticals = Vertical::all(['id', 'name', 'parent_id']);
+            $verticalPaths = [];
+            foreach ($verticals as $vertical) {
+                $verticalPaths[] = $this->getVerticalFullPath($vertical, $verticals);
+            }
+            sort($verticalPaths);
 
             $spreadsheet = new \PhpOffice\PhpSpreadsheet\Spreadsheet();
 
@@ -1045,7 +1052,7 @@ class ComplaintController extends Controller
                 $masterSheet->setCellValue('A' . $row, $section->name);
                 $row++;
             }
-            $sectionRange = 'MasterData!$A$1:$A$' . ($row - 1);
+            $sectionRange = 'MasterData!$A$1:$A$' . max(1, $row - 1);
 
             // Add Network Types to MasterData (Column B)
             $row = 1;
@@ -1053,15 +1060,15 @@ class ComplaintController extends Controller
                 $masterSheet->setCellValue('B' . $row, $networkType->name);
                 $row++;
             }
-            $networkTypeRange = 'MasterData!$B$1:$B$' . ($row - 1);
+            $networkTypeRange = 'MasterData!$B$1:$B$' . max(1, $row - 1);
 
-            // Add Verticals to MasterData (Column C)
+            // Add Hierarchical Verticals to MasterData (Column C)
             $row = 1;
-            foreach ($verticals as $vertical) {
-                $masterSheet->setCellValue('C' . $row, $vertical->name);
+            foreach ($verticalPaths as $path) {
+                $masterSheet->setCellValue('C' . $row, $path);
                 $row++;
             }
-            $verticalRange = 'MasterData!$C$1:$C$' . ($row - 1);
+            $verticalRange = 'MasterData!$C$1:$C$' . max(1, $row - 1);
 
             // Add Users to MasterData (Column D)
             $row = 1;
@@ -1069,7 +1076,7 @@ class ComplaintController extends Controller
                 $masterSheet->setCellValue('D' . $row, $user->full_name);
                 $row++;
             }
-            $userRange = 'MasterData!$D$1:$D$' . ($row - 1);
+            $userRange = 'MasterData!$D$1:$D$' . max(1, $row - 1);
 
             // Hide MasterData sheet
             $masterSheet->setSheetState(\PhpOffice\PhpSpreadsheet\Worksheet\Worksheet::SHEETSTATE_HIDDEN);
@@ -1078,14 +1085,14 @@ class ComplaintController extends Controller
             $sheet = $spreadsheet->getActiveSheet();
             $sheet->setTitle('Complaints');
 
-            // Set headers
+            // Set headers (Split Verticals into 3 columns for multi-select)
             $headers = [
                 'A1' => 'User Name*',
                 'B1' => 'Intercom*',
                 'C1' => 'Room Number*',
                 'D1' => 'Section*',
                 'E1' => 'Network Type*',
-                'F1' => 'Verticals* (comma separated)',
+                'F1' => 'Vertical*',
                 'G1' => 'Description*',
                 'H1' => 'Priority',
                 'I1' => 'Assigned To'
@@ -1103,64 +1110,46 @@ class ComplaintController extends Controller
             $sheet->setCellValue('C2', '101');
             $sheet->setCellValue('D2', $sections->first()->name ?? '');
             $sheet->setCellValue('E2', $networkTypes->first()->name ?? '');
-            $sheet->setCellValue('F2', $verticals->take(3)->pluck('name')->implode(','));
+            $sheet->setCellValue('F2', $verticalPaths[0] ?? '');
+            $sheet->setCellValue('H2', ''); // Optional third vertical sample
             $sheet->setCellValue('G2', 'Sample complaint description');
             $sheet->setCellValue('H2', 'medium');
             $sheet->setCellValue('I2', $users->first()->full_name ?? '');
 
-            // Add Data Validation for Section column (D)
-            $validation = new \PhpOffice\PhpSpreadsheet\Cell\DataValidation();
-            $validation->setType(\PhpOffice\PhpSpreadsheet\Cell\DataValidation::TYPE_LIST);
-            $validation->setErrorStyle(\PhpOffice\PhpSpreadsheet\Cell\DataValidation::STYLE_STOP);
-            $validation->setAllowBlank(false);
-            $validation->setShowInputMessage(true);
-            $validation->setShowErrorMessage(true);
-            $validation->setShowDropDown(true);
-            $validation->setFormula1($sectionRange);
-            $sheet->setDataValidation('D2:D100', $validation);
+            // Reusable Validation Functionality
+            $listValidation = function($range) {
+                $v = new \PhpOffice\PhpSpreadsheet\Cell\DataValidation();
+                $v->setType(\PhpOffice\PhpSpreadsheet\Cell\DataValidation::TYPE_LIST);
+                $v->setErrorStyle(\PhpOffice\PhpSpreadsheet\Cell\DataValidation::STYLE_STOP);
+                $v->setShowInputMessage(true);
+                $v->setShowErrorMessage(true);
+                $v->setShowDropDown(true);
+                $v->setFormula1($range);
+                return $v;
+            };
 
-            // Add Data Validation for Network Type column (E)
-            $validation = new \PhpOffice\PhpSpreadsheet\Cell\DataValidation();
-            $validation->setType(\PhpOffice\PhpSpreadsheet\Cell\DataValidation::TYPE_LIST);
-            $validation->setErrorStyle(\PhpOffice\PhpSpreadsheet\Cell\DataValidation::STYLE_STOP);
-            $validation->setAllowBlank(false);
-            $validation->setShowInputMessage(true);
-            $validation->setShowErrorMessage(true);
-            $validation->setShowDropDown(true);
-            $validation->setFormula1($networkTypeRange);
-            $sheet->setDataValidation('E2:E100', $validation);
+            // Apply Validations
+            $sheet->setDataValidation('D2:D100', $listValidation($sectionRange));
+            $sheet->setDataValidation('E2:E100', $listValidation($networkTypeRange));
+            
+            // Proper Arrow Dropdowns for Vertical columns (F, G, H)
+            $sheet->setDataValidation('F2:F100', $listValidation($verticalRange));
 
-            // Add Data Validation for Priority column (H)
-            $validation = new \PhpOffice\PhpSpreadsheet\Cell\DataValidation();
-            $validation->setType(\PhpOffice\PhpSpreadsheet\Cell\DataValidation::TYPE_LIST);
-            $validation->setErrorStyle(\PhpOffice\PhpSpreadsheet\Cell\DataValidation::STYLE_STOP);
-            $validation->setAllowBlank(true);
-            $validation->setShowInputMessage(true);
-            $validation->setShowErrorMessage(true);
-            $validation->setShowDropDown(true);
-            $validation->setFormula1('"medium,high"');
-            $sheet->setDataValidation('H2:H100', $validation);
+            // Priority Validation
+            $priorityValidation = $listValidation('"medium,high"');
+            $priorityValidation->setAllowBlank(true);
+            $sheet->setDataValidation('H2:H100', $priorityValidation);
 
-            // Add Data Validation for Assigned To column (I)
-            $validation = new \PhpOffice\PhpSpreadsheet\Cell\DataValidation();
-            $validation->setType(\PhpOffice\PhpSpreadsheet\Cell\DataValidation::TYPE_LIST);
-            $validation->setErrorStyle(\PhpOffice\PhpSpreadsheet\Cell\DataValidation::STYLE_STOP);
-            $validation->setAllowBlank(true);
-            $validation->setShowInputMessage(true);
-            $validation->setShowErrorMessage(true);
-            $validation->setShowDropDown(true);
-            $validation->setFormula1($userRange);
-            $sheet->setDataValidation('I2:I100', $validation);
+            // Assigned To Validation
+            $sheet->setDataValidation('I2:I100', $listValidation($userRange));
 
             // Auto-size columns
-            foreach (range('A', 'I') as $col) {
+            foreach (range('A', 'K') as $col) {
                 $sheet->getColumnDimension($col)->setAutoSize(true);
             }
 
-            // Set active sheet to Complaints
             $spreadsheet->setActiveSheetIndex(0);
 
-            // Save file
             $filename = 'complaints_import_format_' . date('Y-m-d') . '.xlsx';
             header('Content-Type: application/vnd.openxmlformats-officedocument.spreadsheetml.sheet');
             header('Content-Disposition: attachment;filename="' . $filename . '"');
@@ -1174,6 +1163,17 @@ class ComplaintController extends Controller
             \Log::error('Download format error: ' . $e->getMessage());
             return redirect()->back()->with('error', 'Failed to download format file.');
         }
+    }
+
+    private function getVerticalFullPath($vertical, $allVerticals)
+    {
+        $path = $vertical->name;
+        while ($vertical->parent_id !== null) {
+            $vertical = $allVerticals->firstWhere('id', $vertical->parent_id);
+            if (!$vertical) break;
+            $path = $vertical->name . ' -> ' . $path;
+        }
+        return $path;
     }
 
     public function bulkImportStore(Request $request)
