@@ -26,7 +26,7 @@ class ComplaintController extends Controller
 {
     public function __construct()
     {
-        $this->middleware('auth')->except(['create', 'store', 'show', 'history', 'track', 'lookup', 'live', 'liveData', 'intercomSuggestions']);
+        $this->middleware('auth')->except(['create', 'store', 'show', 'history', 'track', 'lookup', 'live', 'liveData', 'intercomSuggestions', 'bulkImport', 'bulkImportStore', 'downloadFormat']);
     }
 
     public function index(Request $request)
@@ -1012,6 +1012,199 @@ class ComplaintController extends Controller
                 'success' => false,
                 'message' => 'Failed to send HOD report: ' . $e->getMessage()
             ], 500);
+        }
+    }
+
+    public function bulkImport()
+    {
+        try {
+            return view('complaints.bulk-import');
+        } catch (\Exception $e) {
+            \Log::error('Bulk import view error: ' . $e->getMessage());
+            return redirect()->back()->with('error', 'Something went wrong while loading bulk import page.');
+        }
+    }
+
+    public function downloadFormat()
+    {
+        try {
+            $headers = [
+                'user_name*',
+                'intercom*',
+                'room_number*',
+                'section_id*',
+                'network_type_id*',
+                'vertical_ids* (comma separated)',
+                'description*',
+                'priority (high/medium)',
+                'assigned_to (user_id, optional)'
+            ];
+
+            $filename = 'complaints_import_format_' . date('Y-m-d') . '.csv';
+
+            $handle = fopen('php://output', 'w');
+            header('Content-Type: text/csv');
+            header('Content-Disposition: attachment; filename="' . $filename . '"');
+            header('Pragma: no-cache');
+            header('Expires: 0');
+
+            fputcsv($handle, $headers);
+
+            // Add sample data row
+            $sampleData = [
+                'John Doe',
+                '1234',
+                '101',
+                '1',
+                '2',
+                '1,2,3',
+                'Sample complaint description',
+                'medium',
+                ''
+            ];
+            fputcsv($handle, $sampleData);
+
+            fclose($handle);
+            exit;
+
+        } catch (\Exception $e) {
+            \Log::error('Download format error: ' . $e->getMessage());
+            return redirect()->back()->with('error', 'Failed to download format file.');
+        }
+    }
+
+    public function bulkImportStore(Request $request)
+    {
+        try {
+            $request->validate([
+                'excel_file' => 'required|file|max:10240'
+            ]);
+
+            $file = $request->file('excel_file');
+            $extension = $file->getClientOriginalExtension();
+
+            if (!in_array(strtolower($extension), ['xlsx', 'xls', 'csv', 'txt'])) {
+                return redirect()->back()->with('error', 'Invalid file type. Please upload a CSV, XLSX, or XLS file.');
+            }
+
+            $filePath = $file->getPathname();
+
+            $handle = fopen($filePath, 'r');
+            $headers = fgetcsv($handle);
+            $data = [];
+            $rowNumber = 1;
+            $errors = [];
+            $successCount = 0;
+
+            while (($row = fgetcsv($handle)) !== false) {
+                $rowNumber++;
+                if (empty(array_filter($row))) {
+                    continue;
+                }
+
+                $rowData = array_combine($headers, $row);
+
+                // Validate required fields
+                $validator = Validator::make($rowData, [
+                    'user_name*' => 'required|string|max:255',
+                    'intercom*' => 'required|string|max:255',
+                    'room_number*' => 'required|integer',
+                    'section_id*' => 'required|exists:sections,id',
+                    'network_type_id*' => 'required|exists:network_types,id',
+                    'vertical_ids* (comma separated)' => 'required|string',
+                    'description*' => 'required|string',
+                    'priority (high/medium)' => 'nullable|in:high,medium',
+                    'assigned_to (user_id, optional)' => 'nullable|exists:users,id',
+                ]);
+
+                if ($validator->fails()) {
+                    $errors[] = "Row {$rowNumber}: " . implode(', ', $validator->errors()->all());
+                    continue;
+                }
+
+                // Parse vertical IDs
+                $verticalIds = explode(',', str_replace(' ', '', $rowData['vertical_ids* (comma separated)']));
+                $verticalIds = array_filter($verticalIds);
+
+                if (empty($verticalIds)) {
+                    $errors[] = "Row {$rowNumber}: Invalid vertical IDs format";
+                    continue;
+                }
+
+                // Validate vertical IDs exist
+                $validVerticals = Vertical::whereIn('id', $verticalIds)->pluck('id')->toArray();
+                if (count($validVerticals) !== count($verticalIds)) {
+                    $errors[] = "Row {$rowNumber}: One or more vertical IDs do not exist";
+                    continue;
+                }
+
+                // Create complaint
+                $priority = $rowData['priority (high/medium)'] ?? 'medium';
+                $unassignedStatus = Status::where('name', 'unassigned')->first();
+
+                $date = Carbon::now()->format('Ymd');
+                $verticalsChain = Vertical::whereIn('id', $verticalIds)
+                    ->orderByRaw('FIELD(id, ' . implode(',', $verticalIds) . ')')
+                    ->get();
+
+                $prefixParts = [];
+                foreach ($verticalsChain as $v) {
+                    if ($v->short_form) {
+                        $prefixParts[] = strtoupper($v->short_form);
+                    }
+                }
+                $prefix = !empty($prefixParts) ? implode('-', $prefixParts) : 'CMP';
+
+                $complaintsToday = Complaint::whereDate('created_at', Carbon::today())->count();
+                $referenceNumber = $prefix . '-' . $date . str_pad($complaintsToday + 1, 3, '0', STR_PAD_LEFT);
+
+                $assignedStatus = Status::where('name', 'assigned')->first();
+                $statusId = !empty($rowData['assigned_to (user_id, optional)'])
+                    ? $assignedStatus->id
+                    : $unassignedStatus->id;
+
+                $complaint = Complaint::create([
+                    'reference_number' => $referenceNumber,
+                    'client_id' => Auth::user()->id ?? 0,
+                    'description' => $rowData['description*'],
+                    'priority' => $priority,
+                    'status_id' => $statusId,
+                    'network_type_id' => $rowData['network_type_id*'],
+                    'section_id' => $rowData['section_id*'],
+                    'user_name' => $rowData['user_name*'],
+                    'room_number' => $rowData['room_number*'],
+                    'intercom' => $rowData['intercom*'],
+                    'assigned_to' => !empty($rowData['assigned_to (user_id, optional)']) ? $rowData['assigned_to (user_id, optional)'] : null,
+                    'created_at' => Carbon::now()->setTimezone(config('app.timezone')),
+                    'updated_at' => Carbon::now()->setTimezone(config('app.timezone')),
+                ]);
+
+                $complaint->verticals()->sync($verticalIds);
+
+                ComplaintAction::create([
+                    'complaint_id' => $complaint->id,
+                    'user_id' => Auth::user()->id ?? 0,
+                    'status_id' => $unassignedStatus->id,
+                    'description' => 'Complaint created via bulk import',
+                    'changes' => json_encode([
+                        'verticals' => $complaint->verticals->pluck('name')->toArray()
+                    ])
+                ]);
+
+                $successCount++;
+            }
+
+            fclose($handle);
+
+            if (!empty($errors)) {
+                return redirect()->back()->with('error', "Import completed with errors. Success: {$successCount}, Errors: " . count($errors) . '. ' . implode('; ', array_slice($errors, 0, 5)));
+            }
+
+            return redirect()->route('complaints.bulk-import')->with('success', "Successfully imported {$successCount} complaints.");
+
+        } catch (\Exception $e) {
+            \Log::error('Bulk import error: ' . $e->getMessage());
+            return redirect()->back()->with('error', 'Something went wrong while importing complaints: ' . $e->getMessage());
         }
     }
 

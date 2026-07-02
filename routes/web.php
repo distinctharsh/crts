@@ -76,7 +76,6 @@ Route::middleware(['auth', 'force.password.change'])->group(function () {
     Route::post('/users/restore/{id}', [UserController::class, 'restore'])->name('users.restore');
     Route::get('/complaints/notification-data', [ComplaintController::class, 'notificationData'])->name('complaints.notificationData');
 });
-Route::get('/complaints/{complaint}', [ComplaintController::class, 'show'])->name('complaints.show');
 Route::get('/api/complaints/lookup', [App\Http\Controllers\ComplaintController::class, 'lookup'])->name('api.complaints.lookup');
 Route::get('/api/get-child-verticals', function (Request $request) {
     $parentId = $request->query('parent_id');
@@ -133,7 +132,15 @@ Route::middleware(['auth', 'can:isManager'])->group(function () {
     Route::get('/audit-log', [AuditLogController::class, 'index'])->name('audit-log.index');
 
     Route::get('/usage-report', [UsageReportController::class, 'index'])->name('usage-report.index');
+
+    // Bulk import routes
+    Route::get('/complaints/bulk-import', [ComplaintController::class, 'bulkImport'])->name('complaints.bulk-import');
+    Route::post('/complaints/bulk-import', [ComplaintController::class, 'bulkImportStore'])->name('complaints.bulk-import-store');
+    Route::get('/complaints/download-format', [ComplaintController::class, 'downloadFormat'])->name('complaints.download-format');
 });
+
+Route::get('/complaints/{complaint}', [ComplaintController::class, 'show'])->name('complaints.show');
+
 
 // Fallback route for all unknown URLs
 Route::fallback(function () {
