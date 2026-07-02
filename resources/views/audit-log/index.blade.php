@@ -197,6 +197,33 @@
 
 <script>
 $(document).ready(function() {
+    function stripHtml(html) {
+        var tmp = document.createElement("DIV");
+        tmp.innerHTML = html;
+        return tmp.textContent || tmp.innerText || "";
+    }
+
+    function formatChanges(cell) {
+        var html = $(cell).html();
+        var text = stripHtml(html);
+        text = text.replace(/→/g, ' -> ');
+        text = text.replace(/\s+/g, ' ').trim();
+        return text;
+    }
+
+    function formatEvent(cell) {
+        var html = $(cell).html();
+        var text = stripHtml(html);
+        return text.trim();
+    }
+
+    function formatUser(cell) {
+        var html = $(cell).html();
+        var text = stripHtml(html);
+        text = text.replace(/\(Edited by:.*?\)/g, '').trim();
+        return text;
+    }
+
     $('#auditLogTable').DataTable({
         responsive: true,
         order: [[0, "desc"]],
@@ -206,31 +233,129 @@ $(document).ready(function() {
                 extend: 'copy',
                 text: '<i class="fa fa-copy"></i> Copy',
                 className: 'btn btn-light btn-sm me-1',
-                titleAttr: 'Copy'
+                titleAttr: 'Copy',
+                exportOptions: {
+                    columns: ':visible',
+                    format: {
+                        body: function(data, row, column, node) {
+                            if (column === 5) { 
+                                return formatChanges(node);
+                            }
+                            if (column === 2) { 
+                                return formatEvent(node);
+                            }
+                            if (column === 1) { 
+                                return formatUser(node);
+                            }
+                            return stripHtml(data);
+                        }
+                    }
+                }
             },
             {
                 extend: 'csv',
                 text: '<i class="fa fa-file-csv"></i> CSV',
                 className: 'btn btn-light btn-sm me-1',
-                titleAttr: 'Export as CSV'
+                titleAttr: 'Export as CSV',
+                exportOptions: {
+                    columns: ':visible',
+                    format: {
+                        body: function(data, row, column, node) {
+                            if (column === 5) { 
+                                return formatChanges(node);
+                            }
+                            if (column === 2) { 
+                                return formatEvent(node);
+                            }
+                            if (column === 1) { 
+                                return formatUser(node);
+                            }
+                            return stripHtml(data);
+                        }
+                    }
+                }
             },
             {
                 extend: 'excel',
                 text: '<i class="fa fa-file-excel"></i> Excel',
                 className: 'btn btn-light btn-sm me-1',
-                titleAttr: 'Export as Excel'
+                titleAttr: 'Export as Excel',
+                exportOptions: {
+                    columns: ':visible',
+                    format: {
+                        body: function(data, row, column, node) {
+                            if (column === 5) { 
+                                return formatChanges(node);
+                            }
+                            if (column === 2) { 
+                                return formatEvent(node);
+                            }
+                            if (column === 1) { 
+                                return formatUser(node);
+                            }
+                            return stripHtml(data);
+                        }
+                    }
+                }
             },
             {
                 extend: 'pdf',
                 text: '<i class="fa fa-file-pdf"></i> PDF',
                 className: 'btn btn-light btn-sm me-1',
-                titleAttr: 'Export as PDF'
+                titleAttr: 'Export as PDF',
+                orientation: 'landscape',
+                pageSize: 'A4',
+                exportOptions: {
+                    columns: ':visible',
+                    format: {
+                        body: function(data, row, column, node) {
+                            if (column === 5) { 
+                                return formatChanges(node);
+                            }
+                            if (column === 2) { 
+                                return formatEvent(node);
+                            }
+                            if (column === 1) { 
+                                return formatUser(node);
+                            }
+                            return stripHtml(data);
+                        }
+                    }
+                },
+                customize: function(doc) {
+                    doc.content[1].table.widths = ['15%', '15%', '10%', '10%', '8%', '30%', '12%'];
+                    doc.styles.tableHeader.alignment = 'center';
+                    doc.styles.tableBodyEven.alignment = 'left';
+                    doc.styles.tableBodyOdd.alignment = 'left';
+                }
             },
             {
                 extend: 'print',
                 text: '<i class="fa fa-print"></i> Print',
                 className: 'btn btn-light btn-sm',
-                titleAttr: 'Print'
+                titleAttr: 'Print',
+                exportOptions: {
+                    columns: ':visible',
+                    stripHtml: false,
+                    format: {
+                        body: function(data, row, column, node) {
+                            if (column === 5) { 
+                                return formatChanges(node);
+                            }
+                            if (column === 2) { 
+                                return formatEvent(node);
+                            }
+                            if (column === 1) { 
+                                return formatUser(node);
+                            }
+                            return stripHtml(data);
+                        }
+                    }
+                },
+                customize: function(win) {
+                    $(win.document.body).find('table').addClass('compact').css('font-size', '10px');
+                    $(win.document.body).find('h1').css('font-size', '16px');
+                }
             },
             {
                 extend: 'colvis',
