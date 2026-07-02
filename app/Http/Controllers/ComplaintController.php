@@ -1028,43 +1028,146 @@ class ComplaintController extends Controller
     public function downloadFormat()
     {
         try {
+            $sections = Section::all(['id', 'name']);
+            $networkTypes = NetworkType::all(['id', 'name']);
+            $verticals = Vertical::all(['id', 'name']);
+            $users = User::whereHas('role')->get(['id', 'full_name']);
+
+            $spreadsheet = new \PhpOffice\PhpSpreadsheet\Spreadsheet();
+
+            // Create MasterData sheet (hidden)
+            $masterSheet = $spreadsheet->createSheet();
+            $masterSheet->setTitle('MasterData');
+
+            // Add Sections to MasterData (Column A)
+            $row = 1;
+            foreach ($sections as $section) {
+                $masterSheet->setCellValue('A' . $row, $section->name);
+                $row++;
+            }
+            $sectionRange = 'MasterData!$A$1:$A$' . ($row - 1);
+
+            // Add Network Types to MasterData (Column B)
+            $row = 1;
+            foreach ($networkTypes as $networkType) {
+                $masterSheet->setCellValue('B' . $row, $networkType->name);
+                $row++;
+            }
+            $networkTypeRange = 'MasterData!$B$1:$B$' . ($row - 1);
+
+            // Add Verticals to MasterData (Column C)
+            $row = 1;
+            foreach ($verticals as $vertical) {
+                $masterSheet->setCellValue('C' . $row, $vertical->name);
+                $row++;
+            }
+            $verticalRange = 'MasterData!$C$1:$C$' . ($row - 1);
+
+            // Add Users to MasterData (Column D)
+            $row = 1;
+            foreach ($users as $user) {
+                $masterSheet->setCellValue('D' . $row, $user->full_name);
+                $row++;
+            }
+            $userRange = 'MasterData!$D$1:$D$' . ($row - 1);
+
+            // Hide MasterData sheet
+            $masterSheet->setSheetState(\PhpOffice\PhpSpreadsheet\Worksheet\Worksheet::SHEETSTATE_HIDDEN);
+
+            // Create Complaints sheet
+            $sheet = $spreadsheet->getActiveSheet();
+            $sheet->setTitle('Complaints');
+
+            // Set headers
             $headers = [
-                'user_name*',
-                'intercom*',
-                'room_number*',
-                'section_id*',
-                'network_type_id*',
-                'vertical_ids* (comma separated)',
-                'description*',
-                'priority (high/medium)',
-                'assigned_to (user_id, optional)'
+                'A1' => 'User Name*',
+                'B1' => 'Intercom*',
+                'C1' => 'Room Number*',
+                'D1' => 'Section*',
+                'E1' => 'Network Type*',
+                'F1' => 'Verticals* (comma separated)',
+                'G1' => 'Description*',
+                'H1' => 'Priority',
+                'I1' => 'Assigned To'
             ];
 
-            $filename = 'complaints_import_format_' . date('Y-m-d') . '.csv';
+            foreach ($headers as $cell => $value) {
+                $sheet->setCellValue($cell, $value);
+                $sheet->getStyle($cell)->getFont()->setBold(true);
+                $sheet->getStyle($cell)->getFill()->setFillType(\PhpOffice\PhpSpreadsheet\Style\Fill::FILL_SOLID)->getStartColor()->setARGB('FFD9E1F2');
+            }
 
-            $handle = fopen('php://output', 'w');
-            header('Content-Type: text/csv');
-            header('Content-Disposition: attachment; filename="' . $filename . '"');
-            header('Pragma: no-cache');
-            header('Expires: 0');
+            // Add sample data
+            $sheet->setCellValue('A2', 'Harsh Singh');
+            $sheet->setCellValue('B2', '1234');
+            $sheet->setCellValue('C2', '101');
+            $sheet->setCellValue('D2', $sections->first()->name ?? '');
+            $sheet->setCellValue('E2', $networkTypes->first()->name ?? '');
+            $sheet->setCellValue('F2', $verticals->take(3)->pluck('name')->implode(','));
+            $sheet->setCellValue('G2', 'Sample complaint description');
+            $sheet->setCellValue('H2', 'medium');
+            $sheet->setCellValue('I2', $users->first()->full_name ?? '');
 
-            fputcsv($handle, $headers);
+            // Add Data Validation for Section column (D)
+            $validation = new \PhpOffice\PhpSpreadsheet\Cell\DataValidation();
+            $validation->setType(\PhpOffice\PhpSpreadsheet\Cell\DataValidation::TYPE_LIST);
+            $validation->setErrorStyle(\PhpOffice\PhpSpreadsheet\Cell\DataValidation::STYLE_STOP);
+            $validation->setAllowBlank(false);
+            $validation->setShowInputMessage(true);
+            $validation->setShowErrorMessage(true);
+            $validation->setShowDropDown(true);
+            $validation->setFormula1($sectionRange);
+            $sheet->setDataValidation('D2:D100', $validation);
 
-            // Add sample data row
-            $sampleData = [
-                'Test User',
-                '1234',
-                '101',
-                '1',
-                '2',
-                '1,2,3',
-                'Sample complaint description',
-                'medium',
-                ''
-            ];
-            fputcsv($handle, $sampleData);
+            // Add Data Validation for Network Type column (E)
+            $validation = new \PhpOffice\PhpSpreadsheet\Cell\DataValidation();
+            $validation->setType(\PhpOffice\PhpSpreadsheet\Cell\DataValidation::TYPE_LIST);
+            $validation->setErrorStyle(\PhpOffice\PhpSpreadsheet\Cell\DataValidation::STYLE_STOP);
+            $validation->setAllowBlank(false);
+            $validation->setShowInputMessage(true);
+            $validation->setShowErrorMessage(true);
+            $validation->setShowDropDown(true);
+            $validation->setFormula1($networkTypeRange);
+            $sheet->setDataValidation('E2:E100', $validation);
 
-            fclose($handle);
+            // Add Data Validation for Priority column (H)
+            $validation = new \PhpOffice\PhpSpreadsheet\Cell\DataValidation();
+            $validation->setType(\PhpOffice\PhpSpreadsheet\Cell\DataValidation::TYPE_LIST);
+            $validation->setErrorStyle(\PhpOffice\PhpSpreadsheet\Cell\DataValidation::STYLE_STOP);
+            $validation->setAllowBlank(true);
+            $validation->setShowInputMessage(true);
+            $validation->setShowErrorMessage(true);
+            $validation->setShowDropDown(true);
+            $validation->setFormula1('"medium,high"');
+            $sheet->setDataValidation('H2:H100', $validation);
+
+            // Add Data Validation for Assigned To column (I)
+            $validation = new \PhpOffice\PhpSpreadsheet\Cell\DataValidation();
+            $validation->setType(\PhpOffice\PhpSpreadsheet\Cell\DataValidation::TYPE_LIST);
+            $validation->setErrorStyle(\PhpOffice\PhpSpreadsheet\Cell\DataValidation::STYLE_STOP);
+            $validation->setAllowBlank(true);
+            $validation->setShowInputMessage(true);
+            $validation->setShowErrorMessage(true);
+            $validation->setShowDropDown(true);
+            $validation->setFormula1($userRange);
+            $sheet->setDataValidation('I2:I100', $validation);
+
+            // Auto-size columns
+            foreach (range('A', 'I') as $col) {
+                $sheet->getColumnDimension($col)->setAutoSize(true);
+            }
+
+            // Set active sheet to Complaints
+            $spreadsheet->setActiveSheetIndex(0);
+
+            // Save file
+            $filename = 'complaints_import_format_' . date('Y-m-d') . '.xlsx';
+            header('Content-Type: application/vnd.openxmlformats-officedocument.spreadsheetml.sheet');
+            header('Content-Disposition: attachment;filename="' . $filename . '"');
+            header('Cache-Control: max-age=0');
+
+            $writer = \PhpOffice\PhpSpreadsheet\IOFactory::createWriter($spreadsheet, 'Xlsx');
+            $writer->save('php://output');
             exit;
 
         } catch (\Exception $e) {
@@ -1083,63 +1186,98 @@ class ComplaintController extends Controller
             $file = $request->file('excel_file');
             $extension = $file->getClientOriginalExtension();
 
-            if (!in_array(strtolower($extension), ['xlsx', 'xls', 'csv', 'txt'])) {
-                return redirect()->back()->with('error', 'Invalid file type. Please upload a CSV, XLSX, or XLS file.');
+            if (!in_array(strtolower($extension), ['xlsx', 'xls'])) {
+                return redirect()->back()->with('error', 'Invalid file type. Please upload a XLSX or XLS file.');
             }
 
             $filePath = $file->getPathname();
 
-            $handle = fopen($filePath, 'r');
-            $headers = fgetcsv($handle);
-            $data = [];
-            $rowNumber = 1;
+            $spreadsheet = \PhpOffice\PhpSpreadsheet\IOFactory::load($filePath);
+            $sheet = $spreadsheet->getActiveSheet();
+            $rowData = [];
             $errors = [];
             $successCount = 0;
 
-            while (($row = fgetcsv($handle)) !== false) {
-                $rowNumber++;
-                if (empty(array_filter($row))) {
+            $highestRow = $sheet->getHighestRow();
+            $highestColumn = $sheet->getHighestColumn();
+
+            for ($row = 2; $row <= $highestRow; $row++) {
+                $data = [];
+                for ($col = 'A'; $col <= $highestColumn; $col++) {
+                    $cellValue = $sheet->getCell($col . $row)->getValue();
+                    $data[$sheet->getCell($col . 1)->getValue()] = $cellValue;
+                }
+
+                if (empty(array_filter($data))) {
                     continue;
                 }
 
-                $rowData = array_combine($headers, $row);
-
                 // Validate required fields
-                $validator = Validator::make($rowData, [
-                    'user_name*' => 'required|string|max:255',
-                    'intercom*' => 'required|string|max:255',
-                    'room_number*' => 'required|integer',
-                    'section_id*' => 'required|exists:sections,id',
-                    'network_type_id*' => 'required|exists:network_types,id',
-                    'vertical_ids* (comma separated)' => 'required|string',
-                    'description*' => 'required|string',
-                    'priority (high/medium)' => 'nullable|in:high,medium',
-                    'assigned_to (user_id, optional)' => 'nullable|exists:users,id',
+                $validator = Validator::make($data, [
+                    'User Name*' => 'required|string|max:255',
+                    'Intercom*' => 'required|string|max:255',
+                    'Room Number*' => 'required|integer',
+                    'Section*' => 'required|string',
+                    'Network Type*' => 'required|string',
+                    'Verticals* (comma separated)' => 'required|string',
+                    'Description*' => 'required|string',
+                    'Priority' => 'nullable|in:high,medium',
+                    'Assigned To' => 'nullable|string',
                 ]);
 
                 if ($validator->fails()) {
-                    $errors[] = "Row {$rowNumber}: " . implode(', ', $validator->errors()->all());
+                    $errors[] = "Row {$row}: " . implode(', ', $validator->errors()->all());
                     continue;
                 }
 
-                // Parse vertical IDs
-                $verticalIds = explode(',', str_replace(' ', '', $rowData['vertical_ids* (comma separated)']));
-                $verticalIds = array_filter($verticalIds);
+                // Map section name to ID
+                $section = Section::where('name', $data['Section*'])->first();
+                if (!$section) {
+                    $errors[] = "Row {$row}: Section '{$data['Section*']}' not found";
+                    continue;
+                }
+
+                // Map network type name to ID
+                $networkType = NetworkType::where('name', $data['Network Type*'])->first();
+                if (!$networkType) {
+                    $errors[] = "Row {$row}: Network Type '{$data['Network Type*']}' not found";
+                    continue;
+                }
+
+                // Parse vertical names
+                $verticalNames = explode(',', str_replace(' ', '', $data['Verticals* (comma separated)']));
+                $verticalNames = array_filter($verticalNames);
+
+                if (empty($verticalNames)) {
+                    $errors[] = "Row {$row}: Invalid vertical names format";
+                    continue;
+                }
+
+                // Map vertical names to IDs
+                $verticalIds = [];
+                foreach ($verticalNames as $verticalName) {
+                    $vertical = Vertical::where('name', $verticalName)->first();
+                    if ($vertical) {
+                        $verticalIds[] = $vertical->id;
+                    }
+                }
 
                 if (empty($verticalIds)) {
-                    $errors[] = "Row {$rowNumber}: Invalid vertical IDs format";
+                    $errors[] = "Row {$row}: One or more verticals not found";
                     continue;
                 }
 
-                // Validate vertical IDs exist
-                $validVerticals = Vertical::whereIn('id', $verticalIds)->pluck('id')->toArray();
-                if (count($validVerticals) !== count($verticalIds)) {
-                    $errors[] = "Row {$rowNumber}: One or more vertical IDs do not exist";
-                    continue;
+                // Map user name to ID
+                $assignedToId = null;
+                if (!empty($data['Assigned To'])) {
+                    $user = User::where('full_name', $data['Assigned To'])->first();
+                    if ($user) {
+                        $assignedToId = $user->id;
+                    }
                 }
 
                 // Create complaint
-                $priority = $rowData['priority (high/medium)'] ?? 'medium';
+                $priority = $data['Priority'] ?? 'medium';
                 $unassignedStatus = Status::where('name', 'unassigned')->first();
 
                 $date = Carbon::now()->format('Ymd');
@@ -1159,22 +1297,22 @@ class ComplaintController extends Controller
                 $referenceNumber = $prefix . '-' . $date . str_pad($complaintsToday + 1, 3, '0', STR_PAD_LEFT);
 
                 $assignedStatus = Status::where('name', 'assigned')->first();
-                $statusId = !empty($rowData['assigned_to (user_id, optional)'])
+                $statusId = !empty($assignedToId)
                     ? $assignedStatus->id
                     : $unassignedStatus->id;
 
                 $complaint = Complaint::create([
                     'reference_number' => $referenceNumber,
                     'client_id' => Auth::user()->id ?? 0,
-                    'description' => $rowData['description*'],
+                    'description' => $data['Description*'],
                     'priority' => $priority,
                     'status_id' => $statusId,
-                    'network_type_id' => $rowData['network_type_id*'],
-                    'section_id' => $rowData['section_id*'],
-                    'user_name' => $rowData['user_name*'],
-                    'room_number' => $rowData['room_number*'],
-                    'intercom' => $rowData['intercom*'],
-                    'assigned_to' => !empty($rowData['assigned_to (user_id, optional)']) ? $rowData['assigned_to (user_id, optional)'] : null,
+                    'network_type_id' => $networkType->id,
+                    'section_id' => $section->id,
+                    'user_name' => $data['User Name*'],
+                    'room_number' => $data['Room Number*'],
+                    'intercom' => $data['Intercom*'],
+                    'assigned_to' => $assignedToId,
                     'created_at' => Carbon::now()->setTimezone(config('app.timezone')),
                     'updated_at' => Carbon::now()->setTimezone(config('app.timezone')),
                 ]);
@@ -1193,8 +1331,6 @@ class ComplaintController extends Controller
 
                 $successCount++;
             }
-
-            fclose($handle);
 
             if (!empty($errors)) {
                 return redirect()->back()->with('error', "Import completed with errors. Success: {$successCount}, Errors: " . count($errors) . '. ' . implode('; ', array_slice($errors, 0, 5)));
