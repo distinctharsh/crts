@@ -10,6 +10,7 @@
             <th>User</th>
             <th>Section</th>
             <th>Network</th>
+            <th>Request Type</th>
             <th>Category</th>
             <th>Status</th>
             <th>Priority</th>
@@ -22,10 +23,11 @@
         @foreach($complaints as $complaint)
         <tr>
             <td>{{ $loop->iteration }}</td>
-            <td>{{ $complaint->reference_number }}</td>
+            <td style="word-break: break-all;">{{ $complaint->reference_number }}</td>
             <td>{{ $complaint->user_name }}</td>
             <td>{{ $complaint->section->name }}</td>
             <td>{{ $complaint->networkType->name ?? 'N/A' }}</td>
+            <td>{{ $complaint->requestType->name ?? 'N/A' }}</td>
             <td>{{ $complaint->verticals->pluck('name')->map(fn($name) => ucfirst($name))->implode(' - ') ?? 'N/A' }}</td>
             <td>
                 <span class="badge bg-{{ $complaint->status_color }}">

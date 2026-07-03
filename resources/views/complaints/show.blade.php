@@ -128,6 +128,9 @@ $breadcrumbs = [
                             <p class="mb-1 fw-semibold"><i class="bi bi-hdd-network"></i> Network Type:</p>
                             <p class="mb-3 ps-3">{{ ucfirst($complaint->networkType->name ?? 'N/A') }}</p>
 
+                            <p class="mb-1 fw-semibold"><i class="bi bi-tag"></i> Request Type:</p>
+                            <p class="mb-3 ps-3">{{ $complaint->requestType->name ?? 'N/A' }}</p>
+
                             <p class="mb-1 fw-semibold"><i class="bi bi-layers"></i> Category:</p>
                             <p class="mb-3 ps-3">{{ $complaint->verticals->pluck('name')->map(fn($name) => ucfirst($name))->implode(' - ') ?? 'N/A' }}</p>
 

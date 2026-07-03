@@ -6,6 +6,7 @@ use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\SoftDeletes;
 use Spatie\Activitylog\Traits\LogsActivity;
+use Illuminate\Database\Eloquent\Relations\BelongsTo;
 
 class Complaint extends Model
 {
@@ -20,6 +21,7 @@ class Complaint extends Model
         'file_path',
         'intercom',
         'status_id',
+        'request_type_id',
         'assigned_to',
         'assigned_by',
         'resolution',
@@ -175,6 +177,11 @@ class Complaint extends Model
         return \Spatie\Activitylog\LogOptions::defaults()
             ->logAll()
             ->logOnlyDirty();
+    }
+
+    public function requestType(): BelongsTo
+    {
+        return $this->belongsTo(RequestType::class, 'request_type_id');
     }
 
 }

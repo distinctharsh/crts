@@ -9,6 +9,7 @@ use App\Models\NetworkType;
 use App\Models\Section;
 use App\Models\Vertical;
 use App\Models\SubCategory;
+use App\Models\RequestType;
 use App\Models\Status;
 use Carbon\Carbon;
 use Illuminate\Http\Request;
@@ -137,11 +138,12 @@ class ComplaintController extends Controller
         $networkTypes = NetworkType::all();
         $verticals = Vertical::whereNull('parent_id')->get();
         $sections = Section::all();
+        $requestTypes = RequestType::all();
         $intercoms = Complaint::whereNotNull('intercom')
         ->distinct()
         ->pluck('intercom');
         
-        return view('complaints.create', compact('networkTypes', 'verticals', 'sections', 'intercoms'));
+        return view('complaints.create', compact('networkTypes', 'verticals', 'sections', 'intercoms', 'requestTypes'));
     }
 
     public function store(Request $request)
@@ -149,6 +151,7 @@ class ComplaintController extends Controller
         try {
             $validated = $request->validate([
                 'network_type_id' => 'required|exists:network_types,id',
+                'request_type_id' => 'required|exists:request_types,id',
                 'priority' => 'nullable|in:high',
                 'description' => 'required|string',
                 'vertical_ids' => 'required|array|min:1',
@@ -194,6 +197,7 @@ class ComplaintController extends Controller
                 'priority' => $priority,
                 'status_id' => $statusId,
                 'network_type_id' => $validated['network_type_id'],
+                'request_type_id' => $validated['request_type_id'],
                 'section_id' => $validated['section_id'],
                 'user_name' => $validated['user_name'],
                 'room_number' => $validated['room_number'],
@@ -213,6 +217,7 @@ class ComplaintController extends Controller
                 'user_id' => Auth::user()->id ?? 0,
                 'status_id' => $unassignedStatus->id,
                 'description' => 'Complaint created',
+                'assigned_to' => $complaint->assigned_to ?: null,
                 'changes' => json_encode([
                     ...$complaint->getChanges(),
                     'verticals' => $complaint->verticals->pluck('name')->toArray()
@@ -242,13 +247,14 @@ class ComplaintController extends Controller
             $networkTypes = NetworkType::all();
             $verticals = Vertical::whereNull('parent_id')->get();
             $sections = Section::all();
+            $requestTypes = RequestType::all();
             $statuses = Status::query()->ordered()->get();
             $intercoms = Complaint::whereNotNull('intercom')->distinct()->pluck('intercom');
             $complaint->load(['client', 'assignedTo.role', 'status', 'verticals']);
             $savedVerticals = $complaint->verticals->pluck('id')->toArray();
             $assignedUser = $complaint->assignedTo;
 
-            return view('complaints.create', compact('complaint', 'networkTypes', 'verticals', 'sections', 'statuses', 'intercoms', 'savedVerticals', 'assignedUser'));
+            return view('complaints.create', compact('complaint', 'networkTypes', 'verticals', 'sections', 'statuses', 'intercoms', 'savedVerticals', 'assignedUser', 'requestTypes'));
         } catch (\Exception $e) {
             \Log::error('Complaint edit error: ' . $e->getMessage());
             return redirect()->back()->with('error', 'Something went wrong while editing complaint.');
@@ -279,6 +285,7 @@ class ComplaintController extends Controller
 
             $validated = $request->validate([
                 'network_type_id' => 'required|exists:network_types,id',
+                'request_type_id' => 'required|exists:request_types,id',
                 'description' => 'required|string',
                 'vertical_ids' => 'required|array|min:1',
                 'vertical_ids.*' => 'exists:verticals,id',
@@ -309,6 +316,7 @@ class ComplaintController extends Controller
 
             $oldAssignedTo = $complaint->assigned_to;
             $oldStatusId = $complaint->status_id;
+            $oldRequestTypeId = $complaint->request_type_id;
 
             if (array_key_exists('assigned_to', $validated) && $validated['assigned_to'] != $oldAssignedTo) {
                 $complaint->assigned_by = Auth::user()->id ?? 0;
@@ -320,6 +328,7 @@ class ComplaintController extends Controller
 
             $complaint->user_name = $validated['user_name'];
             $complaint->network_type_id = $validated['network_type_id'];
+            $complaint->request_type_id = $validated['request_type_id'];
             $complaint->description = $validated['description'];
             $complaint->section_id = $validated['section_id'];
             $complaint->intercom = $validated['intercom'];
@@ -346,11 +355,15 @@ class ComplaintController extends Controller
             if ($oldVerticals != $newVerticals) {
                 $changes['verticals'] = ['old' => implode(', ', $oldVerticals), 'new' => implode(', ', $newVerticals)];
             }
+            if ($oldRequestTypeId != $complaint->request_type_id) {
+                $changes['request_type'] = ['old' => $oldRequestTypeId, 'new' => $complaint->request_type_id];
+            }
 
             ComplaintAction::create([
                 'complaint_id' => $complaint->id,
                 'user_id' => Auth::user()->id ?? 0,
                 'status_id' => $complaint->status_id,
+                'assigned_to' => $complaint->assigned_to ?: null,
                 'description' => 'Complaint updated',
                 'changes' => json_encode($changes)
             ]);
@@ -620,7 +633,7 @@ class ComplaintController extends Controller
     public function show($id)
     {
         try {
-            $complaint = \App\Models\Complaint::with(['client', 'assignedTo', 'actions.user', 'networkType', 'verticals', 'section', 'status'])->find($id);
+            $complaint = \App\Models\Complaint::with(['client', 'assignedTo', 'actions.user', 'networkType', 'verticals', 'section', 'status', 'requestType'])->find($id);
             if (!$complaint) {
                 return redirect('/home')->with('error', 'The complaint you are looking for does not exist.');
             }
@@ -1025,28 +1038,31 @@ class ComplaintController extends Controller
         }
     }
 
-public function downloadFormat()
+    public function downloadFormat()
     {
         try {
             $sections = Section::all(['id', 'name']);
             $networkTypes = NetworkType::all(['id', 'name']);
             $users = User::whereHas('role')->get(['id', 'full_name']);
-
-            // 1. Build Hierarchical Verticals text (e.g., "Hardware -> Mouse")
             $verticals = Vertical::all(['id', 'name', 'parent_id']);
+            $requestTypes = RequestType::all(['id', 'name']);
+            $parentIds = $verticals->pluck('parent_id')->filter()->unique()->toArray();
+            
             $verticalPaths = [];
             foreach ($verticals as $vertical) {
+                if (in_array($vertical->id, $parentIds)) {
+                    continue;
+                }
+                
                 $verticalPaths[] = $this->getVerticalFullPath($vertical, $verticals);
             }
             sort($verticalPaths);
 
             $spreadsheet = new \PhpOffice\PhpSpreadsheet\Spreadsheet();
 
-            // Create MasterData sheet (hidden)
             $masterSheet = $spreadsheet->createSheet();
             $masterSheet->setTitle('MasterData');
 
-            // Add Sections to MasterData (Column A)
             $row = 1;
             foreach ($sections as $section) {
                 $masterSheet->setCellValue('A' . $row, $section->name);
@@ -1054,7 +1070,6 @@ public function downloadFormat()
             }
             $sectionRange = 'MasterData!$A$1:$A$' . max(1, $row - 1);
 
-            // Add Network Types to MasterData (Column B)
             $row = 1;
             foreach ($networkTypes as $networkType) {
                 $masterSheet->setCellValue('B' . $row, $networkType->name);
@@ -1062,7 +1077,6 @@ public function downloadFormat()
             }
             $networkTypeRange = 'MasterData!$B$1:$B$' . max(1, $row - 1);
 
-            // Add Hierarchical Verticals to MasterData (Column C)
             $row = 1;
             foreach ($verticalPaths as $path) {
                 $masterSheet->setCellValue('C' . $row, $path);
@@ -1070,7 +1084,6 @@ public function downloadFormat()
             }
             $verticalRange = 'MasterData!$C$1:$C$' . max(1, $row - 1);
 
-            // Add Users to MasterData (Column D)
             $row = 1;
             foreach ($users as $user) {
                 $masterSheet->setCellValue('D' . $row, $user->full_name);
@@ -1078,24 +1091,29 @@ public function downloadFormat()
             }
             $userRange = 'MasterData!$D$1:$D$' . max(1, $row - 1);
 
-            // Hide MasterData sheet
+            $row = 1;
+            foreach ($requestTypes as $requestType) {
+                $masterSheet->setCellValue('E' . $row, $requestType->name);
+                $row++;
+            }
+            $requestTypeRange = 'MasterData!$E$1:$E$' . max(1, $row - 1);
+
             $masterSheet->setSheetState(\PhpOffice\PhpSpreadsheet\Worksheet\Worksheet::SHEETSTATE_HIDDEN);
 
-            // Create Complaints sheet
             $sheet = $spreadsheet->getActiveSheet();
             $sheet->setTitle('Complaints');
 
-            // Set headers (Split Verticals into 3 columns for multi-select)
             $headers = [
                 'A1' => 'User Name*',
                 'B1' => 'Intercom*',
                 'C1' => 'Room Number*',
                 'D1' => 'Section*',
                 'E1' => 'Network Type*',
-                'F1' => 'Vertical*',
-                'G1' => 'Description*',
-                'H1' => 'Priority',
-                'I1' => 'Assigned To'
+                'F1' => 'Request Type*',
+                'G1' => 'Vertical*',
+                'H1' => 'Description*',
+                'I1' => 'Priority',
+                'J1' => 'Assigned To'
             ];
 
             foreach ($headers as $cell => $value) {
@@ -1104,17 +1122,16 @@ public function downloadFormat()
                 $sheet->getStyle($cell)->getFill()->setFillType(\PhpOffice\PhpSpreadsheet\Style\Fill::FILL_SOLID)->getStartColor()->setARGB('FFD9E1F2');
             }
 
-            // Add sample data
             $sheet->setCellValue('A2', 'Harsh Singh');
             $sheet->setCellValue('B2', '1234');
             $sheet->setCellValue('C2', '101');
             $sheet->setCellValue('D2', $sections->first()->name ?? '');
             $sheet->setCellValue('E2', $networkTypes->first()->name ?? '');
-            $sheet->setCellValue('F2', $verticalPaths[0] ?? '');
-            $sheet->setCellValue('H2', ''); // Optional third vertical sample
-            $sheet->setCellValue('G2', 'Sample complaint description');
-            $sheet->setCellValue('H2', 'medium');
-            $sheet->setCellValue('I2', $users->first()->full_name ?? '');
+            $sheet->setCellValue('F2', $requestTypes->first()->name ?? '');
+            $sheet->setCellValue('G2', $verticalPaths[0] ?? '');
+            $sheet->setCellValue('H2', 'Sample complaint description');
+            $sheet->setCellValue('I2', 'medium');
+            $sheet->setCellValue('J2', ''); 
 
             // Reusable Validation Functionality
             $listValidation = function($range) {
@@ -1131,20 +1148,21 @@ public function downloadFormat()
             // Apply Validations
             $sheet->setDataValidation('D2:D100', $listValidation($sectionRange));
             $sheet->setDataValidation('E2:E100', $listValidation($networkTypeRange));
-            
-            // Proper Arrow Dropdowns for Vertical columns (F, G, H)
-            $sheet->setDataValidation('F2:F100', $listValidation($verticalRange));
+            $sheet->setDataValidation('F2:F100', $listValidation($requestTypeRange));
+            $sheet->setDataValidation('G2:G100', $listValidation($verticalRange));
 
             // Priority Validation
             $priorityValidation = $listValidation('"medium,high"');
             $priorityValidation->setAllowBlank(true);
-            $sheet->setDataValidation('H2:H100', $priorityValidation);
+            $sheet->setDataValidation('I2:I100', $priorityValidation);
 
             // Assigned To Validation
-            $sheet->setDataValidation('I2:I100', $listValidation($userRange));
+            $assignedToValidation = $listValidation($userRange);
+            $assignedToValidation->setAllowBlank(true);
+            $sheet->setDataValidation('J2:J100', $assignedToValidation);
 
             // Auto-size columns
-            foreach (range('A', 'K') as $col) {
+            foreach (range('A', 'J') as $col) {
                 $sheet->getColumnDimension($col)->setAutoSize(true);
             }
 
@@ -1194,35 +1212,39 @@ public function downloadFormat()
 
             $spreadsheet = \PhpOffice\PhpSpreadsheet\IOFactory::load($filePath);
             $sheet = $spreadsheet->getActiveSheet();
-            $rowData = [];
             $errors = [];
             $successCount = 0;
 
             $highestRow = $sheet->getHighestRow();
             $highestColumn = $sheet->getHighestColumn();
 
+            $allVerticals = Vertical::all(['id', 'name', 'parent_id', 'short_form']);
+
             for ($row = 2; $row <= $highestRow; $row++) {
                 $data = [];
                 for ($col = 'A'; $col <= $highestColumn; $col++) {
                     $cellValue = $sheet->getCell($col . $row)->getValue();
-                    $data[$sheet->getCell($col . 1)->getValue()] = $cellValue;
+                    $headerValue = $sheet->getCell($col . 1)->getValue();
+                    if ($headerValue) {
+                        $data[trim($headerValue)] = $cellValue;
+                    }
                 }
 
                 if (empty(array_filter($data))) {
                     continue;
                 }
 
-                // Validate required fields
                 $validator = Validator::make($data, [
                     'User Name*' => 'required|string|max:255',
                     'Intercom*' => 'required|string|max:255',
                     'Room Number*' => 'required|integer',
                     'Section*' => 'required|string',
                     'Network Type*' => 'required|string',
-                    'Verticals* (comma separated)' => 'required|string',
+                    'Request Type*' => 'required|string',
+                    'Vertical*' => 'required|string',
                     'Description*' => 'required|string',
                     'Priority' => 'nullable|in:high,medium',
-                    'Assigned To' => 'nullable|string',
+                    'Assigned To' => 'nullable|string'
                 ]);
 
                 if ($validator->fails()) {
@@ -1230,57 +1252,62 @@ public function downloadFormat()
                     continue;
                 }
 
-                // Map section name to ID
-                $section = Section::where('name', $data['Section*'])->first();
+                $section = Section::where('name', trim($data['Section*']))->first();
                 if (!$section) {
                     $errors[] = "Row {$row}: Section '{$data['Section*']}' not found";
                     continue;
                 }
 
-                // Map network type name to ID
-                $networkType = NetworkType::where('name', $data['Network Type*'])->first();
+                $networkType = NetworkType::where('name', trim($data['Network Type*']))->first();
                 if (!$networkType) {
                     $errors[] = "Row {$row}: Network Type '{$data['Network Type*']}' not found";
                     continue;
                 }
 
-                // Parse vertical names
-                $verticalNames = explode(',', str_replace(' ', '', $data['Verticals* (comma separated)']));
-                $verticalNames = array_filter($verticalNames);
-
-                if (empty($verticalNames)) {
-                    $errors[] = "Row {$row}: Invalid vertical names format";
+                $requestType = RequestType::where('name', trim($data['Request Type*']))->first();
+                if (!$requestType) {
+                    $errors[] = "Row {$row}: Request Type '{$data['Request Type*']}' not found";
                     continue;
                 }
 
-                // Map vertical names to IDs
+                $verticalPathString = $data['Vertical*'];
+                $pathNames = array_map('trim', explode('->', $verticalPathString));
+                
                 $verticalIds = [];
-                foreach ($verticalNames as $verticalName) {
-                    $vertical = Vertical::where('name', $verticalName)->first();
-                    if ($vertical) {
-                        $verticalIds[] = $vertical->id;
+                $currentParentId = null;
+                $lookupFailed = false;
+
+                foreach ($pathNames as $vName) {
+                    $vNode = $allVerticals->where('name', $vName)
+                                        ->where('parent_id', $currentParentId)
+                                        ->first();
+                    if ($vNode) {
+                        $verticalIds[] = $vNode->id;
+                        $currentParentId = $vNode->id;
+                    } else {
+                        $lookupFailed = true;
+                        break;
                     }
                 }
 
-                if (empty($verticalIds)) {
-                    $errors[] = "Row {$row}: One or more verticals not found";
+                if ($lookupFailed || empty($verticalIds)) {
+                    $errors[] = "Row {$row}: Vertical path '{$verticalPathString}' is invalid or broken";
                     continue;
                 }
 
-                // Map user name to ID
                 $assignedToId = null;
                 if (!empty($data['Assigned To'])) {
-                    $user = User::where('full_name', $data['Assigned To'])->first();
+                    $user = User::where('full_name', trim($data['Assigned To']))->first();
                     if ($user) {
                         $assignedToId = $user->id;
                     }
                 }
-
-                // Create complaint
+                
                 $priority = $data['Priority'] ?? 'medium';
                 $unassignedStatus = Status::where('name', 'unassigned')->first();
 
                 $date = Carbon::now()->format('Ymd');
+                
                 $verticalsChain = Vertical::whereIn('id', $verticalIds)
                     ->orderByRaw('FIELD(id, ' . implode(',', $verticalIds) . ')')
                     ->get();
@@ -1297,9 +1324,7 @@ public function downloadFormat()
                 $referenceNumber = $prefix . '-' . $date . str_pad($complaintsToday + 1, 3, '0', STR_PAD_LEFT);
 
                 $assignedStatus = Status::where('name', 'assigned')->first();
-                $statusId = !empty($assignedToId)
-                    ? $assignedStatus->id
-                    : $unassignedStatus->id;
+                $statusId = !empty($assignedToId) ? $assignedStatus->id : $unassignedStatus->id;
 
                 $complaint = Complaint::create([
                     'reference_number' => $referenceNumber,
@@ -1308,6 +1333,7 @@ public function downloadFormat()
                     'priority' => $priority,
                     'status_id' => $statusId,
                     'network_type_id' => $networkType->id,
+                    'request_type_id' => $requestType->id,
                     'section_id' => $section->id,
                     'user_name' => $data['User Name*'],
                     'room_number' => $data['Room Number*'],
@@ -1318,16 +1344,31 @@ public function downloadFormat()
                 ]);
 
                 $complaint->verticals()->sync($verticalIds);
+                $complaint->load('verticals');
+
+                $actionChanges = [
+                    'verticals' => $complaint->verticals->pluck('name')->toArray()
+                ];
+
+                if (!empty($assignedToId)) {
+                    $actionChanges['assigned_to'] = trim($data['Assigned To']);
+                }
 
                 ComplaintAction::create([
                     'complaint_id' => $complaint->id,
                     'user_id' => Auth::user()->id ?? 0,
-                    'status_id' => $unassignedStatus->id,
+                    'status_id' => $statusId, 
+                    'assigned_to' => $complaint->assigned_to ?: null,
                     'description' => 'Complaint created via bulk import',
-                    'changes' => json_encode([
-                        'verticals' => $complaint->verticals->pluck('name')->toArray()
-                    ])
+                    'changes' => json_encode($actionChanges) 
                 ]);
+
+                try {
+                    $notificationService = new ComplaintNotificationService();
+                    $notificationService->sendNewComplaintNotifications($complaint);
+                } catch (\Exception $e) {
+                    \Log::error('Email notification failed in bulk import: ' . $e->getMessage());
+                }
 
                 $successCount++;
             }
