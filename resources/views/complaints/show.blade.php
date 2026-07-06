@@ -42,28 +42,7 @@ $breadcrumbs = [
     <div class="row mb-4 align-items-center">
 
         <div class="col-md-12 text-md-end mt-3 mt-md-0">
-            <!-- @if(auth()->check())
-            <a href="{{ route('complaints.index') }}" onclick="
-                    event.preventDefault();
-                    if (document.referrer && document.referrer !== window.location.href) {
-                        window.history.back();
-                    } else {
-                        window.location.href = '{{ route('complaints.index') }}';
-                    }
-                    return false;" class="btn btn-outline-secondary me-2 mb-2">
-                <i class="bi bi-arrow-left"></i> Back
-            </a>
-            @else
-            <a href="{{ url()->previous() }}" class="btn btn-outline-secondary me-2 mb-2">
-                <i class="bi bi-arrow-left"></i> Back
-            </a>
-            @endif -->
-
-
-
             @include('layouts.partials.breadcrumbs', ['breadcrumbs' => $breadcrumbs])
-
-
         </div>
 
         <style>
@@ -138,8 +117,6 @@ $breadcrumbs = [
                         <div class="col-md-6">
                             <p class="mb-1 fw-semibold"><i class="bi bi-geo-alt"></i> Section:</p>
                             <p class="mb-3 ps-3">{{ ucfirst($complaint->section->name ?? 'N/A') }}</p>
-
-
 
                             <p class="mb-1 fw-semibold"><i class="bi bi-telephone"></i> Intercom:</p>
                             <p class="mb-3 ps-3">{{ $complaint->intercom }}</p>
@@ -286,43 +263,6 @@ $breadcrumbs = [
                 </div>
             </div>
         </div>
-
-
-
-
-        <!-- Quick Details Card -->
-        <!-- <div class="card shadow-sm mb-4 mt-4">
-                <div class="card-header bg-light">
-                    <h5 class="mb-0">Quick Details</h5>
-                </div>
-                <div class="card-body">
-                    <dl class="row mb-0">
-                        <dt class="col-sm-5"><i class="bi bi-exclamation-triangle"></i> Priority:</dt>
-                        <dd class="col-sm-7">
-                            <span class="badge bg-{{ $complaint->priority_color }}">
-                                {{ ucfirst($complaint->priority) }}
-                            </span>
-                        </dd>
-
-                        <dt class="col-sm-5"><i class="bi bi-hdd-network"></i> Network:</dt>
-                        <dd class="col-sm-7">{{ ucfirst( $complaint->networkType->name ?? 'N/A' ) }}</dd>
-
-                        <dt class="col-sm-5"><i class="bi bi-layers"></i> Vertical:</dt>
-                        <dd class="col-sm-7">{{ ucfirst($complaint->vertical->name ?? 'N/A' ) }}</dd>
-
-                        <dt class="col-sm-5"><i class="bi bi-geo-alt"></i> Section:</dt>
-                        <dd class="col-sm-7">{{ ucfirst( $complaint->section->name ?? 'N/A' ) }}</dd>
-
-                        <dt class="col-sm-5"><i class="bi bi-telephone"></i> Intercom:</dt>
-                        <dd class="col-sm-7">{{ $complaint->intercom }}</dd>
-
-                        <dt class="col-sm-5"><i class="bi bi-calendar"></i> Created:</dt>
-                        <dd class="col-sm-7">
-                            {{ $complaint->created_at->diffForHumans() }} ({{ $complaint->created_at->format('h:i A') }})
-                        </dd>
-                    </dl>
-                </div>
-            </div> -->
     </div>
 </div>
 </div>
@@ -398,9 +338,5 @@ $breadcrumbs = [
     });
 </script>
 @endpush
-
-
-
-
 
 @endsection
