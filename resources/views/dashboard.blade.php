@@ -77,17 +77,50 @@
                         </div>
                     </div>
 
+                    @php
+                        $allComplaintsCollection = isset($complaints) ? $complaints : $todayComplaints;
+                        $todayTickets = $allComplaintsCollection->filter(function($complaint) {
+                            return \Carbon\Carbon::parse($complaint->created_at)->isToday();
+                        });
+
+                        $previousTickets = $allComplaintsCollection->filter(function($complaint) {
+                            $isToday = \Carbon\Carbon::parse($complaint->created_at)->isToday();
+                            $isDone = in_array(strtolower($complaint->status->name ?? ''), ['completed', 'closed']) 
+                                    || ($complaint->status_id == ($completedStatusId ?? null));
+                            return !$isToday && !$isDone;
+                        });
+                    @endphp
+
                     <!-- Today's Complaints -->
-                    <div class="row">
+                    <div class="row mb-3">
                         <div class="col-12">
-                            <div class="card shadow-lg border-0 rounded-4 mt-2">
-                                <div class="card-header bg-gradient-primary text-white rounded-top-4 d-flex align-items-center justify-content-between" style="background: linear-gradient(90deg, #0d6efd 0%, #0a58ca 100%);">
+                            <div class="card shadow-lg border-0 rounded-4">
+                                <div class="card-header text-white rounded-top-4 d-flex align-items-center justify-content-between" style="background: linear-gradient(90deg, #0d6efd 0%, #0a58ca 100%);">
                                     <h4 class="mb-0">Today's Tickets</h4>
-                                    <span class="badge bg-light text-primary fs-6">{{ $todayComplaints->count() }} Today</span>
+                                    <span class="badge bg-light text-primary fs-6">{{ $todayTickets->count() }} Today</span>
                                 </div>
                                 <div class="card-body">
-                                    @include('complaints.partials.table', ['complaints' => isset($todayComplaints) ? $todayComplaints : $complaints, 'tableId' => 'dashboardComplaintsTable'])
-                                    @foreach(isset($todayComplaints) ? $todayComplaints : $complaints as $complaint)
+                                    @include('complaints.partials.table', ['complaints' => $todayTickets, 'tableId' => 'todayComplaintsTable'])
+                                    @foreach($todayTickets as $complaint)
+                                        @include('complaints.partials.assign-modal', ['complaint' => $complaint])
+                                        @include('complaints.partials.revert-modal', ['complaint' => $complaint, 'managers' => $managers])
+                                    @endforeach
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- 2. Previous Pending Tickets Section -->
+                    <div class="row">
+                        <div class="col-12">
+                            <div class="card shadow-lg border-0 rounded-4">
+                                <div class="card-header text-white rounded-top-4 d-flex align-items-center justify-content-between" style="background: linear-gradient(90deg, #6c757d 0%, #495057 100%);">
+                                    <h4 class="mb-0">Previous Pending Tickets</h4>
+                                    <span class="badge bg-light text-secondary fs-6">{{ $previousTickets->count() }} Pending</span>
+                                </div>
+                                <div class="card-body">
+                                    @include('complaints.partials.table', ['complaints' => $previousTickets, 'tableId' => 'previousComplaintsTable'])
+                                    @foreach($previousTickets as $complaint)
                                         @include('complaints.partials.assign-modal', ['complaint' => $complaint])
                                         @include('complaints.partials.revert-modal', ['complaint' => $complaint, 'managers' => $managers])
                                     @endforeach
@@ -110,7 +143,6 @@
 @endsection
 
 @section('scripts')
-{{-- <script src="{{ asset('js/jquery-3.6.0.min.js') }}"></script> --}} <!-- Removed duplicate jQuery -->
 <script src="{{ asset('js/jquery.dataTables.min.js') }}"></script>
 <script src="{{ asset('js/dataTables.bootstrap5.min.js') }}"></script>
 <script src="{{ asset('js/dataTables.responsive.min.js') }}"></script>
@@ -125,12 +157,22 @@
 
 <script>
     $(document).ready(function() {
-        $('#dashboardComplaintsTable').DataTable({
-            responsive: false, // Disable responsive extension
-            scrollX: true,     // Enable horizontal scrolling
-            order: [
-                [1, 'desc']
-            ], // Reference column descending
+        $('#todayComplaintsTable').DataTable({
+            responsive: false,
+            scrollX: true,
+            order: [[1, 'desc']],
+            pageLength: 10,
+            lengthMenu: [[10, 15, 20, 50, 100, -1], [10, 15, 20, 50, 100, 'All']],
+            language: { search: "", searchPlaceholder: "Search today's complaints..." },
+            dom: 'lfrtip',
+            columnDefs: [{ orderable: false, targets: 0 }]
+        });
+
+        // Previous Table
+        $('#previousComplaintsTable').DataTable({
+            responsive: false,
+            scrollX: true,
+            order: [[1, 'desc']],
             pageLength: 10,
             lengthMenu: [
                 [10, 15, 20, 50, 100, -1],
@@ -150,105 +192,5 @@
     });
 </script>
 @endsection
-
-@push('style')
-<style>
-    .bg-gradient-primary {
-        background: linear-gradient(90deg, #0d6efd 0%, #0a58ca 100%) !important;
-        color: #fff !important;
-    }
-
-    .card {
-        border-radius: 22px;
-        box-shadow: 0 8px 32px 0 rgba(31, 38, 135, 0.13);
-        border: none;
-        margin-bottom: 2rem;
-        transition: box-shadow 0.2s;
-    }
-
-    .card-header {
-        border-radius: 22px 22px 0 0;
-        font-weight: 700;
-        font-size: 1.18rem;
-        letter-spacing: 0.7px;
-        box-shadow: 0 2px 8px rgba(13, 110, 253, 0.07);
-    }
-
-    .table-primary {
-        background: linear-gradient(90deg, #0d6efd 0%, #0a58ca 100%) !important;
-        color: #fff !important;
-        font-size: 1.08rem;
-        letter-spacing: 0.5px;
-    }
-
-    .table-bordered {
-        border-radius: 14px;
-        overflow: hidden;
-    }
-
-    .table-hover tbody tr:hover {
-        background: #f0f6ff !important;
-        transition: background 0.2s;
-    }
-
-    .card-link-stretched {
-        text-decoration: none;
-        display: block;
-    }
-
-    .clickable-card {
-        cursor: pointer;
-        transition: transform 0.12s, box-shadow 0.12s;
-    }
-
-    .clickable-card:hover,
-    .clickable-card:focus {
-        transform: translateY(-4px) scale(1.03);
-        box-shadow: 0 12px 36px 0 rgba(31, 38, 135, 0.18);
-        z-index: 2;
-        text-decoration: none;
-    }
-
-    /* Modern Table Enhancements */
-    .table-responsive {
-        border-radius: 16px;
-        box-shadow: 0 4px 24px rgba(0,0,0,0.08);
-        overflow-x: auto;
-        background: #fff;
-        margin-bottom: 1.5rem;
-    }
-
-    #complaintsTable {
-        min-width: 1200px;
-        border-radius: 12px;
-        overflow: hidden;
-    }
-
-    #complaintsTable thead th {
-        position: sticky;
-        top: 0;
-        background: linear-gradient(90deg, #0d6efd 0%, #0a58ca 100%) !important;
-        color: #fff !important;
-        z-index: 2;
-    }
-
-    #complaintsTable tbody tr:hover {
-        background: #eaf1fb !important;
-        transition: background 0.2s;
-    }
-
-    .table-responsive::-webkit-scrollbar {
-        height: 8px;
-    }
-    .table-responsive::-webkit-scrollbar-thumb {
-        background: #0d6efd;
-        border-radius: 4px;
-    }
-    .table-responsive::-webkit-scrollbar-track {
-        background: #f1f1f1;
-        border-radius: 4px;
-    }
-</style>
-@endpush
 
 @stack('scripts')

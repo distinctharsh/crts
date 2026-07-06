@@ -149,11 +149,6 @@ document.addEventListener(
     'DOMContentLoaded',
     function(){
         if(isNotificationAllowed()){
-
-            console.log(
-                'Starting polling...'
-            );
-
             startNotificationPolling();
         }
 
