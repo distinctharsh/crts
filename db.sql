@@ -177,10 +177,10 @@ CREATE TABLE IF NOT EXISTS `complaints` (
 DELETE FROM `complaints`;
 INSERT INTO `complaints` (`id`, `reference_number`, `user_name`, `client_id`, `network_type_id`, `section_id`, `intercom`, `room_number`, `description`, `file_path`, `priority`, `status_id`, `assigned_to`, `assigned_by`, `resolution`, `created_at`, `updated_at`) VALUES
 	(241, 'SWE-AS-20260629001', 'Purshottam Kumar', 1, 2, 4, '120304', '304', 'Test issue details...', NULL, 'high', 1, NULL, NULL, NULL, '2026-06-29 08:46:58', '2026-06-29 08:46:58'),
-	(242, 'H-20260629002', 'Test User', 1, 2, 4, '120304', '122343', 'weqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqq', NULL, 'medium', 1, NULL, NULL, NULL, '2026-06-29 08:48:07', '2026-06-29 08:48:07'),
-	(243, 'SWE-DS-20260629003', 'Amrita Rao', 1, 2, 2, '120304', '201', 'qswqqwwq', NULL, 'medium', 2, 10, NULL, NULL, '2026-06-29 09:07:17', '2026-06-29 09:07:17'),
-	(244, 'SWE-DS-20260629004', 'Amrita Rao', 1, 2, 4, '120304', '201', 'gfhhhhhhhhhhhhhh', NULL, 'medium', 1, NULL, NULL, NULL, '2026-06-29 09:12:28', '2026-06-29 09:12:28'),
-	(245, 'SWE-DS-20260629005', 'Amrita Rao', 1, 2, 4, '120304', '201', 'gfhhhhhhhhhhhhhh', NULL, 'medium', 1, NULL, NULL, NULL, '2026-06-29 09:15:05', '2026-06-29 09:15:05');
+	(242, 'H-20260629002', 'Test User', 1, 2, 4, '120304', '122343', 'This is test data', NULL, 'medium', 1, NULL, NULL, NULL, '2026-06-29 08:48:07', '2026-06-29 08:48:07'),
+	(243, 'SWE-DS-20260629003', 'Amrita Rao', 1, 2, 2, '120304', '201', 'This is test data', NULL, 'medium', 2, 10, NULL, NULL, '2026-06-29 09:07:17', '2026-06-29 09:07:17'),
+	(244, 'SWE-DS-20260629004', 'Amrita Rao', 1, 2, 4, '120304', '201', 'This is test data', NULL, 'medium', 1, NULL, NULL, NULL, '2026-06-29 09:12:28', '2026-06-29 09:12:28'),
+	(245, 'SWE-DS-20260629005', 'Amrita Rao', 1, 2, 4, '120304', '201', 'This is test data', NULL, 'medium', 1, NULL, NULL, NULL, '2026-06-29 09:15:05', '2026-06-29 09:15:05');
 
 -- Dumping structure for table tms-laravel.failed_jobs
 CREATE TABLE IF NOT EXISTS `failed_jobs` (
