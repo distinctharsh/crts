@@ -31,7 +31,7 @@
                     <h5 class="card-title mb-0">Upload Complaints</h5>
                 </div>
                 <div class="card-body">
-                    <form action="{{ route('complaints.bulk-import-store') }}" method="POST" enctype="multipart/form-data">
+                    <form id="importForm" action="{{ route('complaints.bulk-import-store') }}" method="POST" enctype="multipart/form-data">
                         @csrf
                         <div class="mb-4">
                             <label for="excel_file" class="form-label">Excel File <span class="text-danger">*</span></label>
@@ -55,8 +55,8 @@
                             </ul>
                         </div>
 
-                        <button type="submit" class="btn btn-primary">
-                            <i class="fas fa-upload me-2"></i> Upload & Import
+                        <button type="submit" id="submitBtn" class="btn btn-primary">
+                            <i class="fas fa-upload me-2"></i> <span id="btnText">Upload & Import</span>
                         </button>
                     </form>
                 </div>
@@ -68,4 +68,19 @@
 
 @push('scripts')
 <link rel="stylesheet" href="{{ asset('css/all.min.css') }}">
+
+<script>
+    document.getElementById('importForm').addEventListener('submit', function (e) {
+        var submitBtn = document.getElementById('submitBtn');
+        var btnText = document.getElementById('btnText');
+        
+        submitBtn.disabled = true;
+        btnText.innerText = 'Importing Data, Please wait...';
+        
+        var icon = submitBtn.querySelector('i');
+        if (icon) {
+            icon.className = 'fas fa-spinner fa-spin me-2';
+        }
+    });
+</script>
 @endpush

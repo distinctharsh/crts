@@ -2,6 +2,7 @@
 // $complaints: the list of complaints to show
 // $tableId: optional, for DataTable initialization
 @endphp
+<div class="table-responsive">
 <table id="{{ $tableId ?? 'complaintsTable' }}" class="table table-hover table-bordered table-striped align-middle w-100">
     <thead class="table-primary">
         <tr>
@@ -40,7 +41,7 @@
                 </span>
             </td>
             <td>{{ $complaint->assignedTo?->full_name ?? 'Not Assigned' }}</td>
-            <td>{{ $complaint->description }}</td>
+            <td style="word-break: break-word; min-width: 150px;">{{ $complaint->description }}</td>
             <td>
                 <div class="btn-group">
                     <a href="{{ route('complaints.show', $complaint) }}" class="btn btn-sm btn-info me-1">View</a>
@@ -87,3 +88,4 @@
         @endforeach
     </tbody>
 </table> 
+</div>

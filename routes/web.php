@@ -135,7 +135,7 @@ Route::middleware(['auth', 'can:isManager'])->group(function () {
 
     // Bulk import routes
     Route::get('/complaints/bulk-import', [ComplaintController::class, 'bulkImport'])->name('complaints.bulk-import');
-    Route::post('/complaints/bulk-import', [ComplaintController::class, 'bulkImportStore'])->name('complaints.bulk-import-store');
+    Route::post('/complaints/bulk-import', [ComplaintController::class, 'bulkImportStore'])->name('complaints.bulk-import-store')->middleware('throttle:3,1');
     Route::get('/complaints/download-format', [ComplaintController::class, 'downloadFormat'])->name('complaints.download-format');
 });
 

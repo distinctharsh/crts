@@ -1112,9 +1112,12 @@ class ComplaintController extends Controller
                 'F1' => 'Request Type*',
                 'G1' => 'Vertical*',
                 'H1' => 'Description*',
-                'I1' => 'Priority',
-                'J1' => 'Assigned To'
+                'I1' => 'Priority'
             ];
+
+            if (\Auth::check()) {
+                $headers['J1'] = 'Assigned To';
+            }
 
             foreach ($headers as $cell => $value) {
                 $sheet->setCellValue($cell, $value);
@@ -1131,7 +1134,10 @@ class ComplaintController extends Controller
             $sheet->setCellValue('G2', $verticalPaths[0] ?? '');
             $sheet->setCellValue('H2', 'Sample complaint description');
             $sheet->setCellValue('I2', 'medium');
-            $sheet->setCellValue('J2', ''); 
+            
+            if (\Auth::check()) {
+                $sheet->setCellValue('J2', ''); 
+            }
 
             // Reusable Validation Functionality
             $listValidation = function($range) {
@@ -1156,13 +1162,15 @@ class ComplaintController extends Controller
             $priorityValidation->setAllowBlank(true);
             $sheet->setDataValidation('I2:I100', $priorityValidation);
 
-            // Assigned To Validation
-            $assignedToValidation = $listValidation($userRange);
-            $assignedToValidation->setAllowBlank(true);
-            $sheet->setDataValidation('J2:J100', $assignedToValidation);
+            if (\Auth::check()) {
+                $assignedToValidation = $listValidation($userRange);
+                $assignedToValidation->setAllowBlank(true);
+                $sheet->setDataValidation('J2:J100', $assignedToValidation);
+            }
 
             // Auto-size columns
-            foreach (range('A', 'J') as $col) {
+            $highestColLetter = $sheet->getHighestColumn();
+            foreach (range('A', $highestColLetter) as $col) {
                 $sheet->getColumnDimension($col)->setAutoSize(true);
             }
 
@@ -1296,10 +1304,13 @@ class ComplaintController extends Controller
                 }
 
                 $assignedToId = null;
+                $assignedById = null;
+                
                 if (!empty($data['Assigned To'])) {
                     $user = User::where('full_name', trim($data['Assigned To']))->first();
                     if ($user) {
                         $assignedToId = $user->id;
+                        $assignedById = Auth::id();
                     }
                 }
                 
@@ -1337,8 +1348,9 @@ class ComplaintController extends Controller
                     'section_id' => $section->id,
                     'user_name' => $data['User Name*'],
                     'room_number' => $data['Room Number*'],
-                    'intercom' => $data['Intercom*'],
+                    'intercom' => (string)$data['Intercom*'],
                     'assigned_to' => $assignedToId,
+                    'assigned_by' => $assignedById,
                     'created_at' => Carbon::now()->setTimezone(config('app.timezone')),
                     'updated_at' => Carbon::now()->setTimezone(config('app.timezone')),
                 ]);
@@ -1352,6 +1364,7 @@ class ComplaintController extends Controller
 
                 if (!empty($assignedToId)) {
                     $actionChanges['assigned_to'] = trim($data['Assigned To']);
+                    $actionChanges['assigned_by'] = Auth::user()->full_name ?? 'System';
                 }
 
                 ComplaintAction::create([
