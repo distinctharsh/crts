@@ -39,6 +39,7 @@
             <form action="{{ route('masters.verticals.update', $category->id) }}" method="POST">
                 @csrf
                 @method('PUT')
+                <input type="hidden" name="parent_id" value="{{ $category->parent_id }}">
                 <div class="modal-header bg-warning text-dark rounded-top-4">
                     <h5 class="modal-title"><i class="fas fa-pen me-2"></i>Edit Category</h5>
                     <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>

@@ -176,7 +176,7 @@ class MastersController extends Controller
             $vertical->update([
                 'name' => $request->name,
                 'short_form' => $request->short_form ? strtoupper($request->short_form) : null,
-                'parent_id' => $request->parent_id ?: null,
+                'parent_id' => $request->has('parent_id') ? ($request->parent_id ?: null) : $vertical->parent_id,
                 'send_email' => $request->has('send_email'),
             ]);
             return redirect()->route('masters.index')->with('success', 'Vertical updated successfully.');
