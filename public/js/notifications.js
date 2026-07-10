@@ -25,7 +25,20 @@ function markNotificationShown() {
 // Fetch data
 async function fetchNotificationData() {
     try {
-        const response = await fetch('/complaints/notification-data');
+        const response = await fetch('/complaints/notification-data', {
+            method: 'GET',
+            headers: {
+                'X-Requested-With': 'XMLHttpRequest',
+                'Accept': 'application/json'
+            }
+        });
+
+        if (response.status === 401) {
+            if (typeof notificationInterval !== 'undefined') {
+                clearInterval(notificationInterval);
+            }
+            return null;
+        }
 
         if (!response.ok) {
             console.error(

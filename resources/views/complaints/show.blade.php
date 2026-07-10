@@ -121,6 +121,9 @@ $breadcrumbs = [
                             <p class="mb-1 fw-semibold"><i class="bi bi-telephone"></i> Intercom:</p>
                             <p class="mb-3 ps-3">{{ $complaint->intercom }}</p>
 
+                            <p class="mb-1 fw-semibold"><i class="bi bi-door-open"></i> Room Number:</p>
+                            <p class="mb-3 ps-3">{{ $complaint->room_number  ?? 'N/A' }}</p>
+
                             <p class="mb-1 fw-semibold"><i class="bi bi-calendar"></i> Created At:</p>
                             <p class="mb-3 ps-3">
                                 {{ $complaint->created_at->format('M d, Y h:i A') }}

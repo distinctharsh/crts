@@ -118,7 +118,7 @@
                         </div>
 
                         <div class="col-md-4 mb-3 hierarchy-wrapper">
-                            <label class="form-label">Category</label>
+                            <label class="form-label">Category <span class="text-danger">*</span></label>
                             <select class="form-select hierarchy-select" data-level="1" name="vertical_ids[]" required>
                                 <option value="">Select Category</option>
                                 @foreach($verticals as $category)
@@ -348,7 +348,7 @@
 
                         const selectHtml = `
                             <div class="col-md-4 mb-3 hierarchy-wrapper">
-                                <label class="form-label">${labelText}</label>
+                                <label class="form-label">${labelText} <span class="text-danger">*</span></label>
                                 <select class="form-select hierarchy-select" data-level="${nextLevel}" name="vertical_ids[]" required>
                                     <option value="">Select ${labelText}</option>
                                     ${children.map(child => `<option value="${child.id}">${child.name}</option>`).join('')}
@@ -407,7 +407,7 @@
 
                             const selectHtml = `
                                 <div class="col-md-4 mb-3 hierarchy-wrapper">
-                                    <label class="form-label">${labelText}</label>
+                                    <label class="form-label">${labelText} <span class="text-danger">*</span></label>
                                     <select class="form-select hierarchy-select" data-level="${currentLevel}" name="vertical_ids[]" required>
                                         <option value="">Select ${labelText}</option>
                                         ${children.map(child => `<option value="${child.id}">${child.name}</option>`).join('')}

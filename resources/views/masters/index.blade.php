@@ -25,6 +25,9 @@
         <li class="nav-item" role="presentation">
             <button class="nav-link" id="verticals-tab" data-bs-toggle="tab" data-bs-target="#verticals" type="button" role="tab">Category</button>
         </li>
+        <li class="nav-item" role="presentation">
+            <button class="nav-link" id="request-types-tab" data-bs-toggle="tab" data-bs-target="#request-types" type="button" role="tab">Request Types</button>
+        </li>
     </ul>
     <div class="tab-content" id="masterTabsContent">
         <!-- Network Types Tab -->
@@ -45,13 +48,29 @@
                         </thead>
                         <tbody>
                             @forelse($networkTypes as $networkType)
-                            <tr>
-                                <td class="ps-4">{{ $networkType->name }}</td>
+                            <tr class="{{ $networkType->trashed() ? 'table-light text-muted opacity-75' : '' }}">
+                                <td class="ps-4">
+                                    {{ $networkType->name }}
+                                    @if($networkType->trashed())
+                                        <span class="badge bg-secondary ms-2" style="font-size: 0.75rem;">Deleted</span>
+                                    @endif
+                                </td>
                                 <td class="text-end pe-4">
-                                    <button class="btn btn-outline-primary btn-sm me-1" data-bs-toggle="tooltip" title="Edit" data-bs-target="#editNetworkTypeModal{{ $networkType->id }}" data-bs-toggle2="modal" onclick="$('#editNetworkTypeModal{{ $networkType->id }}').modal('show')"><i class="fas fa-pen"></i></button>
-                                    <button class="btn btn-outline-danger btn-sm" data-bs-toggle="tooltip" title="Delete" data-bs-target="#deleteNetworkTypeModal{{ $networkType->id }}" data-bs-toggle2="modal" onclick="$('#deleteNetworkTypeModal{{ $networkType->id }}').modal('show')"><i class="fas fa-trash"></i></button>
+                                    @if($networkType->trashed())
+                                        <form action="{{ route('masters.network-types.restore', $networkType->id) }}" method="POST" class="d-inline">
+                                            @csrf
+                                            <button type="submit" class="btn btn-outline-success btn-sm me-1" data-bs-toggle="tooltip" title="Restore Network Type">
+                                                <i class="fas fa-undo me-1"></i> Restore
+                                            </button>
+                                        </form>
+                                    @else
+                                        <button class="btn btn-outline-primary btn-sm me-1" data-bs-toggle="tooltip" title="Edit" data-bs-target="#editNetworkTypeModal{{ $networkType->id }}" data-bs-toggle2="modal" onclick="$('#editNetworkTypeModal{{ $networkType->id }}').modal('show')"><i class="fas fa-pen"></i></button>
+                                        <button class="btn btn-outline-danger btn-sm" data-bs-toggle="tooltip" title="Delete" data-bs-target="#deleteNetworkTypeModal{{ $networkType->id }}" data-bs-toggle2="modal" onclick="$('#deleteNetworkTypeModal{{ $networkType->id }}').modal('show')"><i class="fas fa-trash"></i></button>
+                                    @endif
                                 </td>
                             </tr>
+                            
+                            @if(!$networkType->trashed())
                             <!-- Edit Modal for this NetworkType -->
                             <div class="modal fade" id="editNetworkTypeModal{{ $networkType->id }}" tabindex="-1">
                                 <div class="modal-dialog">
@@ -99,6 +118,7 @@
                                     </div>
                                 </div>
                             </div>
+                            @endif
                             @empty
                             <tr>
                                 <td colspan="2" class="text-center text-muted">No Network Types found.</td>
@@ -128,13 +148,29 @@
                         </thead>
                         <tbody>
                             @forelse($sections as $section)
-                            <tr>
-                                <td class="ps-4">{{ $section->name }}</td>
+                            <tr class="{{ $section->trashed() ? 'table-light text-muted opacity-75' : '' }}">
+                                <td class="ps-4">
+                                    {{ $section->name }}
+                                    @if($section->trashed())
+                                        <span class="badge bg-secondary ms-2" style="font-size: 0.75rem;">Deleted</span>
+                                    @endif
+                                </td>
                                 <td class="text-end pe-4">
-                                    <button class="btn btn-outline-success btn-sm me-1" data-bs-toggle="tooltip" title="Edit" data-bs-target="#editSectionModal{{ $section->id }}" onclick="$('#editSectionModal{{ $section->id }}').modal('show')"><i class="fas fa-pen"></i></button>
-                                    <button class="btn btn-outline-danger btn-sm" data-bs-toggle="tooltip" title="Delete" data-bs-toggle="modal" data-bs-target="#deleteSectionModal{{ $section->id }}" data-bs-toggle2="modal" onclick="$('#deleteSectionModal{{ $section->id }}').modal('show')"><i class="fas fa-trash"></i></button>
+                                    @if($section->trashed())
+                                        <form action="{{ route('masters.sections.restore', $section->id) }}" method="POST" class="d-inline">
+                                            @csrf
+                                            <button type="submit" class="btn btn-outline-success btn-sm me-1" data-bs-toggle="tooltip" title="Restore Section">
+                                                <i class="fas fa-undo me-1"></i> Restore
+                                            </button>
+                                        </form>
+                                    @else
+                                        <button class="btn btn-outline-success btn-sm me-1" data-bs-toggle="tooltip" title="Edit" data-bs-target="#editSectionModal{{ $section->id }}" onclick="$('#editSectionModal{{ $section->id }}').modal('show')"><i class="fas fa-pen"></i></button>
+                                        <button class="btn btn-outline-danger btn-sm" data-bs-toggle="tooltip" title="Delete" data-bs-target="#deleteSectionModal{{ $section->id }}" data-bs-toggle2="modal" onclick="$('#deleteSectionModal{{ $section->id }}').modal('show')"><i class="fas fa-trash"></i></button>
+                                    @endif
                                 </td>
                             </tr>
+                            
+                            @if(!$section->trashed())
                             <!-- Edit Modal for this Section -->
                             <div class="modal fade" id="editSectionModal{{ $section->id }}" tabindex="-1">
                                 <div class="modal-dialog">
@@ -182,6 +218,8 @@
                                     </div>
                                 </div>
                             </div>
+                            @endif
+
                             @empty
                             <tr>
                                 <td colspan="2" class="text-center text-muted">No Sections found.</td>
@@ -212,8 +250,13 @@
                         </thead>
                         <tbody>
                             @forelse($statuses as $status)
-                            <tr>
-                                <td class="ps-4">{{ $status->display_name }}</td>
+                            <tr class="{{ $status->trashed() ? 'table-light text-muted opacity-75' : '' }}">
+                                <td class="ps-4">
+                                    {{ $status->display_name }}
+                                    @if($status->trashed())
+                                        <span class="badge bg-secondary ms-2" style="font-size: 0.75rem;">Deleted</span>
+                                    @endif
+                                </td>
                                 <td>
                                     <span class="badge px-3 py-2 bg-{{ $status->color }}">
                                         {{ $status->color }}
@@ -221,10 +264,21 @@
                                 </td>
 
                                 <td class="text-end pe-4">
-                                    <button class="btn btn-outline-info btn-sm me-1" data-bs-toggle="tooltip" title="Edit" data-bs-target="#editStatusModal{{ $status->id }}" onclick="$('#editStatusModal{{ $status->id }}').modal('show')"><i class="fas fa-pen"></i></button>
-                                    <button class="btn btn-outline-danger btn-sm" data-bs-toggle="tooltip" title="Delete" data-bs-toggle="modal" data-bs-target="#deleteStatusModal{{ $status->id }}" data-bs-toggle2="modal" onclick="$('#deleteStatusModal{{ $status->id }}').modal('show')"><i class="fas fa-trash"></i></button>
+                                    @if($status->trashed())
+                                        <form action="{{ route('masters.statuses.restore', $status->id) }}" method="POST" class="d-inline">
+                                            @csrf
+                                            <button type="submit" class="btn btn-outline-success btn-sm me-1" data-bs-toggle="tooltip" title="Restore Status">
+                                                <i class="fas fa-undo me-1"></i> Restore
+                                            </button>
+                                        </form>
+                                    @else
+                                        <button class="btn btn-outline-info btn-sm me-1" data-bs-toggle="tooltip" title="Edit" data-bs-target="#editStatusModal{{ $status->id }}" onclick="$('#editStatusModal{{ $status->id }}').modal('show')"><i class="fas fa-pen"></i></button>
+                                        <button class="btn btn-outline-danger btn-sm" data-bs-toggle="tooltip" title="Delete" data-bs-target="#deleteStatusModal{{ $status->id }}" data-bs-toggle2="modal" onclick="$('#deleteStatusModal{{ $status->id }}').modal('show')"><i class="fas fa-trash"></i></button>
+                                    @endif
                                 </td>
                             </tr>
+                            
+                            @if(!$status->trashed())
                             <!-- Edit Modal for this Status -->
                             <div class="modal fade" id="editStatusModal{{ $status->id }}" tabindex="-1">
                                 <div class="modal-dialog">
@@ -291,6 +345,7 @@
                                     </div>
                                 </div>
                             </div>
+                            @endif
                             @empty
                             <tr>
                                 <td colspan="3" class="text-center text-muted">No Status found.</td>
@@ -321,12 +376,112 @@
                                 <th class="text-end pe-4">Actions</th>
                             </tr>
                         </thead>
-<tbody>
-    @include('masters.partials.category-row', [
-        'categories' => $verticals,
-        'level' => 0
-    ])
-</tbody>
+                        <tbody>
+                            @include('masters.partials.category-row', [
+                                'categories' => $verticals,
+                                'level' => 0
+                            ])
+                        </tbody>
+                    </table>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <!-- Request Types Tab -->
+        <div class="tab-pane fade" id="request-types" role="tabpanel">
+            <div class="card mb-4 shadow rounded-4 border-0">
+                <div class="card-header d-flex justify-content-between align-items-center text-white rounded-top-4" style="background-color: #6f42c1;">
+                    <h5 class="mb-0 fw-bold"><i class="fas fa-list-alt me-2"></i>Request Types</h5>
+                    <button class="btn btn-light btn-sm fw-semibold px-3 py-1" data-bs-toggle="modal" data-bs-target="#addRequestTypeModal"><i class="fas fa-plus"></i> </button>
+                </div>
+                <div class="card-body p-0">
+                    <div class="table-responsive">
+                    <table class="table table-hover align-middle mb-0">
+                        <thead class="table-light">
+                            <tr>
+                                <th class="ps-4">Name</th>
+                                <th class="text-end pe-4">Actions</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            @forelse($requestTypes as $requestType)
+                            <tr class="{{ $requestType->trashed() ? 'table-light text-muted opacity-75' : '' }}">
+                                <td class="ps-4">
+                                    {{ $requestType->name }}
+                                    @if($requestType->trashed())
+                                        <span class="badge bg-secondary ms-2" style="font-size: 0.75rem;">Deleted</span>
+                                    @endif
+                                </td>
+                                <td class="text-end pe-4">
+                                    @if($requestType->trashed())
+                                        <form action="{{ route('masters.request-types.restore', $requestType->id) }}" method="POST" class="d-inline">
+                                            @csrf
+                                            <button type="submit" class="btn btn-outline-success btn-sm me-1" data-bs-toggle="tooltip" title="Restore Request Type">
+                                                <i class="fas fa-undo me-1"></i> Restore
+                                            </button>
+                                        </form>
+                                    @else
+                                        <button class="btn btn-outline-purple btn-sm me-1" style="color: #6f42c1; border-color: #6f42c1;" data-bs-toggle="tooltip" title="Edit" onclick="$('#editRequestTypeModal{{ $requestType->id }}').modal('show')"><i class="fas fa-pen"></i></button>
+                                        <button class="btn btn-outline-danger btn-sm" data-bs-toggle="tooltip" title="Delete" onclick="$('#deleteRequestTypeModal{{ $requestType->id }}').modal('show')"><i class="fas fa-trash"></i></button>
+                                    @endif
+                                </td>
+                            </tr>
+                            
+                            @if(!$requestType->trashed())
+                            <!-- Edit Modal -->
+                            <div class="modal fade" id="editRequestTypeModal{{ $requestType->id }}" tabindex="-1">
+                                <div class="modal-dialog">
+                                    <div class="modal-content rounded-4">
+                                        <form action="{{ route('masters.request-types.update', $requestType) }}" method="POST">
+                                            @csrf
+                                            @method('PUT')
+                                            <div class="modal-header text-white rounded-top-4" style="background-color: #6f42c1;">
+                                                <h5 class="modal-title"><i class="fas fa-pen me-2"></i>Edit Request Type</h5>
+                                                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+                                            </div>
+                                            <div class="modal-body">
+                                                <div class="mb-3">
+                                                    <label class="form-label text-dark">Name</label>
+                                                    <input type="text" name="name" class="form-control" value="{{ $requestType->name }}" required>
+                                                </div>
+                                            </div>
+                                            <div class="modal-footer">
+                                                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                                                <button type="submit" class="btn text-white" style="background-color: #6f42c1;">Update</button>
+                                            </div>
+                                        </form>
+                                    </div>
+                                </div>
+                            </div>
+                            <!-- Delete Modal -->
+                            <div class="modal fade" id="deleteRequestTypeModal{{ $requestType->id }}" tabindex="-1">
+                                <div class="modal-dialog modal-dialog-centered">
+                                    <div class="modal-content rounded-4">
+                                        <form action="{{ route('masters.request-types.destroy', $requestType) }}" method="POST">
+                                            @csrf
+                                            @method('DELETE')
+                                            <div class="modal-header bg-danger text-white rounded-top-4">
+                                                <h5 class="modal-title"><i class="fas fa-exclamation-triangle me-2"></i>Delete Request Type</h5>
+                                                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+                                            </div>
+                                            <div class="modal-body">
+                                                <p class="mb-0 text-dark">Are you sure you want to delete <strong>{{ $requestType->name }}</strong>? Purane tickets safe rahenge.</p>
+                                            </div>
+                                            <div class="modal-footer">
+                                                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                                                <button type="submit" class="btn btn-danger">Yes, Delete</button>
+                                            </div>
+                                        </form>
+                                    </div>
+                                </div>
+                            </div>
+                            @endif
+                            @empty
+                            <tr>
+                                <td colspan="2" class="text-center text-muted">No Request Types found.</td>
+                            </tr>
+                            @endforelse
+                        </tbody>
                     </table>
                     </div>
                 </div>
@@ -578,6 +733,30 @@
                         <div class="mb-3">
                             <label class="form-label">Short Form</label>
                             <input type="text" name="short_form" class="form-control" placeholder="e.g., PH" maxlength="10">
+                        </div>
+                    </div>
+                    <div class="modal-footer">
+                        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                        <button type="submit" class="btn text-white" style="background-color: #6f42c1;">Save</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+    <!-- Add Request Type Modal -->
+    <div class="modal fade" id="addRequestTypeModal" tabindex="-1">
+        <div class="modal-dialog">
+            <div class="modal-content rounded-4">
+                <form action="{{ route('masters.request-types.store') }}" method="POST">
+                    @csrf
+                    <div class="modal-header text-white rounded-top-4" style="background-color: #6f42c1;">
+                        <h5 class="modal-title"><i class="fas fa-plus me-2"></i>Add Request Type</h5>
+                        <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+                    </div>
+                    <div class="modal-body">
+                        <div class="mb-3">
+                            <label class="form-label">Name</label>
+                            <input type="text" name="name" class="form-control" required placeholder="e.g., Incident, Service Request">
                         </div>
                     </div>
                     <div class="modal-footer">

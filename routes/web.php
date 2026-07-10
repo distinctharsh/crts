@@ -112,22 +112,33 @@ Route::middleware(['auth', 'can:isManager'])->group(function () {
     Route::post('/masters/network-types', [MastersController::class, 'storeNetworkType'])->name('masters.network-types.store');
     Route::put('/masters/network-types/{networkType}', [MastersController::class, 'updateNetworkType'])->name('masters.network-types.update');
     Route::delete('/masters/network-types/{networkType}', [MastersController::class, 'destroyNetworkType'])->name('masters.network-types.destroy');
+    Route::post('masters/network-types/{id}/restore', [MastersController::class, 'restoreNetworkType'])->name('masters.network-types.restore');
     // Sections
     Route::post('/masters/sections', [MastersController::class, 'storeSection'])->name('masters.sections.store');
     Route::put('/masters/sections/{section}', [MastersController::class, 'updateSection'])->name('masters.sections.update');
     Route::delete('/masters/sections/{section}', [MastersController::class, 'destroySection'])->name('masters.sections.destroy');
+    Route::post('masters/sections/{id}/restore', [MastersController::class, 'restoreSection'])->name('masters.sections.restore');
     // Statuses
     Route::post('/masters/statuses', [MastersController::class, 'storeStatus'])->name('masters.statuses.store');
     Route::put('/masters/statuses/{status}', [MastersController::class, 'updateStatus'])->name('masters.statuses.update');
     Route::delete('/masters/statuses/{status}', [MastersController::class, 'destroyStatus'])->name('masters.statuses.destroy');
+    Route::post('masters/statuses/{id}/restore', [MastersController::class, 'restoreStatus'])->name('masters.statuses.restore');
+
     // Verticals
     Route::post('/masters/verticals', [MastersController::class, 'storeVertical'])->name('masters.verticals.store');
     Route::put('/masters/verticals/{vertical}', [MastersController::class, 'updateVertical'])->name('masters.verticals.update');
     Route::delete('/masters/verticals/{vertical}', [MastersController::class, 'destroyVertical'])->name('masters.verticals.destroy');
+    Route::post('masters/verticals/{id}/restore', [MastersController::class, 'restoreVertical'])->name('masters.verticals.restore');
 
     Route::post('/masters/sub-categories', [MastersController::class, 'storeSubCategory'])->name('masters.sub-categories.store');
     Route::put('/masters/sub-categories/{subCategory}', [MastersController::class, 'updateSubCategory'])->name('masters.sub-categories.update');
     Route::delete('/masters/sub-categories/{subCategory}', [MastersController::class, 'destroySubCategory'])->name('masters.sub-categories.destroy');
+
+    // Request Types
+    Route::post('/masters/request-types', [MastersController::class, 'storeRequestType'])->name('masters.request-types.store');
+    Route::put('/masters/request-types/{requestType}', [MastersController::class, 'updateRequestType'])->name('masters.request-types.update');
+    Route::delete('/masters/request-types/{requestType}', [MastersController::class, 'destroyRequestType'])->name('masters.request-types.destroy');
+    Route::post('masters/request-types/{id}/restore', [MastersController::class, 'restoreRequestType'])->name('masters.request-types.restore');
 
     Route::get('/audit-log', [AuditLogController::class, 'index'])->name('audit-log.index');
 

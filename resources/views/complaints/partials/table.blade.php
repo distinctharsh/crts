@@ -41,7 +41,9 @@
                 </span>
             </td>
             <td>{{ $complaint->assignedTo?->full_name ?? 'Not Assigned' }}</td>
-            <td style="word-break: break-word; min-width: 150px;">{{ $complaint->description }}</td>
+            <td style="word-break: break-word; min-width: 150px; max-width: 250px;" title="{{ $complaint->description }}">
+                {{ \Illuminate\Support\Str::limit($complaint->description, 50, '...') }}
+            </td>
             <td>
                 <div class="btn-group">
                     <a href="{{ route('complaints.show', $complaint) }}" class="btn btn-sm btn-info me-1">View</a>

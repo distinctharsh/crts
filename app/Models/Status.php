@@ -4,11 +4,12 @@ namespace App\Models;
 
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
+use Illuminate\Database\Eloquent\SoftDeletes;
 use Spatie\Activitylog\Traits\LogsActivity;
 
 class Status extends Model
 {
-    use LogsActivity, HasFactory;
+    use LogsActivity, HasFactory, SoftDeletes;
 
     protected $fillable = [
         'name', 'color', 'slug', 'visible_to_user', 'sort_order', 'description'

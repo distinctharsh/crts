@@ -55,7 +55,7 @@ class Complaint extends Model
 
     public function status()
     {
-        return $this->belongsTo(Status::class);
+        return $this->belongsTo(Status::class, 'status_id')->withTrashed(); 
     }
 
     public function actions()
@@ -65,18 +65,18 @@ class Complaint extends Model
 
     public function networkType()
     {
-        return $this->belongsTo(NetworkType::class);
+        return $this->belongsTo(NetworkType::class, 'network_type_id')->withTrashed();
     }
 
     public function verticals()
     {
         return $this->belongsToMany(Vertical::class, 'complaint_vertical')
-                ->withTimestamps();
+                ->withTimestamps()->withTrashed();
     }
 
     public function section()
     {
-        return $this->belongsTo(Section::class);
+        return $this->belongsTo(Section::class)->withTrashed();
     }
 
     // Status Check Methods
@@ -179,9 +179,9 @@ class Complaint extends Model
             ->logOnlyDirty();
     }
 
-    public function requestType(): BelongsTo
+    public function requestType()
     {
-        return $this->belongsTo(RequestType::class, 'request_type_id');
+        return $this->belongsTo(RequestType::class, 'request_type_id')->withTrashed();
     }
 
 }

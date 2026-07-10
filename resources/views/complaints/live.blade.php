@@ -170,6 +170,7 @@
         display: flex;
         align-items: center;
         gap: 15px;
+        cursor: pointer;
     }
 
     @keyframes fadeInUp {
@@ -275,6 +276,9 @@
         display: -webkit-box;
         -webkit-line-clamp: 2;
         -webkit-box-orient: vertical;
+        position: relative;
+        cursor: pointer;
+        transition: all 0.3s ease;
     }
 
     .card-time {
@@ -351,96 +355,6 @@
         font-size: 0.9rem;
     }
 
-    /* Responsive */
-    @media (max-width: 768px) {
-        .dashboard-title {
-            font-size: 1.5rem;
-        }
-
-        .dashboard-subtitle {
-            font-size: 0.85rem;
-        }
-
-        .stats-container {
-            grid-template-columns: repeat(2, 1fr);
-            gap: 10px;
-        }
-
-        .stat-card {
-            padding: 12px;
-        }
-
-        .stat-number {
-            font-size: 1.8rem;
-        }
-
-        .stat-label {
-            font-size: 0.7rem;
-        }
-
-        .stat-icon {
-            font-size: 1.2rem;
-        }
-
-        .filter-bar {
-            flex-direction: column;
-            gap: 8px;
-        }
-
-        .filter-btn {
-            width: 100%;
-            padding: 10px 20px;
-            font-size: 0.9rem;
-        }
-
-        .complaint-card {
-            flex-wrap: wrap;
-            padding: 10px;
-            gap: 10px;
-        }
-
-        .card-ref {
-            min-width: 80px;
-            font-size: 1rem;
-        }
-
-        .card-user {
-            min-width: 120px;
-            font-size: 0.85rem;
-        }
-
-        .card-badges {
-            width: 100%;
-            order: 3;
-        }
-
-        .card-description {
-            width: 100%;
-            order: 4;
-            font-size: 0.85rem;
-        }
-
-        .card-description::after {
-            width: 300px;
-            left: -10px;
-        }
-
-        .card-time {
-            min-width: 60px;
-            font-size: 0.75rem;
-        }
-
-        .card-assigned {
-            min-width: 100px;
-            font-size: 0.85rem;
-        }
-
-        .view-toggle-btn {
-            padding: 10px 20px;
-            font-size: 0.9rem;
-        }
-    }
-
     /* View Toggle Button */
     .view-toggle-btn {
         padding: 12px 25px;
@@ -500,7 +414,7 @@
         padding: 3px 8px;
         font-size: 0.65rem;
     }
-
+    
     .complaints-grid.card-view .card-description {
         width: 100%;
         margin-bottom: 0;
@@ -509,222 +423,181 @@
         padding: 6px 8px;
     }
 
-    .complaints-grid.card-view .card-description::after {
-        top: 0;
-        left: 100%;
-        margin-left: 5px;
-        margin-top: 0;
-        width: 300px;
-        font-size: 0.85rem;
-        padding: 10px;
-    }
+    .complaints-grid.card-view .card-time { align-self: flex-end; margin-bottom: 0; font-size: 0.75rem; }
+    .complaints-grid.card-view .card-assigned { align-self: flex-end; font-size: 0.8rem; }
 
-    .complaints-grid.card-view .card-time {
-        align-self: flex-end;
-        margin-bottom: 0;
-        font-size: 0.75rem;
-    }
-
-    .complaints-grid.card-view .card-assigned {
-        align-self: flex-end;
-        font-size: 0.8rem;
-    }
-
-
-    .card-description{
-        position: relative;
-        cursor: pointer;
-        transition: all 0.3s ease;
-    }
-
-    .card-description::after{
-        content: attr(data-full-text);
-        position: absolute;
-        left: 0;
-        top: 100%;
-        width: 400px;
-        max-height: 300px;
-        overflow-y: auto;
-        background: #fff;
-        box-shadow: 0 8px 20px rgba(0,0,0,.15);
-        border-radius: 8px;
-        padding: 12px;
-        z-index: 1000;
-        opacity: 0;
-        visibility: hidden;
-        transition: all 0.3s ease;
-        margin-top: 5px;
-        white-space: normal;
-        line-height: 1.4;
-        font-size: 0.9rem;
-        color: #555;
-    }
-
-    .card-description:hover::after{
-        opacity: 1;
-        visibility: visible;
-    }
-
-
-    .live-status{
-        text-align:center;
-        margin-bottom:15px;
-        font-size:14px;
-        font-weight:600;
-        color:#666;
-    }
-
-    .live-dot{
-        width:10px;
-        height:10px;
-        background:#51cf66;
-        border-radius:50%;
-        display:inline-block;
-        animation:pulse 1s infinite;
-    }
-
-    /* Modal Styles */
-    .complaint-modal-overlay {
-        position: fixed;
-        top: 0;
-        left: 0;
-        right: 0;
-        bottom: 0;
-        background: rgba(0, 0, 0, 0.6);
-        backdrop-filter: blur(5px);
-        display: none;
-        justify-content: center;
-        align-items: center;
-        z-index: 9999;
-        animation: fadeIn 0.3s ease;
-    }
-
-    .complaint-modal-overlay.active {
-        display: flex;
-    }
-
-    @keyframes fadeIn {
-        from {
-            opacity: 0;
-        }
-        to {
-            opacity: 1;
-        }
-    }
-
-    .complaint-modal {
-        background: white;
-        border-radius: 20px;
-        max-width: 600px;
-        width: 90%;
-        max-height: 80vh;
-        overflow-y: auto;
-        box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
-        animation: slideUp 0.4s ease;
-        position: relative;
-    }
-
-    @keyframes slideUp {
-        from {
-            transform: translateY(50px);
-            opacity: 0;
-        }
-        to {
-            transform: translateY(0);
-            opacity: 1;
-        }
-    }
-
-    .modal-header {
-        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-        color: white;
-        padding: 25px 30px;
-        border-radius: 20px 20px 0 0;
-        display: flex;
-        justify-content: space-between;
-        align-items: center;
-        position: sticky;
-        top: 0;
-        z-index: 10;
-    }
-
-    .modal-title {
-        font-size: 1.5rem;
-        font-weight: 700;
-        margin: 0;
-    }
-
-    .modal-close {
-        background: rgba(255, 255, 255, 0.2);
-        border: none;
-        color: white;
-        font-size: 1.8rem;
-        width: 40px;
-        height: 40px;
+    .live-dot {
+        width: 10px;
+        height: 10px;
+        background: #51cf66;
         border-radius: 50%;
-        cursor: pointer;
-        display: flex;
-        align-items: center;
-        justify-content: center;
-        transition: all 0.3s ease;
+        display: inline-block;
+        animation: pulse 1s infinite;
     }
 
-    .modal-close:hover {
-        background: rgba(255, 255, 255, 0.3);
-        transform: rotate(90deg);
-    }
+  /* ==========================================================================
+   FINAL CLEAN & EXCELLENT FIXED OVERLAY MODAL STYLES (INNER SCROLL)
+   ========================================================================== */
+.complaint-modal-overlay {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100vw;
+    height: 100vh;
+    background: rgba(15, 23, 42, 0.65) !important;
+    backdrop-filter: blur(8px);
+    display: none;
+    justify-content: center;
+    align-items: center;
+    z-index: 99999 !important;
+    overflow: hidden;
+    padding: 20px;
+}
 
-    .modal-body {
-        padding: 30px;
-    }
+.complaint-modal-overlay.active {
+    display: flex !important;
+}
 
-    .modal-info-row {
-        display: flex;
-        margin-bottom: 20px;
-        padding-bottom: 15px;
-        border-bottom: 1px solid #eee;
-    }
+.complaint-modal {
+    background: #ffffff;
+    border-radius: 24px;
+    max-width: 720px;
+    width: 100%;
+    max-height: 90vh;
+    box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.3);
+    position: relative;
+    border: 1px solid rgba(226, 232, 240, 0.8);
+    display: flex;
+    flex-direction: column;
+}
 
-    .modal-info-row:last-child {
-        border-bottom: none;
-        margin-bottom: 0;
-        padding-bottom: 0;
-    }
+.modal-header {
+    background: linear-gradient(135deg, #4f46e5 0%, #7c3aed 100%);
+    color: white;
+    padding: 20px 25px;
+    border-radius: 24px 24px 0 0;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    flex-shrink: 0;
+}
 
-    .modal-info-label {
-        font-weight: 600;
-        color: #666;
-        min-width: 120px;
-        font-size: 0.95rem;
-    }
+.modal-title {
+    font-size: 1.35rem;
+    font-weight: 700;
+    margin: 0;
+    color: #ffffff !important;
+}
 
-    .modal-info-value {
-        color: #333;
-        font-size: 0.95rem;
-        flex: 1;
-        line-height: 1.5;
-    }
+.modal-close {
+    background: rgba(255, 255, 255, 0.2);
+    border: none;
+    color: white !important;
+    font-size: 1.8rem;
+    width: 36px;
+    height: 36px;
+    border-radius: 50%;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: all 0.3s ease;
+    line-height: 1;
+}
 
+.modal-close:hover {
+    background: rgba(255, 255, 255, 0.35);
+    transform: rotate(90deg);
+}
+
+.modal-body {
+    padding: 25px;
+    background: #f8fafc;
+    border-radius: 0 0 24px 24px;
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
+}
+
+.modal-info-grid {
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    gap: 12px;
+    margin-bottom: 20px;
+    flex-shrink: 0;
+}
+
+.modal-meta-card {
+    background: #ffffff;
+    padding: 12px 16px;
+    border-radius: 14px;
+    border: 1px solid #e2e8f0;
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+}
+
+.meta-label {
+    font-size: 0.72rem;
+    font-weight: 700;
+    color: #94a3b8;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+}
+
+.meta-value {
+    font-size: 0.92rem;
+    font-weight: 600;
+    color: #1e293b;
+}
+
+.modal-description {
+    background: #ffffff;
+    padding: 22px;
+    border-radius: 16px;
+    border: 1px solid #e2e8f0;
+    border-left: 4px solid #4f46e5;
+    box-shadow: 0 2px 4px rgba(0,0,0,0.01);
+    width: 100%;
+    box-sizing: border-box;
+    display: flex;
+    flex-direction: column;
+    max-height: 250px;
+}
+
+.modal-description strong {
+    color: #1e293b;
+    font-size: 0.85rem;
+    text-transform: uppercase;
+    display: block;
+    margin-bottom: 10px;
+    flex-shrink: 0;
+}
+
+.modal-description p {
+    color: #475569;
+    font-size: 0.95rem;
+    line-height: 1.6;
+    margin: 0;
+    white-space: pre-wrap;
+    word-break: break-word;
+    overflow-y: auto; 
+    &::-webkit-scrollbar {
+        display: none;
+    }
+    -ms-overflow-style: none;
+    scrollbar-width: none;
+}
+
+
+@media (max-width: 768px) {
+    .modal-info-grid {
+        grid-template-columns: 1fr;
+    }
     .modal-description {
-        background: #f8f9fa;
-        padding: 20px;
-        border-radius: 12px;
-        border-left: 4px solid #667eea;
-        margin-top: 15px;
-        line-height: 1.6;
-        color: #444;
+        max-height: 180px;
     }
-
-    .modal-badges {
-        display: flex;
-        gap: 10px;
-        flex-wrap: wrap;
-        margin-top: 10px;
-    }
-
-    .complaint-card {
-        cursor: pointer;
-    }
+}
 </style>
 
 <div class="live-dashboard">
@@ -735,22 +608,22 @@
     </div>
 
     <div class="stats-container">
-        <div class="stat-card total">
+        <div class="stat-card total" data-filter="all" style="cursor: pointer;">
             <div class="stat-icon">📊</div>
             <div class="stat-number" id="totalComplaints">0</div>
             <div class="stat-label">Total Complaints</div>
         </div>
-        <div class="stat-card assigned">
+        <div class="stat-card assigned" data-filter="assigned" style="cursor: pointer;">
             <div class="stat-icon">✅</div>
             <div class="stat-number" id="assignedComplaints">0</div>
             <div class="stat-label">Assigned</div>
         </div>
-        <div class="stat-card unassigned">
+        <div class="stat-card unassigned" data-filter="unassigned" style="cursor: pointer;">
             <div class="stat-icon">⏳</div>
             <div class="stat-number" id="unassignedComplaints">0</div>
             <div class="stat-label">Unassigned</div>
         </div>
-        <div class="stat-card high-priority">
+        <div class="stat-card high-priority" data-filter="high" style="cursor: pointer;">
             <div class="stat-icon">🔥</div>
             <div class="stat-number" id="highPriorityComplaints">0</div>
             <div class="stat-label">High Priority</div>
@@ -983,40 +856,68 @@ function showComplaintModal(complaintId) {
     const assignedName = complaint.assigned_to_name || 'Not Assigned';
     const timeAgo = getTimeAgo(complaint.created_at);
     const description = complaint.description || 'No description provided';
+    
+    const roomNumber = complaint.room_number || 'N/A';
+    const intercom = complaint.intercom || 'N/A';
+    const networkType = complaint.network_type || 'N/A';
+    const requestType = complaint.request_type || 'N/A';
+    const section = complaint.section || 'N/A';
 
     const modalBody = `
-        <div class="modal-info-row">
-            <div class="modal-info-label">Reference:</div>
-            <div class="modal-info-value">#${complaint.reference_number}</div>
-        </div>
-        <div class="modal-info-row">
-            <div class="modal-info-label">User:</div>
-            <div class="modal-info-value">${complaint.user_name}</div>
-        </div>
-        <div class="modal-info-row">
-            <div class="modal-info-label">Status:</div>
-            <div class="modal-info-value">
-                <div class="modal-badges">
+        <!-- 2-Column Responsive Dashboard Grid -->
+        <div class="modal-info-grid">
+            <div class="modal-meta-card">
+                <span class="meta-label">👤 User / Client</span>
+                <span class="meta-value">${complaint.user_name}</span>
+            </div>
+            <div class="meta-value" style="display:flex; align-items:center; gap:6px; background:#fff; padding:14px 18px; border-radius:14px; border:1px solid #e2e8f0;">
+                <div class="modal-badges" style="margin:0; gap:6px;">
                     ${getStatusBadge(complaint.status)}
                     ${getPriorityBadge(complaint.priority)}
                 </div>
             </div>
+
+            <div class="modal-meta-card">
+                <span class="meta-label">📍 Location (Room)</span>
+                <span class="meta-value">Room No: ${roomNumber}</span>
+            </div>
+
+            <div class="modal-meta-card">
+                <span class="meta-label">📞 Intercom</span>
+                <span class="meta-value">${intercom}</span>
+            </div>
+
+            <div class="modal-meta-card">
+                <span class="meta-label">🏢 Section</span>
+                <span class="meta-value">${section}</span>
+            </div>
+
+            <div class="modal-meta-card">
+                <span class="meta-label">🔌 Request & Network</span>
+                <span class="meta-value">${requestType} (${networkType})</span>
+            </div>
+
+            <div class="modal-meta-card">
+                <span class="meta-label">🛠️ Assigned Officer</span>
+                <span class="meta-value" style="color: ${complaint.assigned_to_name ? '#1e293b' : '#94a3b8'}">
+                    ${complaint.assigned_to_name ? '👤 ' + assignedName : '⏳ Not Assigned Yet'}
+                </span>
+            </div>
+
+            <div class="modal-meta-card">
+                <span class="meta-label">🕐 Logged Time</span>
+                <span class="meta-value">${timeAgo} <small style="color:#64748b; font-weight:400;">(${complaint.created_at})</small></span>
+            </div>
+
         </div>
-        <div class="modal-info-row">
-            <div class="modal-info-label">Assigned To:</div>
-            <div class="modal-info-value">${assignedName}</div>
-        </div>
-        <div class="modal-info-row">
-            <div class="modal-info-label">Created:</div>
-            <div class="modal-info-value">${timeAgo}</div>
-        </div>
+
+        <!-- Description Box -->
         <div class="modal-description">
-            <strong>Description:</strong><br>
-            ${description}
+            <strong>📝 Issue Description</strong><p style="white-space: pre-wrap;">${description}</p>
         </div>
     `;
 
-    $('#modalTitle').text(`Complaint #${complaint.reference_number}`);
+    $('#modalTitle').text(`Ticket #${complaint.reference_number}`);
     $('#modalBody').html(modalBody);
     $('#complaintModal').addClass('active');
 }
@@ -1078,7 +979,6 @@ $(document).ready(function() {
     fetchComplaints();
     setInterval(fetchComplaints, POLL_INTERVAL);
 
-    // Filter buttons
     $('.filter-btn').on('click', function() {
         $('.filter-btn').removeClass('active');
         $(this).addClass('active');
@@ -1086,14 +986,22 @@ $(document).ready(function() {
         renderComplaints(allComplaints);
     });
 
-    // View toggle button
+    $('.stat-card').on('click', function() {
+        const targetFilter = $(this).data('filter');
+        currentFilter = targetFilter;
+        
+        $('.filter-btn').removeClass('active');
+        $(`.filter-btn[data-filter="${targetFilter}"]`).addClass('active');
+        
+        renderComplaints(allComplaints);
+    });
+
     $('#viewToggleBtn').on('click', function() {
         toggleView();
     });
 
     // Apply initial view
     applyView();
-
 });
 </script>
 @endpush 

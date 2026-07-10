@@ -27,14 +27,14 @@ class ComplaintController extends Controller
 {
     public function __construct()
     {
-        $this->middleware('auth')->except(['create', 'store', 'show', 'history', 'track', 'lookup', 'live', 'liveData', 'intercomSuggestions', 'bulkImport', 'bulkImportStore', 'downloadFormat']);
+        $this->middleware('auth')->except(['create', 'store', 'show', 'history', 'track', 'lookup', 'live', 'liveData', 'intercomSuggestions', 'bulkImport', 'bulkImportStore', 'downloadFormat', 'notificationData']);
     }
 
     public function index(Request $request)
     {
         try {
             $user = Auth::user();
-            $query = Complaint::query()->with(['client', 'assignedTo', 'networkType', 'verticals', 'status']);
+            $query = Complaint::query()->with(['client', 'assignedTo', 'networkType', 'verticals', 'status', 'section']);
             if ($user) {
                 if ($user->isManager()) {
                     $activeStatusIds = Status::whereIn('name', [
@@ -774,12 +774,11 @@ class ComplaintController extends Controller
     public function liveData()
     {
         try {
-            // Show only open/assigned complaints (not completed/closed)
             $statuses = Status::whereIn('name', ['unassigned', 'assigned', 'pending_with_vendor', 'pending_with_user', 'assign_to_me', 'in_progress'])
                 ->pluck('id');
             $startOfDay = now()->startOfDay();
             $endOfDay = now()->endOfDay();
-            $complaints = Complaint::with(['assignedTo', 'status'])
+            $complaints = Complaint::with(['assignedTo', 'status', 'networkType', 'requestType', 'section'])
                 ->whereIn('status_id', $statuses)
                 ->whereBetween('created_at', [
                     $startOfDay,
@@ -793,6 +792,11 @@ class ComplaintController extends Controller
                     'id' => $c->id,
                     'reference_number' => $c->reference_number,
                     'user_name' => $c->user_name,
+                    'room_number' => $c->room_number ?? 'N/A',
+                    'intercom' => $c->intercom ?? 'N/A',
+                    'network_type' => $c->networkType?->name ?? 'N/A', 
+                    'request_type' => $c->requestType?->name ?? 'N/A',
+                    'section' => $c->section?->name ?? 'N/A',
                     'status' => $c->status?->display_name ?? 'Unknown',
                     'priority' => ucfirst($c->priority),
                     'assigned_to' => $c->assigned_to,
@@ -805,7 +809,7 @@ class ComplaintController extends Controller
             return response()->json(['complaints' => $data]);
         } catch (\Exception $e) {
             \Log::error('Complaint liveData error: ' . $e->getMessage());
-            return response()->json(['error' => 'Something went wrong while fetching live data. Please try again. (कुछ गलत हो गया, कृपया फिर से कोशिश करें.)'], 500);
+            return response()->json(['error' => 'Something went wrong.'], 500);
         }
     }
 
@@ -816,6 +820,15 @@ class ComplaintController extends Controller
     public function notificationData()
     {
         try {
+
+            if (!auth()->check()) {
+                return response()->json([
+                    'unassigned' => 0,
+                    'assign_to_me' => 0,
+                    'complaints' => [],
+                    'authenticated' => false
+                ], 401);
+            }
 
             $user = auth()->user();
 
