@@ -278,7 +278,7 @@
                 @endguest
 
 
-                <a href="{{ route('complaints.live') }}" class="btn btn-success btn-lg " style="background: #28a745; color: #fff; border: none;">Live Complaints Dashboard</a>
+                <a href="{{ route('complaints.live') }}" class="btn btn-success btn-lg " style="background: #28a745; color: #fff; border: none;">Live Unresolved Complaints Dashboard</a>
             </div>
         </div>
     </section>

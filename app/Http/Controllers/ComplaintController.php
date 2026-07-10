@@ -776,18 +776,15 @@ class ComplaintController extends Controller
         try {
             $statuses = Status::whereIn('name', ['unassigned', 'assigned', 'pending_with_vendor', 'pending_with_user', 'assign_to_me', 'in_progress'])
                 ->pluck('id');
-            $startOfDay = now()->startOfDay();
-            $endOfDay = now()->endOfDay();
+            $startOfToday = now()->startOfDay();
+            $endOfToday = now()->endOfDay();
             $complaints = Complaint::with(['assignedTo', 'status', 'networkType', 'requestType', 'section'])
                 ->whereIn('status_id', $statuses)
-                ->whereBetween('created_at', [
-                    $startOfDay,
-                    $endOfDay
-                ])
+                ->where('created_at', '<=', $endOfToday)
                 ->orderByDesc('created_at')
                 ->get();
 
-            $data = $complaints->map(function ($c) {
+            $formattedComplaints = $complaints->map(function ($c) {
                 return [
                     'id' => $c->id,
                     'reference_number' => $c->reference_number,
@@ -802,17 +799,29 @@ class ComplaintController extends Controller
                     'assigned_to' => $c->assigned_to,
                     'assigned_to_name' => $c->assignedTo?->full_name ?? null,
                     'description' => $c->description,
+                    'created_at_raw' => $c->created_at,
                     'created_at' => $c->created_at->format('M d, Y H:i'),
                     'updated_at' => $c->updated_at->format('M d, Y H:i'),
                 ];
             });
-            return response()->json(['complaints' => $data]);
+
+            $todayComplaints = $formattedComplaints->filter(function ($c) use ($startOfToday, $endOfToday) {
+                return $c['created_at_raw']->between($startOfToday, $endOfToday);
+            })->values();
+
+            $olderPendingComplaints = $formattedComplaints->filter(function ($c) use ($startOfToday) {
+                return $c['created_at_raw']->lessThan($startOfToday);
+            })->values();
+
+            return response()->json([
+                'today' => $todayComplaints,
+                'older_pending' => $olderPendingComplaints
+            ]);
         } catch (\Exception $e) {
             \Log::error('Complaint liveData error: ' . $e->getMessage());
             return response()->json(['error' => 'Something went wrong.'], 500);
         }
     }
-
     /**
      * Get notification data for logged-in users (Manager, VM, NFO)
      * Returns unassigned and assign_to_me complaints
