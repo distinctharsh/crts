@@ -37,18 +37,15 @@
                 <button class="btn btn-outline-warning btn-sm me-1 text-dark" data-bs-toggle="tooltip" title="Edit" onclick="$('#editVerticalModal{{ $category->id }}').modal('show')">
                     <i class="fas fa-pen"></i>
                 </button>
-                <form action="{{ route('masters.verticals.destroy', $category) }}" method="POST" class="d-inline" onsubmit="return confirm('Are you sure you want to delete this category and all its sub-categories?')">
-                    @csrf
-                    @method('DELETE')
-                    <button type="submit" class="btn btn-outline-danger btn-sm" data-bs-toggle="tooltip" title="Delete">
-                        <i class="fas fa-trash"></i>
-                    </button>
-                </form>
+                <button class="btn btn-outline-danger btn-sm" data-bs-toggle="tooltip" title="Delete" onclick="$('#deleteVerticalModal{{ $category->id }}').modal('show')">
+                    <i class="fas fa-trash"></i>
+                </button>
             @endif
         </td>
     </tr>
 
     @if(!$category->trashed())
+    <!-- Edit Modal -->
     <div class="modal fade" id="editVerticalModal{{ $category->id }}" tabindex="-1" aria-hidden="true">
         <div class="modal-dialog">
             <div class="modal-content rounded-4">
@@ -79,6 +76,28 @@
                     <div class="modal-footer">
                         <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
                         <button type="submit" class="btn btn-warning text-dark fw-bold">Update</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+
+    <div class="modal fade" id="deleteVerticalModal{{ $category->id }}" tabindex="-1" aria-hidden="true">
+        <div class="modal-dialog modal-dialog-centered">
+            <div class="modal-content rounded-4">
+                <form action="{{ route('masters.verticals.destroy', $category) }}" method="POST">
+                    @csrf
+                    @method('DELETE')
+                    <div class="modal-header bg-danger text-white rounded-top-4">
+                        <h5 class="modal-title"><i class="fas fa-exclamation-triangle me-2"></i>Delete Category</h5>
+                        <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
+                    </div>
+                    <div class="modal-body text-start">
+                        <p class="mb-0 text-dark">Are you sure you want to delete <strong>{{ $category->name }}</strong>? Iske andar ke sabhi sub-categories bhi delete ho jayenge.</p>
+                    </div>
+                    <div class="modal-footer">
+                        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                        <button type="submit" class="btn btn-danger">Yes, Delete</button>
                     </div>
                 </form>
             </div>
