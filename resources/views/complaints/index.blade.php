@@ -101,11 +101,11 @@ $breadcrumbs = [
                                             </div>
                                             <div class="col-md-2">
                                                 <label class="form-label mb-1">From</label>
-                                                <input type="text" name="date_from" class="form-control date-picker" value="{{ request('date_from') }}" placeholder="DD/MM/YYYY">
+                                                <input type="text" name="date_from" class="form-control date-picker" value="{{ request('date_from') }}" placeholder="dd/mm/yyyy">
                                             </div>
                                             <div class="col-md-2">
                                                 <label class="form-label mb-1">To</label>
-                                                <input type="text" name="date_to" class="form-control date-picker" value="{{ request('date_to') }}" placeholder="DD/MM/YYYY">
+                                                <input type="text" name="date_to" class="form-control date-picker" value="{{ request('date_to') }}" placeholder="dd/mm/yyyy">
                                             </div>
                                             <div class="col-md-2 d-flex gap-2 ms-auto">
                                                 <a href="{{ route('complaints.index') }}" class="btn btn-outline-danger rounded-pill px-3 w-100 text-center text-nowrap">

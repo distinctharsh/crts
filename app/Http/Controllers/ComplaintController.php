@@ -336,7 +336,7 @@ class ComplaintController extends Controller
             $complaint->priority = $validated['priority'];
             $complaint->status_id = $validated['status_id'];
             if(isset($validated['assigned_to'])) {
-                $complaint->assigned_to = $validated['assigned_to'];
+                $complaint->assigned_to = $validated['assigned_to'] ?: null;
             }
             $complaint->save();
 

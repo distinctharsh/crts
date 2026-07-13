@@ -383,6 +383,17 @@
             });
         }
 
+        if (statusSelect) {
+            statusSelect.addEventListener('change', function () {
+                if (!assignSelect) return;
+                @if(isset($complaint))
+                    if (this.value == UNASSIGNED_STATUS_ID) {
+                        assignTom ? assignTom.setValue('', true) : assignSelect.value = '';
+                    }
+                @endif
+            });
+        }
+
         async function buildHierarchyChain() {
             if (!savedVerticals.length) return;
 
