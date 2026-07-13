@@ -84,11 +84,11 @@ class ComplaintController extends Controller
                 $query->whereIn('section_id', $searchBySection);
             }
             if ($request->filled('date_from')) {
-                $dateFrom = Carbon::parse($request->input('date_from'))->startOfDay();
+                $dateFrom = Carbon::createFromFormat('d/m/Y', $request->input('date_from'))->startOfDay();
                 $query->where('created_at', '>=', $dateFrom);
             }
             if ($request->filled('date_to')) {
-                $dateTo = Carbon::parse($request->input('date_to'))->endOfDay();
+                $dateTo = Carbon::createFromFormat('d/m/Y', $request->input('date_to'))->endOfDay();
                 $query->where('created_at', '<=', $dateTo);
             }
             if (request('assigned_to_me') == '1') {
@@ -605,13 +605,15 @@ class ComplaintController extends Controller
 
             // Filter by date range
             if ($request->filled('date_from')) {
-                $query->whereHas('actions', function ($q) use ($request) {
-                    $q->whereDate('created_at', '>=', $request->date_from);
+                $dateFrom = Carbon::createFromFormat('d/m/Y', $request->date_from)->startOfDay();
+                $query->whereHas('actions', function ($q) use ($dateFrom) {
+                    $q->where('created_at', '>=', $dateFrom);
                 });
             }
             if ($request->filled('date_to')) {
-                $query->whereHas('actions', function ($q) use ($request) {
-                    $q->whereDate('created_at', '<=', $request->date_to);
+                $dateTo = Carbon::createFromFormat('d/m/Y', $request->date_to)->endOfDay();
+                $query->whereHas('actions', function ($q) use ($dateTo) {
+                    $q->where('created_at', '<=', $dateTo);
                 });
             }
 

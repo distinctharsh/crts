@@ -101,14 +101,17 @@ $breadcrumbs = [
                                             </div>
                                             <div class="col-md-2">
                                                 <label class="form-label mb-1">From</label>
-                                                <input type="date" name="date_from" class="form-control" value="{{ request('date_from') }}">
+                                                <input type="text" name="date_from" class="form-control date-picker" value="{{ request('date_from') }}" placeholder="DD/MM/YYYY">
                                             </div>
                                             <div class="col-md-2">
                                                 <label class="form-label mb-1">To</label>
-                                                <input type="date" name="date_to" class="form-control" value="{{ request('date_to') }}">
+                                                <input type="text" name="date_to" class="form-control date-picker" value="{{ request('date_to') }}" placeholder="DD/MM/YYYY">
                                             </div>
-                                            <div class="col-md-1 d-grid ms-auto">
-                                                <button class="btn btn-secondary rounded-pill px-3" type="submit">
+                                            <div class="col-md-2 d-flex gap-2 ms-auto">
+                                                <a href="{{ route('complaints.index') }}" class="btn btn-outline-danger rounded-pill px-3 w-100 text-center text-nowrap">
+                                                    <i class="bi bi-x-circle me-1"></i> Reset
+                                                </a>
+                                                <button class="btn btn-secondary rounded-pill px-3 w-100 text-nowrap" type="submit">
                                                     Filter
                                                 </button>
                                             </div>
@@ -252,6 +255,163 @@ $breadcrumbs = [
             }
 
             new TomSelect(el, config);
+        });
+
+        // Custom date picker for dd/mm/yyyy format
+        document.querySelectorAll('.date-picker').forEach(function(input) {
+            // Create date picker popup
+            const picker = document.createElement('div');
+            picker.className = 'custom-date-picker';
+            picker.style.cssText = `
+                position: absolute;
+                background: white;
+                border: 1px solid #ccc;
+                border-radius: 4px;
+                padding: 10px;
+                box-shadow: 0 2px 10px rgba(0,0,0,0.2);
+                z-index: 1000;
+                display: none;
+                min-width: 250px;
+            `;
+            
+            // Month/Year header
+            const header = document.createElement('div');
+            header.style.cssText = 'display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px;';
+            
+            const prevBtn = document.createElement('button');
+            prevBtn.innerHTML = '&lt;';
+            prevBtn.style.cssText = 'background: none; border: none; cursor: pointer; padding: 5px 10px;';
+            
+            const monthYear = document.createElement('span');
+            monthYear.style.cssText = 'font-weight: bold;';
+            
+            const nextBtn = document.createElement('button');
+            nextBtn.innerHTML = '&gt;';
+            nextBtn.style.cssText = 'background: none; border: none; cursor: pointer; padding: 5px 10px;';
+            
+            header.appendChild(prevBtn);
+            header.appendChild(monthYear);
+            header.appendChild(nextBtn);
+            
+            // Days grid
+            const daysGrid = document.createElement('div');
+            daysGrid.style.cssText = 'display: grid; grid-template-columns: repeat(7, 1fr); gap: 2px;';
+            
+            // Day names
+            const dayNames = ['Su', 'Mo', 'Tu', 'We', 'Th', 'Fr', 'Sa'];
+            dayNames.forEach(day => {
+                const dayEl = document.createElement('div');
+                dayEl.textContent = day;
+                dayEl.style.cssText = 'text-align: center; font-weight: bold; font-size: 12px; padding: 5px;';
+                daysGrid.appendChild(dayEl);
+            });
+            
+            picker.appendChild(header);
+            picker.appendChild(daysGrid);
+            document.body.appendChild(picker);
+            
+            let currentDate = new Date();
+            let selectedDate = null;
+            
+            function renderCalendar(date) {
+                const year = date.getFullYear();
+                const month = date.getMonth();
+                
+                monthYear.textContent = date.toLocaleDateString('en-US', { month: 'long', year: 'numeric' });
+                
+                // Clear existing day cells (keep day names)
+                while (daysGrid.children.length > 7) {
+                    daysGrid.removeChild(daysGrid.lastChild);
+                }
+                
+                const firstDay = new Date(year, month, 1).getDay();
+                const daysInMonth = new Date(year, month + 1, 0).getDate();
+                
+                // Empty cells for days before first day
+                for (let i = 0; i < firstDay; i++) {
+                    const empty = document.createElement('div');
+                    daysGrid.appendChild(empty);
+                }
+                
+                // Day cells
+                for (let day = 1; day <= daysInMonth; day++) {
+                    const dayCell = document.createElement('div');
+                    dayCell.textContent = day;
+                    dayCell.style.cssText = 'text-align: center; padding: 5px; cursor: pointer; border-radius: 3px;';
+                    dayCell.addEventListener('mouseover', () => dayCell.style.background = '#e9ecef');
+                    dayCell.addEventListener('mouseout', () => dayCell.style.background = '');
+                    
+                    dayCell.addEventListener('click', () => {
+                        const selected = new Date(year, month, day);
+                        const dd = String(selected.getDate()).padStart(2, '0');
+                        const mm = String(selected.getMonth() + 1).padStart(2, '0');
+                        const yyyy = selected.getFullYear();
+                        input.value = `${dd}/${mm}/${yyyy}`;
+                        picker.style.display = 'none';
+                        input.setCustomValidity('');
+                    });
+                    
+                    daysGrid.appendChild(dayCell);
+                }
+            }
+            
+            prevBtn.addEventListener('click', () => {
+                currentDate.setMonth(currentDate.getMonth() - 1);
+                renderCalendar(currentDate);
+            });
+            
+            nextBtn.addEventListener('click', () => {
+                currentDate.setMonth(currentDate.getMonth() + 1);
+                renderCalendar(currentDate);
+            });
+            
+            input.addEventListener('focus', function() {
+                const rect = input.getBoundingClientRect();
+                picker.style.top = (rect.bottom + window.scrollY) + 'px';
+                picker.style.left = rect.left + 'px';
+                picker.style.display = 'block';
+                
+                // Parse current value if exists
+                if (input.value) {
+                    const parts = input.value.split('/');
+                    if (parts.length === 3) {
+                        currentDate = new Date(parts[2], parts[1] - 1, parts[0]);
+                    }
+                }
+                renderCalendar(currentDate);
+            });
+            
+            // Close picker when clicking outside
+            document.addEventListener('click', function(e) {
+                if (!picker.contains(e.target) && e.target !== input) {
+                    picker.style.display = 'none';
+                }
+            });
+            
+            // Input mask for manual entry
+            input.addEventListener('input', function(e) {
+                let value = e.target.value.replace(/\D/g, '');
+                if (value.length > 8) value = value.slice(0, 8);
+                
+                if (value.length >= 2) {
+                    value = value.slice(0, 2) + '/' + value.slice(2);
+                }
+                if (value.length >= 5) {
+                    value = value.slice(0, 5) + '/' + value.slice(5);
+                }
+                
+                e.target.value = value;
+            });
+            
+            input.addEventListener('blur', function(e) {
+                const value = e.target.value;
+                const regex = /^(\d{2})\/(\d{2})\/(\d{4})$/;
+                if (value && !regex.test(value)) {
+                    e.target.setCustomValidity('Please enter date in DD/MM/YYYY format');
+                } else {
+                    e.target.setCustomValidity('');
+                }
+            });
         });
     });
 </script>
