@@ -133,7 +133,7 @@
                         @if(!auth()->user()->isNFO())
                         <div class="col-md-4 mb-3" id="assignToWrapper" style="display:none;">
                             <label for="assigned_to" class="form-label">Assign To</label>
-                            <select id="assigned_to" name="assigned_to" class="form-select">
+                            <select id="assigned_to" name="assigned_to" class="form-select" @if(isset($assignedUser)) required @endif>
                                 <option value="">-- Leave Unassigned --</option>
                             </select>
                         </div>
@@ -191,6 +191,9 @@
                         <label for="status_id" class="form-label">Status *</label>
                         <select class="form-select tom-select @error('status_id') is-invalid @enderror" id="status_id" name="status_id" required>
                             @foreach($statuses as $status)
+                                @if(isset($assignedUser) && $status->name === 'unassigned')
+                                    @continue
+                                @endif
                                 <option value="{{ $status->id }}" {{ old('status_id', $complaint->status_id) == $status->id ? 'selected' : '' }}>
                                     {{ $status->display_name }}
                                 </option>
@@ -275,19 +278,12 @@
                     });
                 });
 
-                if (selectedUserId && !users.find(u => u.id == selectedUserId) && assignedUserData) {
-                    assignTom.addOption({
-                        id: assignedUserData.id,
-                        full_name: `${assignedUserData.full_name} (${assignedUserData.role?.name?.toUpperCase() ?? ''})`
-                    });
-                }
-
                 assignTom.refreshOptions(false);
 
-                if (selectedUserId) {
+                if (selectedUserId && users.find(u => u.id == selectedUserId)) {
                     assignTom.setValue(String(selectedUserId), true);
                 } else {
-                    // If no user selected, ensure the default empty option is selected
+                    // If no user selected or user not in new category, ensure the default empty option is selected
                     assignTom.setValue('', true);
                 }
             } catch (error) {

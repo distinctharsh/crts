@@ -57,8 +57,10 @@
                                     <a href="{{ route('complaints.index', ['status' => $completedStatusId ?? '']) }}" class="card-link-stretched text-decoration-none">
                                         <div class="card shadow-lg border-0 rounded-4 bg-success text-white h-100 clickable-card">
                                             <div class="card-body text-center py-4">
-                                                <h5 class="card-title mb-2">Completed</h5>
-                                                <h2 class="fw-bold mb-0 display-5">{{ $completedComplaints }}</h2>
+                                                <h5 class="card-title mb-2">Completed & Closed</h5>
+                                                <h2 class="fw-bold mb-0 display-5">
+                                                    {{ ($completedComplaints ?? 0) + ($closedComplaints ?? 0) }}
+                                                </h2>
                                             </div>
                                         </div>
                                     </a>
