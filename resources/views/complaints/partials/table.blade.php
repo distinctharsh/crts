@@ -214,8 +214,11 @@
                 <div class="btn-group">
                     <a href="{{ route('complaints.show', $complaint) }}" class="btn btn-sm btn-info me-1">View</a>
                     @auth
-                    @if((auth()->user()->isManager() || auth()->user()->isVM()) && $complaint->status->name != 'closed' && $complaint->status->name != 'completed')
-                    <a href="{{ route('complaints.edit', $complaint) }}" class="btn btn-sm btn-primary me-1">Edit</a>
+                    @if(
+                        (auth()->user()->isManager() && $complaint->status->name != 'closed') || 
+                        (auth()->user()->isVM() && $complaint->status->name != 'closed' && $complaint->status->name != 'completed')
+                    )
+                        <a href="{{ route('complaints.edit', $complaint) }}" class="btn btn-sm btn-primary me-1">Edit</a>
                     @endif
                     @endauth
                     

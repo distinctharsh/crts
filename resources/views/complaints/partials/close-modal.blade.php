@@ -13,16 +13,10 @@
                 </div>
 
                 <div class="modal-body">
-                    <div class="mb-3">
-                        <label for="close_status_id{{ $complaint->id }}" class="form-label fw-bold">Status <span class="text-danger">*</span></label>
-                       <select name="status_id" id="close_status_id{{ $complaint->id }}" class="form-select" required>
-                            @if($closeStatus)
-                                <option value="{{ $closeStatus->id }}">{{ $closeStatus->display_name ?? 'Closed' }}</option>
-                            @else
-                                <option value="" disabled selected>Status ID not found in database</option>
-                            @endif
-                        </select>
-                    </div>
+                    @if($closeStatus)
+                        <input type="hidden" name="status_id" value="{{ $closeStatus->id }}">
+                    @endif
+
                     <div class="mb-3">
                         <label for="close_description{{ $complaint->id }}" class="form-label fw-bold">Remarks (Optional)</label>
                         <textarea name="description" id="close_description{{ $complaint->id }}" class="form-control" rows="3" placeholder="Enter closing remarks..."></textarea>

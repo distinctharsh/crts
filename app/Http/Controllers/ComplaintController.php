@@ -244,6 +244,11 @@ class ComplaintController extends Controller
     {
         try {
             $this->authorize('update', $complaint);
+            $isManager = auth()->user()->isManager();
+            $statusName = strtolower($complaint->status->name ?? '');
+            if (in_array($statusName, ['completed', 'closed']) && !$isManager) {
+                return redirect()->route('complaints.index')->with('error', 'You are not authorized to edit a completed or closed ticket.');
+            }
 
             $networkTypes = NetworkType::all();
             $verticals = Vertical::whereNull('parent_id')->get();

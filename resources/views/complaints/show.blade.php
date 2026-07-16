@@ -85,10 +85,13 @@ $breadcrumbs = [
                 <div class="card-header bg-light d-flex justify-content-between align-items-center">
                     <h5 class="mb-0">Ticket Details</h5>
                     @auth
-                    @if((auth()->user()->isManager() || auth()->user()->isVM()) && $complaint->status->name != 'closed' && $complaint->status->name != 'completed')
-                    <a href="{{ route('complaints.edit', $complaint) }}" class="btn btn-sm btn-outline-primary">
-                        <i class="fa-solid fa-pencil"></i>
-                    </a>
+                    @if(
+                        (auth()->user()->isManager() && $complaint->status->name != 'closed') || 
+                        (auth()->user()->isVM() && $complaint->status->name != 'closed' && $complaint->status->name != 'completed')
+                    )
+                        <a href="{{ route('complaints.edit', $complaint) }}" class="btn btn-sm btn-outline-primary">
+                            <i class="fa-solid fa-pencil"></i>
+                        </a>
                     @endif
                     @endauth
                 </div>
