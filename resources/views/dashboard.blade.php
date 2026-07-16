@@ -106,6 +106,7 @@
                                     @foreach($todayTickets as $complaint)
                                         @include('complaints.partials.assign-modal', ['complaint' => $complaint])
                                         @include('complaints.partials.revert-modal', ['complaint' => $complaint, 'managers' => $managers])
+                                        @include('complaints.partials.close-modal', ['complaint' => $complaint, 'closeStatus' => $closeStatus ?? null])
                                     @endforeach
                                 </div>
                             </div>
@@ -125,6 +126,7 @@
                                     @foreach($previousTickets as $complaint)
                                         @include('complaints.partials.assign-modal', ['complaint' => $complaint])
                                         @include('complaints.partials.revert-modal', ['complaint' => $complaint, 'managers' => $managers])
+                                        @include('complaints.partials.close-modal', ['complaint' => $complaint, 'closeStatus' => $closeStatus ?? null])
                                     @endforeach
                                 </div>
                             </div>

@@ -221,6 +221,11 @@
                     
                     @auth
                     @if(auth()->user()->isManager())
+                        @if($complaint->status->name == 'completed')
+                            <button type="button" class="btn btn-sm btn-success ms-1" data-bs-toggle="modal" data-bs-target="#closeModal{{ $complaint->id }}">
+                                Close
+                            </button>
+                        @endif
                     @if($complaint->status->name != 'completed' && $complaint->status->name != 'closed')
                     <button type="button" class="btn btn-sm btn-primary" data-bs-toggle="modal" data-bs-target="#assignModal{{ $complaint->id }}">
                         @if($complaint->assigned_to)

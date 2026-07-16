@@ -126,6 +126,7 @@ $breadcrumbs = [
                     @foreach($complaints as $complaint)
                         @include('complaints.partials.assign-modal', ['complaint' => $complaint])
                         @include('complaints.partials.revert-modal', ['complaint' => $complaint, 'managers' => $managers])
+                        @include('complaints.partials.close-modal', ['complaint' => $complaint, 'closeStatus' => $closeStatus])
                     @endforeach
                 </div>
             </div>

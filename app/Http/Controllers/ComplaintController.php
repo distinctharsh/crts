@@ -125,7 +125,8 @@ class ComplaintController extends Controller
             $verticals = Vertical::get();
             $networkTypes = NetworkType::get();
             $sections = Section::get();
-            return view('complaints.index', compact('complaints', 'usersList', 'managers', 'statuses', 'networkTypes', 'sections', 'verticals'));
+            $closeStatus = Status::where('name', 'closed')->first();
+            return view('complaints.index', compact('complaints', 'usersList', 'managers', 'statuses', 'networkTypes', 'sections', 'verticals', 'closeStatus'));
         } catch (\Exception $e) {
             \Log::error('Complaint index error: ' . $e->getMessage());
             return redirect('/home')->with('error', 'Something went wrong while loading complaints. Please try again. (कुछ गलत हो गया, कृपया फिर से कोशिश करें.)');

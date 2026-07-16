@@ -68,6 +68,9 @@ class DashboardController extends Controller
             $managers = \App\Models\User::whereHas('role', function($q) {
                 $q->where('slug', 'manager');
             })->get();
+
+            $closeStatus = Status::where('name', 'closed')->first();
+
             $data = [
                 'totalComplaints' => (clone $baseQuery)->count(),
                 'unassignedComplaints' => (clone $baseQuery)->where('status_id', $statusIds->get('unassigned'))->count(),
@@ -89,6 +92,7 @@ class DashboardController extends Controller
                 'completedStatusId' => $statusIds->get('completed'),
                 'assignToMeStatusId' => null,
                 'managers' => $managers,
+                'closeStatus' => $closeStatus,
             ];
             
             // Remove the old recentComplaints section from the view

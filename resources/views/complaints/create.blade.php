@@ -107,7 +107,7 @@
                                 id="request_type_id" name="request_type_id" required>
                                 <option value="">Select Request Type</option>
                                 @foreach($requestTypes as $type)
-                                <option value="{{ $type->id }}" {{ old('request_type_id', isset($complaint) ? $complaint->request_type_id : '') == $type->id ? 'selected' : '' }}>
+                                <option value="{{ $type->id }}" {{ old('request_type_id', isset($complaint) ? $complaint->request_type_id : ($loop->first ? $type->id : '')) == $type->id ? 'selected' : '' }}>
                                     {{ $type->name }}
                                 </option>
                                 @endforeach
