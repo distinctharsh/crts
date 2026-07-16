@@ -21,8 +21,46 @@ class UserController extends Controller
         $users = User::withTrashed()->with('role', 'verticals')->get();
         $perPage = 'all';
         $roles = Role::whereNotIn('slug', ['admin', 'client'])->get();
-        $verticals = Vertical::all();
-        return view('users.index', compact('users', 'perPage', 'roles', 'verticals'));
+
+        $rawVerticals = Vertical::with('parent.parent')
+            ->get()
+            ->sortBy(function($vertical) {
+                return $vertical->depth;
+            });
+
+        $verticals = $rawVerticals->map(function($v) {
+            $path = [];
+            $current = $v;
+            while($current) {
+                array_unshift($path, $current->name);
+                $current = $current->parent;
+            }
+            return [
+                'id' => $v->id,
+                'name' => implode(' → ', $path)
+            ];
+        })->values();
+
+        $allVerticalsWithTrashed = Vertical::withTrashed()
+            ->with('parent.parent')
+            ->get()
+            ->sortBy(function($vertical) {
+                return $vertical->depth;
+            })
+            ->map(function($v) {
+                $path = [];
+                $current = $v;
+                while($current) {
+                    array_unshift($path, $current->name);
+                    $current = $current->parent;
+                }
+                return [
+                    'id' => $v->id,
+                    'name' => implode(' → ', $path),
+                    'deleted_at' => $v->deleted_at
+                ];
+            })->values();
+        return view('users.index', compact('users', 'perPage', 'roles', 'verticals', 'allVerticalsWithTrashed'));
     }
 
     public function edit(User $user)

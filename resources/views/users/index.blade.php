@@ -211,7 +211,7 @@ $breadcrumbs = [
                                 <span class="input-group-text"><i class="bi bi-diagram-3"></i></span>
                                 <select name="vertical_ids[]" id="vertical_ids" class="form-select tom-select" multiple>
                                     @foreach($verticals as $vertical)
-                                    <option value="{{ $vertical->id }}" {{ collect(old('vertical_ids', []))->contains($vertical->id) ? 'selected' : '' }}>{{ $vertical->name }}</option>
+                                        <option value="{{ $vertical['id'] }}" {{ collect(old('vertical_ids', []))->contains($vertical['id']) ? 'selected' : '' }}>{{ $vertical['name'] }}</option>
                                     @endforeach
                                 </select>
                             </div>
@@ -254,12 +254,13 @@ $breadcrumbs = [
 <script src="{{ asset('js/jquery.dataTables.min.js') }}"></script>
 <script src="{{ asset('js/dataTables.bootstrap5.min.js') }}"></script>
 <script>
+    var allVerticalsWithTrashed = @json($allVerticalsWithTrashed);
     $(document).ready(function() {
         $('#usersTable').DataTable({
             responsive: true,
             dom: '<"d-flex justify-content-between align-items-center mb-2"Bfl>rtip',
-        buttons: [
-            {
+            buttons: [
+                {
                     extend: 'copy',
                     text: '<i class="bi bi-clipboard"></i>',
                     className: 'btn btn-light btn-sm me-1',
@@ -312,7 +313,7 @@ $breadcrumbs = [
             clearUserForm();
             $('#userModalLabel').text('Create User');
             $('#userBtnText').text('Create');
-        $('#userForm').attr('action', '{{ route('users.store') }}');
+            $('#userForm').attr('action', '{{ route('users.store') }}');
             $('#form_method').val('POST');
             $('#user_id').val('');
             $('#defaultPasswordNote').show();
@@ -338,12 +339,32 @@ $breadcrumbs = [
             $('#password').removeAttr('required');
             $('#passwordHelpText').text(' (leave blank to keep current)');
 
-            // Set verticals in Tom Select dropdown
             if (window.TomSelect && $('#vertical_ids')[0].tomselect) {
                 var tomselect = $('#vertical_ids')[0].tomselect;
                 tomselect.clear();
+                tomselect.clearOptions();
+                var activeVerticals = @json($verticals);
+                activeVerticals.forEach(function(v) {
+                    tomselect.addOption({value: v.id, text: v.name});
+                });
                 if (user.verticals && user.verticals.length > 0) {
-                    var verticalIds = user.verticals.map(function(v) { return v.id; });
+                    var verticalIds = [];
+                    user.verticals.forEach(function(uv) {
+                        verticalIds.push(uv.id);
+                        var optionExists = tomselect.options[uv.id] !== undefined;
+                        if (!optionExists) {
+                            var foundVertical = allVerticalsWithTrashed.find(function(v) {
+                                return v.id == uv.id;
+                            });
+                            
+                            if (foundVertical) {
+                                tomselect.addOption({
+                                    value: foundVertical.id, 
+                                    text: foundVertical.name + ' (Deleted)' 
+                                });
+                            }
+                        }
+                    });
                     tomselect.setValue(verticalIds);
                 }
             }
@@ -378,7 +399,7 @@ $breadcrumbs = [
             $('#userForm')[0].reset();
             $('#user_id').val('');
             $('#form_method').val('POST');
-        $('#userForm').attr('action', '{{ route('users.store') }}');
+            $('#userForm').attr('action', '{{ route('users.store') }}');
             $('#userBtnText').text('Create');
             $('#userModalLabel').text('Create User');
             $('#defaultPasswordNote').show();

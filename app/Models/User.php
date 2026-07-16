@@ -151,9 +151,8 @@ class User extends Authenticatable
      */
     public function getAssignableUsers($complaint = null, $verticalIds = null)
     {
-        $query = User::query()->with('role');
+        $query = User::query()->with(['role', 'verticals']);
 
-        // MANAGER or ADMIN
         if ($this->isAdmin() || $this->isManager()) {
             $query->whereHas('role', function ($q) {
                 $q->whereIn('slug', ['vm', 'nfo']);
@@ -161,7 +160,6 @@ class User extends Authenticatable
         } 
         elseif ($this->isVM()) {
             $query->where(function ($q) use ($complaint) {
-                // Only include self if not already assigned
                 if (!$complaint || $complaint->assigned_to != $this->id) {
                     $q->where('id', $this->id);
                 }
@@ -178,17 +176,37 @@ class User extends Authenticatable
             return collect();
         }
 
+        $allTargetVerticalIds = [];
+
         if (!empty($verticalIds)) {
-            $query->whereHas('verticals', function ($q) use ($verticalIds) {
-                $q->whereIn('verticals.id', $verticalIds);
-            });
+            $allTargetVerticalIds = $verticalIds;
         } elseif ($complaint) {
-            $query->whereHas('verticals', function ($q) use ($complaint) {
-                $q->whereIn('verticals.id', $complaint->verticals->pluck('id'));
+            $allTargetVerticalIds = $complaint->verticals->pluck('id')->toArray();
+        }
+
+        if (!empty($allTargetVerticalIds)) {
+            $allTargetVerticalIds = array_map('intval', (array)$allTargetVerticalIds);
+            $parentCategoryIds = \App\Models\Vertical::whereIn('id', $allTargetVerticalIds)
+                ->get()
+                ->flatMap(function($v) {
+                    $parents = [];
+                    $current = $v;
+                    while($current) {
+                        $parents[] = $current->id;
+                        $current = $current->parent;
+                    }
+                    return $parents;
+                })
+                ->unique()
+                ->toArray();
+
+            $allowedVerticalIds = array_values(array_unique(array_merge($allTargetVerticalIds, $parentCategoryIds)));
+            $query->whereHas('verticals', function ($q) use ($allowedVerticalIds) {
+                $q->whereIn('verticals.id', $allowedVerticalIds);
             });
         }
 
-        return $query->get(['id', 'username', 'full_name', 'role_id']);
+        return $query->get(['users.id', 'users.username', 'users.full_name', 'users.role_id']);
     }
 
 

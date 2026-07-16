@@ -43,4 +43,15 @@ class Vertical extends Model
     {
         return $this->hasMany(Vertical::class, 'parent_id')->with('children');
     }
+
+    public function getDepthAttribute()
+    {
+        $depth = 0;
+        $current = $this;
+        while ($current->relationLoaded('parent') ? $current->parent : $current->parent()->first()) {
+            $depth++;
+            $current = $current->relationLoaded('parent') ? $current->parent : $current->parent()->first();
+        }
+        return $depth;
+    }
 }

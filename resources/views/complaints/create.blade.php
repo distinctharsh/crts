@@ -263,7 +263,12 @@
                 return;
             }
             try {
-                const response = await fetch(`{{ route('api.assignable-users') }}?vertical_ids=${verticalId}`);
+                let queryParam = verticalId;
+                if (Array.isArray(verticalId)) {
+                    queryParam = verticalId.join(',');
+                }
+
+                const response = await fetch(`{{ route('api.assignable-users') }}?vertical_ids=${queryParam}`);
                 const users = await response.json();
 
                 assignTom.clear();
@@ -293,18 +298,18 @@
 
         function triggerDependentAPIs(userId = null) {
             const allSelects = container.querySelectorAll('.hierarchy-select');
-            let firstSelectedValue = '';
-            for (let i = 0; i < allSelects.length; i++) {
+            let finalSelectedValue = '';
+            for (let i = allSelects.length - 1; i >= 0; i--) {
                 if (allSelects[i].value) {
-                    firstSelectedValue = allSelects[i].value;
+                    finalSelectedValue = allSelects[i].value;
                     break;
                 }
             }
 
             const userToSelect = userId !== null ? userId : selectedUser;
-            loadAssignableUsers(firstSelectedValue, userToSelect);
+            loadAssignableUsers(finalSelectedValue, userToSelect);
 
-            if (!firstSelectedValue && statusSelect) {
+            if (!finalSelectedValue && statusSelect) {
                 @if(isset($complaint))
                     statusSelect.tomselect ? statusSelect.tomselect.setValue(UNASSIGNED_STATUS_ID) : statusSelect.value = UNASSIGNED_STATUS_ID;
                 @endif
