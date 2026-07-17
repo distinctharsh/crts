@@ -80,7 +80,7 @@ class UsageReportService
                 }
             }
 
-            if ($deepestVertical) {
+            if ($deepestVertical && isset($verticalCounts[$deepestVertical->id])) {
                 $verticalCounts[$deepestVertical->id]['total']++;
                 if (in_array($complaint->status_id, $completedStatusIds->toArray())) {
                     $verticalCounts[$deepestVertical->id]['completed']++;
