@@ -20,6 +20,7 @@ use Illuminate\Support\Facades\Auth;
 use Illuminate\Pagination\LengthAwarePaginator;
 use App\Services\ComplaintNotificationService;
 use App\Mail\HODReportMail;
+use App\Services\UsageReportService;
 use Illuminate\Support\Facades\Mail;
 use Illuminate\Support\Facades\Validator;
 
@@ -1033,6 +1034,9 @@ class ComplaintController extends Controller
                 ];
             }
 
+            $usageReportService = new UsageReportService();
+            $categoryData = $usageReportService->getCategoryWiseStatistics(Carbon::today()->startOfDay(), Carbon::today()->endOfDay());
+
             $reportData = [
                 'date' => $today,
                 'total_complaints' => $totalComplaints,
@@ -1040,6 +1044,7 @@ class ComplaintController extends Controller
                 'completed' => $completed,
                 'action_pending' => $actionPending,
                 'usage_data' => $usageData,
+                'category_data' => $categoryData,
             ];
 
             Mail::to(env('HOD_EMAIL'))->send(new HODReportMail($reportData));

@@ -106,12 +106,52 @@
                         </thead>
                         <tbody>
                             @foreach($reportData['usage_data'] as $user)
+                            @php
+                                if ($user['total'] == 0) {
+                                    continue;
+                                }
+                            @endphp
                             <tr style="border-bottom:1px solid #e5e7eb;">
                                 <td style="padding:12px;font-size:14px;color:#333;">{{ $user['name'] }}</td>
                                 <td style="text-align:center;padding:12px;font-size:14px;color:#D97706;font-weight:bold;">{{ $user['pending'] }}</td>
                                 <td style="text-align:center;padding:12px;font-size:14px;color:#059669;font-weight:bold;">{{ $user['completed'] }}</td>
                                 <td style="text-align:center;padding:12px;font-size:14px;color:#1e3a8a;font-weight:bold;">{{ $user['total'] }}</td>
                                 <td style="text-align:center;padding:12px;font-size:14px;color:#333;">{{ $user['completion_rate'] }}%</td>
+                            </tr>
+                            @endforeach
+                        </tbody>
+                    </table>
+                </div>
+                @endif
+
+                <!-- Category-wise Statistics -->
+                @if(isset($reportData['category_data']) && count($reportData['category_data']) > 0)
+                <div style="margin-top:40px;">
+                    <h3 style="margin:0 0 20px 0;font-size:18px;color:#1e3a8a;border-bottom:2px solid #1e3a8a;padding-bottom:10px;">
+                        Category-wise Statistics
+                    </h3>
+                    <table width="100%" cellspacing="0" cellpadding="10" style="border-collapse:collapse;background:#ffffff;border:1px solid #e5e7eb;border-radius:8px;overflow:hidden;">
+                        <thead>
+                            <tr style="background:#1e3a8a;color:white;">
+                                <th style="text-align:left;padding:12px;font-size:14px;">Category Name</th>
+                                <th style="text-align:center;padding:12px;font-size:14px;">Pending</th>
+                                <th style="text-align:center;padding:12px;font-size:14px;">Completed</th>
+                                <th style="text-align:center;padding:12px;font-size:14px;">Total</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            @foreach($reportData['category_data'] as $category)
+                            @php
+                                if ($category['total'] == 0) {
+                                    continue;
+                                }
+                                $indent = str_repeat(' ', $category['level']);
+                            @endphp
+                            <tr style="border-bottom:1px solid #e5e7eb;">
+                                <td style="padding:12px;font-size:14px;color:#333;">{!! $indent !!}{{ $category['name'] }}</td>
+                                <td style="text-align:center;padding:12px;font-size:14px;color:#D97706;font-weight:bold;">{{ $category['pending'] }}</td>
+                                <td style="text-align:center;padding:12px;font-size:14px;color:#059669;font-weight:bold;">{{ $category['completed'] }}</td>
+                                <td style="text-align:center;padding:12px;font-size:14px;color:#1e3a8a;font-weight:bold;">{{ $category['total'] }}</td>
                             </tr>
                             @endforeach
                         </tbody>

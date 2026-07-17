@@ -141,6 +141,89 @@
         </div>
     </div>
 
+    <!-- Category-wise Statistics -->
+    <div class="row mb-4">
+        <div class="col-12">
+            <div class="card shadow-sm">
+                <div class="card-header bg-white">
+                    <h5 class="card-title mb-0">Category-wise Statistics</h5>
+                </div>
+                <div class="card-body">
+                    <div class="table-responsive">
+                        <table id="categoryReportTable" class="table table-hover table-bordered table-nowrap align-middle mb-0">
+                            <thead class="table-light">
+                                <tr>
+                                    <th class="text-center" width="5%">#</th>
+                                    <th>Category Name</th>
+                                    <th class="text-center">Pending</th>
+                                    <th class="text-center">Completed</th>
+                                    <th class="text-center">Total</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                @forelse($categoryReportData as $index => $category)
+                                @php
+                                    if ($category['total'] == 0) {
+                                        continue;
+                                    }
+                                    
+                                    $performanceClass = '';
+                                    if ($category['completion_rate'] >= 80) {
+                                        $performanceClass = 'bg-success bg-opacity-10';
+                                    } elseif ($category['completion_rate'] >= 50) {
+                                        $performanceClass = 'bg-warning bg-opacity-10';
+                                    } else {
+                                        $performanceClass = 'bg-danger bg-opacity-10';
+                                    }
+                                    
+                                    // Add indentation based on level
+                                    $indent = str_repeat('&nbsp;&nbsp;&nbsp;&nbsp;', $category['level']);
+                                    $icon = $category['has_children'] ? '<i class="fas fa-folder text-warning me-1"></i>' : '<i class="fas fa-file text-muted me-1"></i>';
+                                @endphp
+                                <tr class="{{ $performanceClass }}">
+                                    <td class="text-center">{{ $index + 1 }}</td>
+                                    <td>
+                                        <div class="d-flex align-items-center">
+                                            <div>
+                                                <h6 class="mb-0">{!! $indent . $icon !!}{{ $category['name'] }}</h6>
+                                            </div>
+                                        </div>
+                                    </td>
+                                    <td class="text-center">
+                                        <span class="badge rounded-pill bg-warning bg-opacity-25 text-warning p-2">
+                                            <i class="fas fa-clock me-1"></i> {{ $category['pending'] }}
+                                        </span>
+                                    </td>
+                                    <td class="text-center">
+                                        <span class="badge rounded-pill bg-success bg-opacity-25 text-success p-2">
+                                            <i class="fas fa-check-circle me-1"></i> {{ $category['completed'] }}
+                                        </span>
+                                    </td>
+                                    <td class="text-center">
+                                        <span class="badge rounded-pill bg-primary bg-opacity-25 text-primary p-2">
+                                            <i class="fas fa-tasks me-1"></i> {{ $category['total'] }}
+                                        </span>
+                                    </td>
+                                </tr>
+                                @empty
+                                <tr>
+                                    <td colspan="6" class="text-center py-4">
+                                        <div class="d-flex flex-column align-items-center">
+                                            <i class="fas fa-inbox fa-3x text-muted mb-2"></i>
+                                            <h5 class="text-muted">No data available</h5>
+                                            <p class="text-muted mb-0">Try adjusting your filters or check back later.</p>
+                                        </div>
+                                    </td>
+                                </tr>
+                                @endforelse
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
     <div class="row">
         <div class="col-12">
             <div class="card shadow-sm">
@@ -163,6 +246,10 @@
                             <tbody>
                                 @forelse($reportData as $index => $user)
                                 @php
+                                    if ($user['total'] == 0) {
+                                        continue;
+                                    }
+                                    
                                     $performanceClass = '';
                                     if ($user['completion_rate'] >= 80) {
                                         $performanceClass = 'bg-success bg-opacity-10';
@@ -232,7 +319,7 @@
 @push('scripts')
 <script>
 $(function () {
-    // Initialize DataTable with export buttons
+    // Initialize DataTable with export buttons for User Performance
     var table = $('#usageReportTable').DataTable({
         "paging": true,
         "lengthChange": true,
@@ -259,6 +346,34 @@ $(function () {
     });
     // Add the export buttons to the DOM
     table.buttons().container().appendTo('#usageReportTable_wrapper .col-md-6:eq(0)');
+
+    // Initialize DataTable with export buttons for Category-wise Statistics
+    var categoryTable = $('#categoryReportTable').DataTable({
+        "paging": true,
+        "lengthChange": true,
+        "searching": true,
+        "ordering": true,
+        "info": true,
+        "autoWidth": false,
+        "responsive": true,
+        "pageLength": 25,
+        "serverSide": false,
+        "processing": false,
+        "dom": 'Bfrtip',
+        "buttons": [
+            {
+                extend: 'excel',
+                text: '<i class="fa fa-file-excel"></i> Excel',
+                className: 'btn btn-light btn-sm me-1',
+                titleAttr: 'Export as Excel',
+                exportOptions: {
+                    columns: ':not(.no-export)'
+                }
+            }
+        ]
+    });
+    // Add the export buttons to the DOM
+    categoryTable.buttons().container().appendTo('#categoryReportTable_wrapper .col-md-6:eq(0)');
 });
 </script>
 @endpush

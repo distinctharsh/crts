@@ -6,6 +6,7 @@ use App\Http\Controllers\Controller;
 use App\Models\User;
 use App\Models\Complaint;
 use App\Models\Status;
+use App\Services\UsageReportService;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Carbon\Carbon;
@@ -53,8 +54,13 @@ class UsageReportController extends Controller
             ];
         }
 
+        // Get category-wise statistics using service
+        $usageReportService = new UsageReportService();
+        $categoryReportData = $usageReportService->getCategoryWiseStatistics($dateFrom, $dateTo);
+
         return view('usage-report.index', [
             'reportData' => $reportData,
+            'categoryReportData' => $categoryReportData,
             'dateFrom' => $request->input('date_from'),
             'dateTo' => $request->input('date_to')
         ]);
