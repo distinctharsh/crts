@@ -1112,6 +1112,7 @@ class ComplaintController extends Controller
             $users = User::whereHas('role')->get(['id', 'full_name']);
             $verticals = Vertical::all(['id', 'name', 'parent_id']);
             $requestTypes = RequestType::all(['id', 'name']);
+            $statuses = Status::all(['id', 'name']);
             $parentIds = $verticals->pluck('parent_id')->filter()->unique()->toArray();
             
             $verticalPaths = [];
@@ -1164,6 +1165,13 @@ class ComplaintController extends Controller
             }
             $requestTypeRange = 'MasterData!$E$1:$E$' . max(1, $row - 1);
 
+            $row = 1;
+            foreach ($statuses as $status) {
+                $masterSheet->setCellValue('F' . $row, $status->name);
+                $row++;
+            }
+            $statusRange = 'MasterData!$F$1:$F$' . max(1, $row - 1);
+
             $masterSheet->setSheetState(\PhpOffice\PhpSpreadsheet\Worksheet\Worksheet::SHEETSTATE_HIDDEN);
 
             $sheet = $spreadsheet->getActiveSheet();
@@ -1178,11 +1186,12 @@ class ComplaintController extends Controller
                 'F1' => 'Request Type*',
                 'G1' => 'Vertical*',
                 'H1' => 'Description*',
-                'I1' => 'Priority'
+                'I1' => 'Priority',
+                'J1' => 'Status'
             ];
 
             if (\Auth::check()) {
-                $headers['J1'] = 'Assigned To';
+                $headers['K1'] = 'Assigned To';
             }
 
             foreach ($headers as $cell => $value) {
@@ -1200,9 +1209,10 @@ class ComplaintController extends Controller
             $sheet->setCellValue('G2', $verticalPaths[0] ?? '');
             $sheet->setCellValue('H2', 'Sample complaint description');
             $sheet->setCellValue('I2', 'medium');
+            $sheet->setCellValue('J2', 'assigned');
             
             if (\Auth::check()) {
-                $sheet->setCellValue('J2', ''); 
+                $sheet->setCellValue('K2', '');
             }
 
             // Reusable Validation Functionality
@@ -1228,10 +1238,15 @@ class ComplaintController extends Controller
             $priorityValidation->setAllowBlank(true);
             $sheet->setDataValidation('I2:I100', $priorityValidation);
 
+            // Status Validation
+            $statusValidation = $listValidation($statusRange);
+            $statusValidation->setAllowBlank(true);
+            $sheet->setDataValidation('J2:J100', $statusValidation);
+
             if (\Auth::check()) {
                 $assignedToValidation = $listValidation($userRange);
                 $assignedToValidation->setAllowBlank(true);
-                $sheet->setDataValidation('J2:J100', $assignedToValidation);
+                $sheet->setDataValidation('K2:K100', $assignedToValidation);
             }
 
             // Auto-size columns
@@ -1318,6 +1333,7 @@ class ComplaintController extends Controller
                     'Vertical*' => 'required|string',
                     'Description*' => 'required|string',
                     'Priority' => 'nullable|in:high,medium',
+                    'Status' => 'nullable|string',
                     'Assigned To' => 'nullable|string'
                 ]);
 
@@ -1370,18 +1386,36 @@ class ComplaintController extends Controller
                 }
 
                 $assignedToId = null;
-                $assignedById = null;
+                $currentUserId = Auth::user() ? Auth::user()->id : null;
                 
                 if (!empty($data['Assigned To'])) {
                     $user = User::where('full_name', trim($data['Assigned To']))->first();
                     if ($user) {
                         $assignedToId = $user->id;
-                        $assignedById = Auth::id();
+                    } else {
+                        $errors[] = "Row {$row}: User '{$data['Assigned To']}' not found";
+                        continue;
                     }
                 }
                 
                 $priority = $data['Priority'] ?? 'medium';
-                $unassignedStatus = Status::where('name', 'unassigned')->first();
+                $statusId = null;
+                if (!empty($data['Status'])) {
+                    $customStatus = Status::where('name', trim($data['Status']))->first();
+                    if ($customStatus) {
+                        $statusId = $customStatus->id;
+                    }
+                }
+
+                if (!$statusId) {
+                    if (!empty($assignedToId)) {
+                        $assignedStatus = Status::where('name', 'assigned')->first();
+                        $statusId = $assignedStatus ? $assignedStatus->id : null;
+                    } else {
+                        $unassignedStatus = Status::where('name', 'unassigned')->first();
+                        $statusId = $unassignedStatus ? $unassignedStatus->id : null;
+                    }
+                }
 
                 $date = Carbon::now()->format('Ymd');
                 
@@ -1400,12 +1434,9 @@ class ComplaintController extends Controller
                 $complaintsToday = Complaint::whereDate('created_at', Carbon::today())->count();
                 $referenceNumber = $prefix . '-' . $date . str_pad($complaintsToday + 1, 3, '0', STR_PAD_LEFT);
 
-                $assignedStatus = Status::where('name', 'assigned')->first();
-                $statusId = !empty($assignedToId) ? $assignedStatus->id : $unassignedStatus->id;
-
                 $complaint = Complaint::create([
                     'reference_number' => $referenceNumber,
-                    'client_id' => Auth::user()->id ?? 0,
+                    'client_id' => $currentUserId, 
                     'description' => $data['Description*'],
                     'priority' => $priority,
                     'status_id' => $statusId,
@@ -1414,9 +1445,9 @@ class ComplaintController extends Controller
                     'section_id' => $section->id,
                     'user_name' => $data['User Name*'],
                     'room_number' => $data['Room Number*'],
-                    'intercom' => (string)$data['Intercom*'],
+                    'intercom'=> (string)$data['Intercom*'],
                     'assigned_to' => $assignedToId,
-                    'assigned_by' => $assignedById,
+                    'assigned_by' => $assignedToId ? $currentUserId : null,
                     'created_at' => Carbon::now()->setTimezone(config('app.timezone')),
                     'updated_at' => Carbon::now()->setTimezone(config('app.timezone')),
                 ]);
@@ -1435,7 +1466,7 @@ class ComplaintController extends Controller
 
                 ComplaintAction::create([
                     'complaint_id' => $complaint->id,
-                    'user_id' => Auth::user()->id ?? 0,
+                    'user_id' => $currentUserId,
                     'status_id' => $statusId, 
                     'assigned_to' => $complaint->assigned_to ?: null,
                     'description' => 'Complaint created via bulk import',
