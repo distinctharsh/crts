@@ -251,22 +251,38 @@
     showToast('{{ session('error') }}', 'error');
     @endif
 
-    $(document).on('submit', '.close-ticket-form', function(e) {
-        console.log('Close form submitted');
+    $(document).on('submit', '.close-ticket-form, .assign-ticket-form, .revert-ticket-form', function(e) {
         e.preventDefault();
         e.stopPropagation();
         
         var form = $(this);
         var complaintId = form.data('complaint-id');
         var formData = new FormData(this);
-        var modal = $('#closeModal' + complaintId);
+        var formClass = form.attr('class');
+        var modalId, loadingText, buttonText, successMessage;
+        
+        if (formClass.includes('close-ticket-form')) {
+            modalId = 'closeModal';
+            loadingText = 'Closing...';
+            buttonText = 'Close Ticket';
+            successMessage = 'Ticket closed successfully!';
+            formData.append('_method', 'PUT');
+        } else if (formClass.includes('assign-ticket-form')) {
+            modalId = 'assignModal';
+            loadingText = 'Assigning...';
+            buttonText = 'Assign';
+            successMessage = 'Ticket assigned successfully!';
+        } else if (formClass.includes('revert-ticket-form')) {
+            modalId = 'revertModal';
+            loadingText = 'Reverting...';
+            buttonText = 'Revert';
+            successMessage = 'Ticket reverted successfully!';
+        }
+        
+        var modal = $('#' + modalId + complaintId);
         var submitBtn = form.find('button[type="submit"]');
         
-        console.log('Complaint ID:', complaintId);
-        
-        submitBtn.prop('disabled', true).html('<span class="spinner-border spinner-border-sm" role="status" aria-hidden="true"></span> Closing...');
-
-        formData.append('_method', 'PUT');
+        submitBtn.prop('disabled', true).html('<span class="spinner-border spinner-border-sm" role="status" aria-hidden="true"></span> ' + loadingText);
         
         $.ajax({
             url: form.attr('action'),
@@ -279,28 +295,48 @@
             },
             success: function(response) {
                 modal.modal('hide');
-                
-                var statusBadge = $('tr[data-complaint-id="' + complaintId + '"]').find('.status-badge');
-                if (statusBadge.length) {
-                    statusBadge.removeClass('bg-warning bg-info bg-primary bg-secondary')
-                        .addClass('bg-secondary')
-                        .text('Closed');
+                showToast(successMessage, 'success');
+                if (formClass.includes('close-ticket-form')) {
+                    var statusBadge = $('tr[data-complaint-id="' + complaintId + '"]').find('.status-badge');
+                    if (statusBadge.length) {
+                        statusBadge.removeClass('bg-warning bg-info bg-primary bg-secondary')
+                            .addClass('bg-secondary')
+                            .text('Closed');
+                    }
+                    
+                    var actionCell = $('tr[data-complaint-id="' + complaintId + '"]').find('.action-buttons');
+                    if (actionCell.length) {
+                        actionCell.find('.btn-close-ticket').remove();
+                    }
                 }
                 
-                var actionCell = $('tr[data-complaint-id="' + complaintId + '"]').find('.action-buttons');
-                if (actionCell.length) {
-                    actionCell.find('.btn-close-ticket').remove();
+                if (formClass.includes('assign-ticket-form') || formClass.includes('revert-ticket-form')) {
+                    if (formClass.includes('revert-show-form')) {
+                        location.reload();
+                    } else {
+                        if (response.assigned_to) {
+                            var assignedToCell = $('tr[data-complaint-id="' + complaintId + '"]').find('.assigned-to-cell');
+                            if (assignedToCell.length) {
+                                assignedToCell.text(response.assigned_to);
+                            }
+                        }
+                        if (response.status && response.status_color) {
+                            var statusBadge = $('tr[data-complaint-id="' + complaintId + '"]').find('.status-badge');
+                            if (statusBadge.length) {
+                                statusBadge.removeClass('bg-warning bg-info bg-primary bg-secondary')
+                                    .addClass('bg-' + response.status_color)
+                                    .text(response.status);
+                            }
+                        }
+                    }
                 }
-                
-                showToast('Ticket closed successfully!', 'success');
             },
             error: function(xhr) {
-                console.log('Error:', xhr);
-                var errorMessage = xhr.responseJSON?.message || 'Error closing ticket. Please try again.';
+                var errorMessage = xhr.responseJSON?.message || 'Error processing request. Please try again.';
                 showToast(errorMessage, 'error');
             },
             complete: function() {
-                submitBtn.prop('disabled', false).html('Close Ticket');
+                submitBtn.prop('disabled', false).html(buttonText);
                 form[0].reset();
             }
         });

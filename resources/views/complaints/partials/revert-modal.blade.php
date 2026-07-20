@@ -2,7 +2,7 @@
 <div class="modal fade" id="revertModal{{ $complaint->id }}" tabindex="-1" aria-labelledby="revertModalLabel{{ $complaint->id }}" aria-hidden="true">
     <div class="modal-dialog">
         <div class="modal-content">
-            <form action="{{ route('complaints.revert', $complaint) }}" method="POST">
+            <form class="revert-ticket-form" data-complaint-id="{{ $complaint->id }}" action="{{ route('complaints.revert', $complaint) }}" method="POST">
                 @csrf
                 <div class="modal-header">
                     <h5 class="modal-title" id="revertModalLabel{{ $complaint->id }}">Revert to Manager</h5>

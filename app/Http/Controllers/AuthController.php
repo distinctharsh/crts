@@ -36,10 +36,6 @@ class AuthController extends Controller
 
         if (Auth::attempt($credentials)) {
             $request->session()->regenerate();
-            Log::info('Login must_change_password', [
-                'user_id' => Auth::user()->id,
-                'must_change_password' => Auth::user()->must_change_password
-            ]);
             if (Auth::user()->must_change_password) {
                 return redirect()->route('profile.change-password');
             }

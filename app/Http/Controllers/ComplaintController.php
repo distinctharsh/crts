@@ -454,6 +454,17 @@ class ComplaintController extends Controller
             $previousUrl = url()->previous();
             $dashboardUrl = route('dashboard');
 
+            if ($request->ajax() || $request->wantsJson()) {
+                $complaint->load(['assignedTo', 'status']);
+                return response()->json([
+                    'success' => true, 
+                    'message' => 'Complaint assigned successfully.',
+                    'assigned_to' => $complaint->assignedTo?->full_name ?? 'Not Assigned',
+                    'status' => $complaint->status->display_name ?? 'Unknown',
+                    'status_color' => $complaint->status_color
+                ]);
+            }
+
             if ($previousUrl === $dashboardUrl) {
                 return redirect()->route('dashboard')->with('success', 'Complaint updated successfully.');
             }
@@ -547,6 +558,17 @@ class ComplaintController extends Controller
                 'status_id' => $revertedStatus->id,
                 'description' => $validated['description']
             ]);
+
+            if ($request->ajax() || $request->wantsJson()) {
+                $complaint->load(['assignedTo', 'status']);
+                return response()->json([
+                    'success' => true, 
+                    'message' => 'Complaint reverted to manager successfully.',
+                    'assigned_to' => $complaint->assignedTo?->full_name ?? 'Not Assigned',
+                    'status' => $complaint->status->display_name ?? 'Unknown',
+                    'status_color' => $complaint->status_color
+                ]);
+            }
 
             return redirect()->route('complaints.show', $complaint)
                 ->with('success', 'Complaint reverted to manager successfully.');

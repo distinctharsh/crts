@@ -2,7 +2,7 @@
 <div class="modal fade" id="assignModal{{ $complaint->id }}" tabindex="-1" aria-labelledby="assignModalLabel{{ $complaint->id }}" aria-hidden="true">
     <div class="modal-dialog modal-dialog-centered">
         <div class="modal-content">
-            <form action="{{ route('complaints.assign', $complaint) }}" method="POST">
+            <form class="assign-ticket-form" data-complaint-id="{{ $complaint->id }}" action="{{ route('complaints.assign', $complaint) }}" method="POST">
                 @csrf
                 <div class="modal-header bg-primary text-white">
                     <h5 class="modal-title" id="assignModalLabel{{ $complaint->id }}">Assign Ticket {{ $complaint->reference_number }}</h5>
