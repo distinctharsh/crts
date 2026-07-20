@@ -186,12 +186,12 @@
     </thead>
     <tbody>
         @foreach($complaints as $complaint)
-        <tr>
+        <tr data-complaint-id="{{ $complaint->id }}">
             <td>{{ $loop->iteration }}</td>
             <td style="word-break: break-all;">
                 {{ $complaint->reference_number }}
                 <div class="mt-1">
-                    <span class="badge bg-{{ $complaint->status_color }}" style="font-size: 0.75rem;">
+                    <span class="badge bg-{{ $complaint->status_color }} status-badge" style="font-size: 0.75rem;">
                         {{ $complaint->status->display_name ?? 'Unknown' }}
                     </span>
                     @if($complaint->priority === 'high')
@@ -211,7 +211,7 @@
                 {{ \Illuminate\Support\Str::limit($complaint->description, 50, '...') }}
             </td>
             <td>
-                <div class="btn-group">
+                <div class="btn-group action-buttons">
                     <a href="{{ route('complaints.show', $complaint) }}" class="btn btn-sm btn-info me-1">View</a>
                     @auth
                     @if(
@@ -225,7 +225,7 @@
                     @auth
                     @if(auth()->user()->isManager())
                         @if($complaint->status->name == 'completed')
-                            <button type="button" class="btn btn-sm btn-success ms-1" data-bs-toggle="modal" data-bs-target="#closeModal{{ $complaint->id }}">
+                            <button type="button" class="btn btn-sm btn-success ms-1 btn-close-ticket" data-bs-toggle="modal" data-bs-target="#closeModal{{ $complaint->id }}">
                                 Close
                             </button>
                         @endif

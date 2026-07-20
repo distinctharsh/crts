@@ -2,7 +2,7 @@
 <div class="modal fade" id="closeModal{{ $complaint->id }}" tabindex="-1" aria-labelledby="closeModalLabel{{ $complaint->id }}" aria-hidden="true">
     <div class="modal-dialog modal-dialog-centered">
         <div class="modal-content">
-            <form action="{{ route('complaints.update', $complaint) }}" method="POST">
+            <form class="close-ticket-form" data-complaint-id="{{ $complaint->id }}" action="{{ route('complaints.update', $complaint) }}" method="POST">
                 @csrf
                 @method('PUT')
                 <div class="modal-header bg-success text-white">

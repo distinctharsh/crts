@@ -129,6 +129,11 @@
             margin-bottom: 0.5rem !important;
             margin-top: 0.5rem !important;
         }
+
+        .swal2-container.custom-swal-toast-container {
+            padding-top: 110px !important; 
+            z-index: 1050 !important;
+        }
     </style>
 </head>
 
@@ -137,18 +142,6 @@
 
 
     <main class="container py-4">
-        @if(session('success'))
-        <div class="alert alert-success">
-            {{ session('success') }}
-        </div>
-        @endif
-
-        @if(session('error'))
-        <div class="alert alert-danger">
-            {{ session('error') }}
-        </div>
-        @endif
-
         @yield('content')
     </main>
 
@@ -166,6 +159,7 @@
     <script src="{{ asset('js/buttons.html5.min.js') }}"></script>
     <script src="{{ asset('js/buttons.print.min.js') }}"></script>
     <script src="{{ asset('js/buttons.colVis.min.js') }}"></script>
+    <script src="{{ asset('js/sweetalert2.all.min.js') }}"></script>
 
     @if(auth()->check() && (auth()->user()->isManager() || auth()->user()->isVM() || auth()->user()->isNFO()))
     <div id="complaintNotification"
@@ -225,6 +219,95 @@
     @endif
 
     @stack('scripts')
+    
+    <script>
+    function showToast(message, type = 'success') {
+        const Toast = Swal.mixin({
+            toast: true,
+            position: 'top-end',
+            showConfirmButton: false,
+            timer: 3000,
+            timerProgressBar: true,
+            customClass: {
+                container: 'custom-swal-toast-container'
+            },
+            didOpen: (toast) => {
+                toast.addEventListener('mouseenter', Swal.stopTimer);
+                toast.addEventListener('mouseleave', Swal.resumeTimer);
+            }
+        });
+
+        Toast.fire({
+            icon: type,
+            title: message
+        });
+    }
+
+    @if(session('success'))
+    showToast('{{ session('success') }}', 'success');
+    @endif
+
+    @if(session('error'))
+    showToast('{{ session('error') }}', 'error');
+    @endif
+
+    $(document).on('submit', '.close-ticket-form', function(e) {
+        console.log('Close form submitted');
+        e.preventDefault();
+        e.stopPropagation();
+        
+        var form = $(this);
+        var complaintId = form.data('complaint-id');
+        var formData = new FormData(this);
+        var modal = $('#closeModal' + complaintId);
+        var submitBtn = form.find('button[type="submit"]');
+        
+        console.log('Complaint ID:', complaintId);
+        
+        submitBtn.prop('disabled', true).html('<span class="spinner-border spinner-border-sm" role="status" aria-hidden="true"></span> Closing...');
+
+        formData.append('_method', 'PUT');
+        
+        $.ajax({
+            url: form.attr('action'),
+            type: 'POST',
+            data: formData,
+            processData: false,
+            contentType: false,
+            headers: {
+                'X-CSRF-TOKEN': $('meta[name="csrf-token"]').attr('content')
+            },
+            success: function(response) {
+                modal.modal('hide');
+                
+                var statusBadge = $('tr[data-complaint-id="' + complaintId + '"]').find('.status-badge');
+                if (statusBadge.length) {
+                    statusBadge.removeClass('bg-warning bg-info bg-primary bg-secondary')
+                        .addClass('bg-secondary')
+                        .text('Closed');
+                }
+                
+                var actionCell = $('tr[data-complaint-id="' + complaintId + '"]').find('.action-buttons');
+                if (actionCell.length) {
+                    actionCell.find('.btn-close-ticket').remove();
+                }
+                
+                showToast('Ticket closed successfully!', 'success');
+            },
+            error: function(xhr) {
+                console.log('Error:', xhr);
+                var errorMessage = xhr.responseJSON?.message || 'Error closing ticket. Please try again.';
+                showToast(errorMessage, 'error');
+            },
+            complete: function() {
+                submitBtn.prop('disabled', false).html('Close Ticket');
+                form[0].reset();
+            }
+        });
+        
+        return false;
+    });
+    </script>
 </body>
 
 </html>
