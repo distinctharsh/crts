@@ -925,7 +925,6 @@ class ComplaintController extends Controller
             } else {
                 $unassignedCount = (clone $baseQuery)
                     ->where('status_id', $statusIds->get('unassigned'))
-                    ->whereDate('created_at', today())
                     ->count();
             }
 

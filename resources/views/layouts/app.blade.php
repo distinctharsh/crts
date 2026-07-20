@@ -187,7 +187,7 @@
         ">
             <div style="display:flex;align-items:center;gap:10px;">
                 <i class="bi bi-bell-fill" style="color:#fff;font-size:18px;"></i>
-                <strong style="font-size:15px;color:#fff;font-weight:600;">Today Complaint Summary</strong>
+                <strong style="font-size:15px;color:#fff;font-weight:600;">Complaint Summary</strong>
             </div>
 
             <button onclick="hideNotification()"
