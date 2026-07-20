@@ -38,9 +38,9 @@ CREATE TABLE IF NOT EXISTS `activity_log` (
   KEY `causer` (`causer_type`,`causer_id`),
   KEY `activity_log_log_name_index` (`log_name`),
   CONSTRAINT `activity_log_chk_1` CHECK (json_valid(`properties`))
-) ENGINE=InnoDB AUTO_INCREMENT=1789 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
--- Dumping data for table tms-laravel.activity_log: ~23 rows (approximately)
+-- Dumping data for table tms-laravel.activity_log: ~0 rows (approximately)
 DELETE FROM `activity_log`;
 
 -- Dumping structure for table tms-laravel.cache
@@ -53,6 +53,9 @@ CREATE TABLE IF NOT EXISTS `cache` (
 
 -- Dumping data for table tms-laravel.cache: ~2 rows (approximately)
 DELETE FROM `cache`;
+INSERT INTO `cache` (`key`, `value`, `expiration`) VALUES
+	('crts_cache_83d5e1e49bd5f0ebbf6c9ba40416057fac1b5d76', 'i:1;', 1784549090),
+	('crts_cache_83d5e1e49bd5f0ebbf6c9ba40416057fac1b5d76:timer', 'i:1784549090;', 1784549090);
 
 -- Dumping structure for table tms-laravel.cache_locks
 CREATE TABLE IF NOT EXISTS `cache_locks` (
@@ -78,7 +81,7 @@ CREATE TABLE IF NOT EXISTS `comments` (
   KEY `comments_user_id_foreign` (`user_id`),
   CONSTRAINT `comments_complaint_id_foreign` FOREIGN KEY (`complaint_id`) REFERENCES `complaints` (`id`) ON DELETE CASCADE,
   CONSTRAINT `comments_user_id_foreign` FOREIGN KEY (`user_id`) REFERENCES `users` (`id`) ON DELETE CASCADE
-) ENGINE=InnoDB AUTO_INCREMENT=83 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+) ENGINE=InnoDB AUTO_INCREMENT=87 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
 -- Dumping data for table tms-laravel.comments: ~0 rows (approximately)
 DELETE FROM `comments`;
@@ -98,58 +101,26 @@ CREATE TABLE IF NOT EXISTS `complaint_actions` (
   KEY `complaint_actions_status_id_foreign` (`status_id`),
   CONSTRAINT `complaint_actions_complaint_id_foreign` FOREIGN KEY (`complaint_id`) REFERENCES `complaints` (`id`) ON DELETE CASCADE,
   CONSTRAINT `complaint_actions_status_id_foreign` FOREIGN KEY (`status_id`) REFERENCES `statuses` (`id`)
-) ENGINE=InnoDB AUTO_INCREMENT=838 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+) ENGINE=InnoDB AUTO_INCREMENT=997 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
--- Dumping data for table tms-laravel.complaint_actions: ~40 rows (approximately)
+-- Dumping data for table tms-laravel.complaint_actions: ~15 rows (approximately)
 DELETE FROM `complaint_actions`;
 INSERT INTO `complaint_actions` (`id`, `complaint_id`, `user_id`, `assigned_to`, `status_id`, `description`, `created_at`, `updated_at`) VALUES
-	(791, 464, 1, NULL, 1, 'Complaint created', '2026-07-06 09:14:41', '2026-07-06 09:14:41'),
-	(792, 466, 1, NULL, 1, 'Complaint created', '2026-07-06 09:17:14', '2026-07-06 09:17:14'),
-	(793, 464, 1, 5, 2, NULL, '2026-07-06 09:21:42', '2026-07-06 09:21:42'),
-	(794, 467, 1, NULL, 1, 'Complaint created via bulk import', '2026-07-06 10:04:43', '2026-07-06 10:04:43'),
-	(795, 468, 1, NULL, 1, 'Complaint created via bulk import', '2026-07-06 10:04:43', '2026-07-06 10:04:43'),
-	(796, 469, 1, NULL, 1, 'Complaint created via bulk import', '2026-07-06 10:04:43', '2026-07-06 10:04:43'),
-	(797, 470, 1, NULL, 1, 'Complaint created via bulk import', '2026-07-06 10:04:43', '2026-07-06 10:04:43'),
-	(798, 471, 1, NULL, 1, 'Complaint created via bulk import', '2026-07-06 10:04:43', '2026-07-06 10:04:43'),
-	(799, 472, 1, NULL, 1, 'Complaint created via bulk import', '2026-07-06 10:04:43', '2026-07-06 10:04:43'),
-	(800, 473, 1, NULL, 1, 'Complaint created via bulk import', '2026-07-06 10:04:43', '2026-07-06 10:04:43'),
-	(801, 474, 1, NULL, 1, 'Complaint created via bulk import', '2026-07-06 10:04:43', '2026-07-06 10:04:43'),
-	(802, 475, 1, NULL, 1, 'Complaint created via bulk import', '2026-07-06 10:04:43', '2026-07-06 10:04:43'),
-	(803, 476, 1, NULL, 1, 'Complaint created via bulk import', '2026-07-06 10:04:43', '2026-07-06 10:04:43'),
-	(804, 477, 1, NULL, 1, 'Complaint created via bulk import', '2026-07-06 10:04:43', '2026-07-06 10:04:43'),
-	(805, 478, 1, NULL, 1, 'Complaint created via bulk import', '2026-07-06 10:04:43', '2026-07-06 10:04:43'),
-	(806, 479, 1, NULL, 1, 'Complaint created via bulk import', '2026-07-06 10:04:44', '2026-07-06 10:04:44'),
-	(807, 480, 1, NULL, 1, 'Complaint created via bulk import', '2026-07-06 10:04:44', '2026-07-06 10:04:44'),
-	(808, 466, 1, 3, 2, NULL, '2026-07-06 10:06:52', '2026-07-06 10:06:52'),
-	(809, 466, 3, NULL, 3, NULL, '2026-07-06 10:07:32', '2026-07-06 10:07:32'),
-	(810, 466, 3, NULL, 4, NULL, '2026-07-06 10:07:58', '2026-07-06 10:07:58'),
-	(811, 466, 3, NULL, 5, NULL, '2026-07-06 10:08:10', '2026-07-06 10:08:10'),
-	(812, 466, 3, NULL, 8, NULL, '2026-07-06 10:08:20', '2026-07-06 10:08:20'),
-	(813, 473, 1, 8, 2, NULL, '2026-07-06 10:14:42', '2026-07-06 10:14:42'),
-	(814, 473, 8, NULL, 8, NULL, '2026-07-06 10:15:02', '2026-07-06 10:15:02'),
-	(815, 476, 8, NULL, 1, 'Complaint updated', '2026-07-06 10:15:32', '2026-07-06 10:15:32'),
-	(816, 476, 8, 4, 2, NULL, '2026-07-06 10:16:24', '2026-07-06 10:16:24'),
-	(817, 471, 8, 4, 2, NULL, '2026-07-06 10:16:30', '2026-07-06 10:16:30'),
-	(818, 471, 4, NULL, 4, NULL, '2026-07-06 10:26:22', '2026-07-06 10:26:22'),
-	(819, 471, 4, NULL, 5, NULL, '2026-07-06 10:26:29', '2026-07-06 10:26:29'),
-	(820, 471, 4, NULL, 3, NULL, '2026-07-06 10:26:47', '2026-07-06 10:26:47'),
-	(821, 470, 1, 8, 2, NULL, '2026-07-06 10:30:33', '2026-07-06 10:30:33'),
-	(822, 480, 1, 10, 2, 'Please review this matter', '2026-07-06 10:30:59', '2026-07-06 10:30:59'),
-	(823, 474, 1, 5, 2, 'Find the issue and please resolve it immediately', '2026-07-06 10:31:27', '2026-07-06 10:31:27'),
-	(824, 476, 1, 6, 2, 'Complaint updated', '2026-07-06 10:32:30', '2026-07-06 10:32:30'),
-	(825, 471, 1, 17, 2, NULL, '2026-07-06 10:33:09', '2026-07-06 10:33:09'),
-	(826, 481, 1, NULL, 1, 'Complaint created', '2026-07-08 05:23:56', '2026-07-08 05:23:56'),
-	(827, 481, 1, NULL, 1, 'Complaint updated', '2026-07-08 12:24:51', '2026-07-08 12:24:51'),
-	(828, 479, 1, NULL, 1, 'Complaint updated', '2026-07-08 12:24:59', '2026-07-08 12:24:59'),
-	(829, 481, 1, NULL, 1, 'Complaint updated', '2026-07-08 12:25:22', '2026-07-08 12:25:22'),
-	(830, 482, 0, NULL, 1, 'Complaint created', '2026-07-09 07:00:26', '2026-07-09 07:00:26'),
-	(831, 483, 0, NULL, 1, 'Complaint created', '2026-07-09 08:56:46', '2026-07-09 08:56:46'),
-	(832, 484, 0, NULL, 1, 'Complaint created', '2026-07-09 08:57:11', '2026-07-09 08:57:11'),
-	(833, 485, 1, NULL, 1, 'Complaint created', '2026-07-10 04:37:24', '2026-07-10 04:37:24'),
-	(834, 486, 1, NULL, 1, 'Complaint created', '2026-07-10 05:46:18', '2026-07-10 05:46:18'),
-	(835, 486, 1, 4, 2, NULL, '2026-07-10 05:58:36', '2026-07-10 05:58:36'),
-	(836, 486, 4, NULL, 13, NULL, '2026-07-10 05:59:04', '2026-07-10 05:59:04'),
-	(837, 485, 1, 11, 2, NULL, '2026-07-10 09:05:25', '2026-07-10 09:05:25');
+	(982, 499, 1, NULL, 1, 'Complaint created', '2026-07-20 10:58:47', '2026-07-20 10:58:47'),
+	(983, 499, 1, 11, 2, 'Complaint updated', '2026-07-20 10:59:03', '2026-07-20 10:59:03'),
+	(984, 499, 11, 1, 2, NULL, '2026-07-20 10:59:53', '2026-07-20 10:59:53'),
+	(985, 499, 1, 11, 2, NULL, '2026-07-20 11:00:17', '2026-07-20 11:00:17'),
+	(986, 500, 1, NULL, 1, 'Complaint created', '2026-07-20 11:07:41', '2026-07-20 11:07:41'),
+	(987, 500, 1, 8, 2, NULL, '2026-07-20 11:07:51', '2026-07-20 11:07:51'),
+	(988, 499, 11, 1, 2, NULL, '2026-07-20 11:08:14', '2026-07-20 11:08:14'),
+	(989, 499, 1, 11, 2, NULL, '2026-07-20 11:11:25', '2026-07-20 11:11:25'),
+	(990, 499, 11, 1, 2, NULL, '2026-07-20 11:12:17', '2026-07-20 11:12:17'),
+	(991, 499, 1, 11, 2, NULL, '2026-07-20 11:12:33', '2026-07-20 11:12:33'),
+	(992, 499, 11, 17, 2, NULL, '2026-07-20 11:12:54', '2026-07-20 11:12:54'),
+	(993, 501, 1, 3, 2, 'Complaint created via bulk import', '2026-07-20 11:41:35', '2026-07-20 11:41:35'),
+	(994, 502, 1, 3, 2, 'Complaint created via bulk import', '2026-07-20 11:48:41', '2026-07-20 11:48:41'),
+	(995, 504, 1, 3, 8, 'Complaint created via bulk import', '2026-07-20 12:03:50', '2026-07-20 12:03:50'),
+	(996, 504, 1, NULL, 6, 'checked', '2026-07-20 12:31:53', '2026-07-20 12:31:53');
 
 -- Dumping structure for table tms-laravel.complaint_vertical
 CREATE TABLE IF NOT EXISTS `complaint_vertical` (
@@ -163,49 +134,18 @@ CREATE TABLE IF NOT EXISTS `complaint_vertical` (
   KEY `complaint_vertical_vertical_id_foreign` (`vertical_id`),
   CONSTRAINT `complaint_vertical_complaint_id_foreign` FOREIGN KEY (`complaint_id`) REFERENCES `complaints` (`id`) ON DELETE CASCADE,
   CONSTRAINT `complaint_vertical_vertical_id_foreign` FOREIGN KEY (`vertical_id`) REFERENCES `verticals` (`id`)
-) ENGINE=InnoDB AUTO_INCREMENT=758 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+) ENGINE=InnoDB AUTO_INCREMENT=799 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
--- Dumping data for table tms-laravel.complaint_vertical: ~38 rows (approximately)
+-- Dumping data for table tms-laravel.complaint_vertical: ~7 rows (approximately)
 DELETE FROM `complaint_vertical`;
 INSERT INTO `complaint_vertical` (`id`, `complaint_id`, `vertical_id`, `created_at`, `updated_at`) VALUES
-	(713, 464, 2, '2026-07-06 09:14:41', '2026-07-06 09:14:41'),
-	(714, 466, 2, '2026-07-06 09:17:14', '2026-07-06 09:17:14'),
-	(715, 467, 4, '2026-07-06 10:04:43', '2026-07-06 10:04:43'),
-	(716, 467, 13, '2026-07-06 10:04:43', '2026-07-06 10:04:43'),
-	(718, 468, 4, '2026-07-06 10:04:43', '2026-07-06 10:04:43'),
-	(719, 468, 12, '2026-07-06 10:04:43', '2026-07-06 10:04:43'),
-	(720, 468, 21, '2026-07-06 10:04:43', '2026-07-06 10:04:43'),
-	(721, 469, 5, '2026-07-06 10:04:43', '2026-07-06 10:04:43'),
-	(722, 469, 15, '2026-07-06 10:04:43', '2026-07-06 10:04:43'),
-	(723, 470, 6, '2026-07-06 10:04:43', '2026-07-06 10:04:43'),
-	(724, 470, 16, '2026-07-06 10:04:43', '2026-07-06 10:04:43'),
-	(725, 470, 17, '2026-07-06 10:04:43', '2026-07-06 10:04:43'),
-	(726, 471, 1, '2026-07-06 10:04:43', '2026-07-06 10:04:43'),
-	(727, 471, 14, '2026-07-06 10:04:43', '2026-07-06 10:04:43'),
-	(728, 472, 9, '2026-07-06 10:04:43', '2026-07-06 10:04:43'),
-	(729, 473, 3, '2026-07-06 10:04:43', '2026-07-06 10:04:43'),
-	(730, 473, 10, '2026-07-06 10:04:43', '2026-07-06 10:04:43'),
-	(731, 474, 3, '2026-07-06 10:04:43', '2026-07-06 10:04:43'),
-	(732, 474, 11, '2026-07-06 10:04:43', '2026-07-06 10:04:43'),
-	(739, 477, 5, '2026-07-06 10:04:43', '2026-07-06 10:04:43'),
-	(740, 477, 15, '2026-07-06 10:04:43', '2026-07-06 10:04:43'),
-	(741, 478, 6, '2026-07-06 10:04:43', '2026-07-06 10:04:43'),
-	(742, 478, 16, '2026-07-06 10:04:43', '2026-07-06 10:04:43'),
-	(743, 478, 17, '2026-07-06 10:04:43', '2026-07-06 10:04:43'),
-	(744, 479, 3, '2026-07-06 10:04:44', '2026-07-06 10:04:44'),
-	(745, 479, 11, '2026-07-06 10:04:44', '2026-07-06 10:04:44'),
-	(746, 480, 3, '2026-07-06 10:04:44', '2026-07-06 10:04:44'),
-	(747, 480, 10, '2026-07-06 10:04:44', '2026-07-06 10:04:44'),
-	(748, 476, 1, '2026-07-06 10:15:32', '2026-07-06 10:15:32'),
-	(749, 476, 14, '2026-07-06 10:15:32', '2026-07-06 10:15:32'),
-	(750, 481, 2, '2026-07-08 05:23:56', '2026-07-08 05:23:56'),
-	(751, 482, 2, '2026-07-09 07:00:26', '2026-07-09 07:00:26'),
-	(752, 483, 2, '2026-07-09 08:56:46', '2026-07-09 08:56:46'),
-	(753, 484, 2, '2026-07-09 08:57:11', '2026-07-09 08:57:11'),
-	(754, 485, 5, '2026-07-10 04:37:24', '2026-07-10 04:37:24'),
-	(755, 485, 15, '2026-07-10 04:37:24', '2026-07-10 04:37:24'),
-	(756, 486, 1, '2026-07-10 05:46:18', '2026-07-10 05:46:18'),
-	(757, 486, 14, '2026-07-10 05:46:18', '2026-07-10 05:46:18');
+	(792, 499, 5, '2026-07-20 10:58:47', '2026-07-20 10:58:47'),
+	(793, 499, 15, '2026-07-20 10:58:47', '2026-07-20 10:58:47'),
+	(794, 500, 3, '2026-07-20 11:07:41', '2026-07-20 11:07:41'),
+	(795, 500, 10, '2026-07-20 11:07:41', '2026-07-20 11:07:41'),
+	(796, 501, 2, '2026-07-20 11:41:35', '2026-07-20 11:41:35'),
+	(797, 502, 2, '2026-07-20 11:48:41', '2026-07-20 11:48:41'),
+	(798, 504, 2, '2026-07-20 12:03:50', '2026-07-20 12:03:50');
 
 -- Dumping structure for table tms-laravel.complaints
 CREATE TABLE IF NOT EXISTS `complaints` (
@@ -241,33 +181,16 @@ CREATE TABLE IF NOT EXISTS `complaints` (
   CONSTRAINT `complaints_request_type_id_foreign` FOREIGN KEY (`request_type_id`) REFERENCES `request_types` (`id`) ON DELETE SET NULL,
   CONSTRAINT `complaints_section_id_foreign` FOREIGN KEY (`section_id`) REFERENCES `sections` (`id`),
   CONSTRAINT `complaints_status_id_foreign` FOREIGN KEY (`status_id`) REFERENCES `statuses` (`id`)
-) ENGINE=InnoDB AUTO_INCREMENT=487 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+) ENGINE=InnoDB AUTO_INCREMENT=505 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
--- Dumping data for table tms-laravel.complaints: ~22 rows (approximately)
+-- Dumping data for table tms-laravel.complaints: ~11 rows (approximately)
 DELETE FROM `complaints`;
 INSERT INTO `complaints` (`id`, `reference_number`, `user_name`, `client_id`, `network_type_id`, `section_id`, `intercom`, `room_number`, `description`, `file_path`, `priority`, `request_type_id`, `status_id`, `assigned_to`, `assigned_by`, `resolution`, `created_at`, `updated_at`) VALUES
-	(464, 'CMP-20260205001', 'Amrita Rao', 1, 2, 5, '120201', '201', 'Test this issue this is urgent', NULL, 'high', 1, 2, 5, 1, NULL, '2026-02-05 09:14:41', '2026-07-06 09:21:42'),
-	(466, 'CMP-20260706001', 'Amrita Rao', 1, 2, 5, '120201', '201', 'Test description', NULL, 'medium', 1, 8, 3, 1, NULL, '2026-02-05 09:14:41', '2026-07-06 10:08:20'),
-	(467, 'CS-NS-TN-20260706002', 'Kartik', 1, 2, 1, '1234', '101', 'Sample complaint description', NULL, 'medium', 2, 1, NULL, NULL, NULL, '2026-02-05 09:14:41', '2026-07-06 10:04:43'),
-	(468, 'CS-IS-IS2-20260706003', 'Mohan', 1, 2, 1, '1234', '101', 'Sample complaint description', NULL, 'high', 2, 1, NULL, NULL, NULL, '2026-02-05 09:14:41', '2026-07-06 10:04:43'),
-	(469, 'E-ES-20260706004', 'Sohan', 1, 2, 1, '1234', '101', 'Sample complaint description', NULL, 'medium', 1, 1, NULL, NULL, NULL, '2026-02-05 09:14:41', '2026-07-06 10:04:43'),
-	(470, 'H-PSD-PSD2-20260706005', 'Rohan', 1, 2, 1, '1234', '101', 'Sample complaint description', NULL, 'high', 2, 2, 8, 1, NULL, '2026-02-05 09:14:41', '2026-07-06 10:30:33'),
-	(471, 'NET-WS-20260706006', 'Reena', 1, 2, 1, '1234', '101', 'Sample complaint description', NULL, 'medium', 2, 2, 17, 1, NULL, '2026-02-05 09:14:41', '2026-07-06 10:33:09'),
-	(472, 'CMP-20260706007', 'Meena', 1, 2, 1, '1234', '101', 'Sample complaint description', NULL, 'medium', 1, 1, NULL, NULL, NULL, '2026-02-05 09:14:41', '2026-07-06 10:04:43'),
-	(473, 'SWE-AS-20260706008', 'Teena', 1, 2, 1, '1234', '101', 'Sample complaint description', NULL, 'high', 2, 8, 8, 1, NULL, '2026-07-06 10:04:43', '2026-07-06 10:15:02'),
-	(474, 'SWE-DS-20260706009', 'Raghav', 1, 2, 1, '1234', '101', 'Sample complaint description', NULL, 'medium', 2, 2, 5, 1, NULL, '2026-02-05 09:14:41', '2026-07-06 10:31:27'),
-	(475, 'GGGGGG-GGGG5-GGGG6-20260706010', 'Rishabh', 1, 2, 1, '1234', '101', 'Sample complaint description', NULL, 'medium', 1, 1, NULL, NULL, NULL, '2026-02-05 09:14:41', '2026-07-06 10:04:43'),
-	(476, 'H-PSD-PSD2-20260706011', 'Shubham', 1, 2, 1, '1234', '101', 'Sample complaint description', NULL, 'high', 2, 2, 6, 1, NULL, '2026-07-06 10:04:43', '2026-07-06 10:32:30'),
-	(477, 'E-ES-20260706012', 'Laxmi', 1, 2, 1, '1234', '101', 'Sample complaint description', NULL, 'medium', 2, 1, NULL, NULL, NULL, '2026-02-05 09:14:41', '2026-07-06 10:04:43'),
-	(478, 'H-PSD-PSD2-20260706013', 'Vishnu', 1, 2, 1, '1234', '101', 'Sample complaint description', NULL, 'high', 2, 1, NULL, NULL, NULL, '2026-07-06 10:04:43', '2026-07-06 10:04:43'),
-	(479, 'SWE-DS-20260706014', 'Orendra', 1, 2, 1, '1234', '101', 'Sample complaint description', NULL, 'high', 1, 1, NULL, NULL, NULL, '2026-02-05 09:14:41', '2026-07-08 12:24:59'),
-	(480, 'SWE-AS-20260706015', 'Harendra', 1, 2, 1, '1234', '101', 'Sample complaint description', NULL, 'high', 2, 2, 10, 1, NULL, '2026-02-05 09:14:41', '2026-07-06 10:30:59'),
-	(481, 'CMP-20260708001', 'Amrita Rao', 1, 2, 2, '1234', '201', 'test', NULL, 'medium', 2, 1, NULL, NULL, NULL, '2026-07-08 05:23:56', '2026-07-08 12:25:22'),
-	(482, 'VC-20260709001', 'Ramesh', 0, 2, 4, '120201', '201', 'Test', NULL, 'medium', 1, 1, NULL, NULL, NULL, '2026-07-09 07:00:26', '2026-07-09 07:00:26'),
-	(483, 'VC-20260709002', 'Amrita Rao', 0, 2, 3, '1234', '201', 'adwsfdfsdfsdfsd', NULL, 'medium', 1, 1, NULL, NULL, NULL, '2026-07-09 08:56:46', '2026-07-09 08:56:46'),
-	(484, 'VC-20260709003', 'Amrita Rao', 0, 2, 4, '1234', '323', 'dsffffffffffffffffff', NULL, 'medium', 2, 1, NULL, NULL, NULL, '2026-07-09 08:57:11', '2026-07-09 08:57:11'),
-	(485, 'E-ES-20260710001', 'Amrita Rao', 1, 2, 4, '120201', '201', 'LAn is not woreking LAn is not woreking LAn is not woreking LAn is not woreking LAn is not woreking  LAn is not woreking LAn is not woreking LAn is not woreking LAn is not woreking LAn is not woreking  LAn is not woreking LAn is not woreking LAn is not woreking LAn is not woreking LAn is not woreking  LAn is not woreking LAn is not woreking LAn is not woreking LAn is not woreking LAn is not woreking  LAn is not woreking LAn is not woreking LAn is not woreking LAn is not woreking LAn is not woreking  LAn is not woreking LAn is not woreking LAn is not woreking LAn is not woreking LAn is not woreking  LAn is not woreking LAn is not woreking LAn is not woreking LAn is not woreking LAn is not woreking  LAn is not woreking LAn is not woreking LAn is not woreking LAn is not woreking LAn is not woreking  LAn is not woreking LAn is not woreking LAn is not woreking LAn is not woreking LAn is not woreking  LAn is not woreking LAn is not woreking LAn is not woreking LAn is not woreking LAn is not woreking  LAn is not woreking LAn is not woreking LAn is not woreking LAn is not woreking LAn is not woreking  LAn is not woreking LAn is not woreking LAn is not woreking LAn is not woreking LAn is not woreking  LAn is not woreking LAn is not woreking LAn is not woreking LAn is not woreking LAn is not woreking  LAn is not woreking LAn is not woreking LAn is not woreking LAn is not woreking LAn is not woreking  LAn is not woreking LAn is not woreking LAn is not woreking LAn is not woreking LAn is not woreking ', NULL, 'medium', 1, 2, 11, 1, NULL, '2026-07-10 04:37:24', '2026-07-10 09:05:25'),
-	(486, 'NET-WS-20260710002', 'Amrita Rao', 1, 2, 5, '120201', '201', 'This is test issue....', NULL, 'high', 2, 13, 4, 1, NULL, '2026-07-10 05:46:18', '2026-07-10 05:59:04');
+	(499, 'E-ES-20260720001', 'Aman', 1, 2, 5, '120222', '201', 'Test Issue....', NULL, 'high', 1, 2, 17, 11, NULL, '2026-07-20 10:58:47', '2026-07-20 11:12:54'),
+	(500, 'SWE-AS-20260720002', 'Test User', 1, 2, 6, '120222', '201', 'Test Issue....', NULL, 'medium', 1, 2, 8, 1, NULL, '2026-07-20 11:07:41', '2026-07-20 11:07:51'),
+	(501, 'VC-20260720003', 'Harsh Singh', 1, 2, 9, '1234', '101', 'Sample complaint description', NULL, 'medium', 2, 2, 3, 1, NULL, '2026-07-20 11:41:35', '2026-07-20 11:41:35'),
+	(502, 'VC-20260720004', 'Harsh Singh', 1, 2, 9, '1234', '101', 'Sample complaint description', NULL, 'medium', 2, 2, 3, 1, NULL, '2026-07-20 11:48:41', '2026-07-20 11:48:41'),
+	(504, 'VC-20260720005', 'Harsh Singh', 1, 1, 1, '1234', '101', 'Sample complaint description', NULL, 'medium', 1, 6, 3, 1, NULL, '2026-07-20 12:03:50', '2026-07-20 12:31:53');
 
 -- Dumping structure for table tms-laravel.failed_jobs
 CREATE TABLE IF NOT EXISTS `failed_jobs` (
@@ -409,13 +332,14 @@ CREATE TABLE IF NOT EXISTS `network_types` (
   `updated_at` timestamp NULL DEFAULT NULL,
   `deleted_at` timestamp NULL DEFAULT NULL,
   PRIMARY KEY (`id`)
-) ENGINE=InnoDB AUTO_INCREMENT=4 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+) ENGINE=InnoDB AUTO_INCREMENT=5 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
--- Dumping data for table tms-laravel.network_types: ~2 rows (approximately)
+-- Dumping data for table tms-laravel.network_types: ~3 rows (approximately)
 DELETE FROM `network_types`;
 INSERT INTO `network_types` (`id`, `name`, `created_at`, `updated_at`, `deleted_at`) VALUES
 	(1, 'Air Gap Network', '2025-06-17 05:29:27', '2026-07-10 11:03:25', NULL),
-	(2, 'Internet', '2025-06-17 05:29:27', '2026-07-10 06:24:03', NULL);
+	(2, 'Internet', '2025-06-17 05:29:27', '2026-07-10 06:24:03', NULL),
+	(4, 'Test', '2026-07-13 09:52:38', '2026-07-13 09:52:38', NULL);
 
 -- Dumping structure for table tms-laravel.request_types
 CREATE TABLE IF NOT EXISTS `request_types` (
@@ -470,7 +394,7 @@ CREATE TABLE IF NOT EXISTS `sections` (
   PRIMARY KEY (`id`)
 ) ENGINE=InnoDB AUTO_INCREMENT=24 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
--- Dumping data for table tms-laravel.sections: ~23 rows (approximately)
+-- Dumping data for table tms-laravel.sections: ~22 rows (approximately)
 DELETE FROM `sections`;
 INSERT INTO `sections` (`id`, `name`, `created_at`, `updated_at`, `deleted_at`) VALUES
 	(1, 'ACC', '2025-06-17 05:29:27', '2026-07-10 06:31:22', NULL),
@@ -530,7 +454,7 @@ CREATE TABLE IF NOT EXISTS `statuses` (
   UNIQUE KEY `statuses_slug_unique` (`slug`)
 ) ENGINE=InnoDB AUTO_INCREMENT=14 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
--- Dumping data for table tms-laravel.statuses: ~8 rows (approximately)
+-- Dumping data for table tms-laravel.statuses: ~7 rows (approximately)
 DELETE FROM `statuses`;
 INSERT INTO `statuses` (`id`, `name`, `slug`, `color`, `description`, `sort_order`, `created_at`, `updated_at`, `visible_to_user`, `deleted_at`) VALUES
 	(1, 'unassigned', 'unassigned', 'warning', 'Complaint is waiting to be assigned', 1, '2025-06-23 17:43:53', '2025-06-23 17:43:53', 0, NULL),
@@ -540,7 +464,7 @@ INSERT INTO `statuses` (`id`, `name`, `slug`, `color`, `description`, `sort_orde
 	(5, 'pending_with_user', 'pending_with_user', 'danger', 'Complaint has been resolved successfully', 5, '2025-06-23 17:43:53', '2025-06-23 17:43:53', 1, NULL),
 	(6, 'closed', 'closed', 'success', 'Complaint has been closed', 7, '2025-06-23 17:43:53', '2025-06-23 17:43:53', 0, NULL),
 	(8, 'completed', 'completed', 'success', NULL, 6, '2025-06-23 17:43:53', '2025-06-23 17:43:53', 1, NULL),
-	(13, 'test', 'test', 'info', NULL, 0, '2026-07-10 05:58:21', '2026-07-10 06:27:45', 1, NULL);
+	(13, 'test', 'test', 'info', NULL, 0, '2026-07-10 05:58:21', '2026-07-13 12:10:18', 1, '2026-07-13 12:10:18');
 
 -- Dumping structure for table tms-laravel.user_vertical
 CREATE TABLE IF NOT EXISTS `user_vertical` (
@@ -552,30 +476,44 @@ CREATE TABLE IF NOT EXISTS `user_vertical` (
   CONSTRAINT `user_vertical_vertical_id_foreign` FOREIGN KEY (`vertical_id`) REFERENCES `verticals` (`id`) ON DELETE CASCADE
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
--- Dumping data for table tms-laravel.user_vertical: ~20 rows (approximately)
+-- Dumping data for table tms-laravel.user_vertical: ~35 rows (approximately)
 DELETE FROM `user_vertical`;
 INSERT INTO `user_vertical` (`user_id`, `vertical_id`) VALUES
 	(3, 2),
-	(4, 1),
+	(3, 9),
+	(4, 11),
 	(5, 2),
 	(5, 3),
+	(5, 9),
 	(6, 1),
 	(6, 4),
+	(6, 9),
 	(6, 12),
 	(6, 13),
 	(7, 4),
+	(7, 9),
 	(8, 1),
 	(8, 3),
 	(8, 6),
+	(8, 9),
 	(9, 2),
+	(9, 9),
 	(10, 2),
 	(10, 3),
+	(10, 9),
 	(11, 5),
+	(11, 9),
 	(17, 1),
 	(17, 5),
+	(17, 9),
 	(18, 1),
+	(18, 9),
 	(27, 5),
-	(29, 25);
+	(27, 9),
+	(29, 9),
+	(29, 25),
+	(30, 10),
+	(30, 28);
 
 -- Dumping structure for table tms-laravel.users
 CREATE TABLE IF NOT EXISTS `users` (
@@ -597,9 +535,9 @@ CREATE TABLE IF NOT EXISTS `users` (
   KEY `users_role_id_foreign` (`role_id`),
   CONSTRAINT `users_role_id_foreign` FOREIGN KEY (`role_id`) REFERENCES `roles` (`id`) ON DELETE SET NULL,
   CONSTRAINT `users_vertical_id_foreign` FOREIGN KEY (`vertical_id`) REFERENCES `verticals` (`id`) ON DELETE SET NULL
-) ENGINE=InnoDB AUTO_INCREMENT=30 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+) ENGINE=InnoDB AUTO_INCREMENT=31 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
--- Dumping data for table tms-laravel.users: ~14 rows (approximately)
+-- Dumping data for table tms-laravel.users: ~16 rows (approximately)
 DELETE FROM `users`;
 INSERT INTO `users` (`id`, `role_id`, `username`, `email`, `phone_number`, `full_name`, `vertical_id`, `password`, `must_change_password`, `created_at`, `updated_at`, `deleted_at`) VALUES
 	(1, 2, 'rohit', 'rohit.kumar09@nic.in', NULL, 'Rohit Kumar', NULL, '$2y$12$gBfu.K.azISKyLR6F4EwYOmUrXQAXwkITvIH.b1HC9R7vE09qxKNi', 0, '2025-06-19 18:58:26', '2026-05-22 10:17:50', NULL),
@@ -616,7 +554,8 @@ INSERT INTO `users` (`id`, `role_id`, `username`, `email`, `phone_number`, `full
 	(17, 4, 'Ankits', 'ankitsharma@nic.in', NULL, 'Ankit Sharma', 1, '$2y$12$gBfu.K.azISKyLR6F4EwYOmUrXQAXwkITvIH.b1HC9R7vE09qxKNi', 0, '2025-07-01 06:12:47', '2026-06-11 09:01:27', NULL),
 	(18, 3, 'prankur', 'prankur@nic.in', NULL, 'Prankur Sharma', 1, '$2y$12$gBfu.K.azISKyLR6F4EwYOmUrXQAXwkITvIH.b1HC9R7vE09qxKNi', 0, '2025-07-01 08:02:48', '2026-06-11 09:01:37', NULL),
 	(27, 3, 'prasad', 'prasad.gl@nic.in', NULL, 'Guggilam Lakshmi Prasad', NULL, '$2y$12$gBfu.K.azISKyLR6F4EwYOmUrXQAXwkITvIH.b1HC9R7vE09qxKNi', 1, '2026-05-22 10:19:58', '2026-05-22 10:19:58', NULL),
-	(29, 4, 'testuser', NULL, NULL, 'Test User', NULL, '$2y$12$Q3ewYp99KuDhbO/I7DwGSOwhA5eNtjqiyVaR3yzqpI7G5d8qX/JXy', 1, '2026-07-10 11:59:49', '2026-07-10 11:59:49', NULL);
+	(29, 4, 'testuser', NULL, NULL, 'Test User', NULL, '$2y$12$Q3ewYp99KuDhbO/I7DwGSOwhA5eNtjqiyVaR3yzqpI7G5d8qX/JXy', 1, '2026-07-10 11:59:49', '2026-07-10 11:59:49', NULL),
+	(30, 4, 'harsh', 'distinctharsh@gmail.com', NULL, 'Harsh Singh', NULL, '$2y$12$IhhR47HT.crAaKLufMrdN.zjARa2l8QMsWoqwdo69ZfFrXuigHN8e', 0, '2026-07-15 12:04:10', '2026-07-15 12:05:11', NULL);
 
 -- Dumping structure for table tms-laravel.verticals
 CREATE TABLE IF NOT EXISTS `verticals` (
@@ -631,13 +570,13 @@ CREATE TABLE IF NOT EXISTS `verticals` (
   PRIMARY KEY (`id`),
   KEY `verticals_parent_id_foreign` (`parent_id`),
   CONSTRAINT `verticals_parent_id_foreign` FOREIGN KEY (`parent_id`) REFERENCES `verticals` (`id`) ON DELETE CASCADE
-) ENGINE=InnoDB AUTO_INCREMENT=28 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+) ENGINE=InnoDB AUTO_INCREMENT=29 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
--- Dumping data for table tms-laravel.verticals: ~18 rows (approximately)
+-- Dumping data for table tms-laravel.verticals: ~20 rows (approximately)
 DELETE FROM `verticals`;
 INSERT INTO `verticals` (`id`, `name`, `short_form`, `parent_id`, `send_email`, `created_at`, `updated_at`, `deleted_at`) VALUES
 	(1, 'Network', 'NET', NULL, 1, '2025-06-17 05:29:27', '2026-06-11 11:54:24', NULL),
-	(2, 'VC', 'VC', NULL, 1, '2025-06-17 05:29:27', '2026-07-10 06:24:13', NULL),
+	(2, 'VC', 'VC', NULL, 1, '2025-06-17 05:29:27', '2026-07-14 06:23:45', NULL),
 	(3, 'Software', 'SWE', NULL, 1, '2025-06-17 05:29:27', '2026-06-11 11:54:55', NULL),
 	(4, 'Cyber Security', 'CS', NULL, 1, '2025-06-20 04:45:03', '2026-07-10 11:34:26', NULL),
 	(5, 'Email', 'E', NULL, 0, '2025-06-20 04:41:20', '2026-06-11 12:42:20', NULL),
@@ -645,16 +584,17 @@ INSERT INTO `verticals` (`id`, `name`, `short_form`, `parent_id`, `send_email`, 
 	(9, 'Other', 'OTHER', NULL, 0, '2026-05-21 08:51:49', '2026-07-08 12:05:19', NULL),
 	(10, 'Application Security', 'AS', 3, 0, '2026-06-23 07:17:54', '2026-07-10 11:56:57', NULL),
 	(11, 'Database Security', 'DS', 3, 1, '2026-06-23 07:20:49', '2026-06-23 07:20:49', NULL),
-	(12, 'Information Security', 'ISS', 4, 1, '2026-06-23 07:21:09', '2026-07-10 11:34:26', NULL),
+	(12, 'Information Security', 'ISS', 4, 1, '2026-06-23 07:21:09', '2026-07-10 13:03:50', NULL),
 	(13, 'Network Security', 'NS', 4, 1, '2026-06-23 07:21:32', '2026-07-10 11:34:26', NULL),
 	(14, 'Wireless Security (Wi-Fi Security)', 'WS', 1, 1, '2026-06-23 07:21:57', '2026-06-23 07:21:57', NULL),
 	(15, 'Email Security', 'ES', 5, 0, '2026-06-23 08:56:37', '2026-07-10 11:56:37', NULL),
 	(16, 'Physical Security of Devices', 'PSD', 6, 1, '2026-06-23 08:56:59', '2026-06-23 08:56:59', NULL),
 	(17, 'PSD2', 'PS2', 16, 0, '2026-06-23 09:01:14', '2026-07-10 11:56:45', NULL),
-	(21, 'IS2', 'IS2', 12, 0, '2026-06-25 11:30:49', '2026-07-10 11:56:07', NULL),
-	(25, 'Iss3', NULL, 12, 0, '2026-07-10 06:38:24', '2026-07-10 12:00:17', NULL),
+	(21, 'IS2', 'IS2', 12, 0, '2026-06-25 11:30:49', '2026-07-10 13:06:19', NULL),
+	(25, 'Iss334', NULL, 12, 1, '2026-07-10 06:38:24', '2026-07-10 13:07:33', NULL),
 	(26, 'test nets', 'TNS', 13, 0, '2026-07-10 06:44:37', '2026-07-10 11:56:25', NULL),
-	(27, 'ts', 'TSS', NULL, 1, '2026-07-10 11:30:31', '2026-07-10 11:30:31', NULL);
+	(27, 'ts', 'TSS', NULL, 1, '2026-07-10 11:30:31', '2026-07-16 06:04:03', NULL),
+	(28, 'Test', 'TT', NULL, 1, '2026-07-13 09:52:58', '2026-07-16 06:03:59', NULL);
 
 /*!40103 SET TIME_ZONE=IFNULL(@OLD_TIME_ZONE, 'system') */;
 /*!40101 SET SQL_MODE=IFNULL(@OLD_SQL_MODE, '') */;
