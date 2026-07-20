@@ -5,6 +5,9 @@
     <meta charset="UTF-8">
     <meta name="csrf-token" content="{{ csrf_token() }}">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    @auth
+    <meta name="current-user-id" content="{{ auth()->id() }}">
+    @endauth
     <title>Complaint Redressal Ticketing (CRT) System</title>
     <link rel="icon" type="image/x-icon" href="{{ asset('images/favicon.ico') }}">
     <link rel="shortcut icon" href="{{ asset('favicon.ico') }}">
@@ -314,18 +317,60 @@
                     if (formClass.includes('revert-show-form')) {
                         location.reload();
                     } else {
-                        if (response.assigned_to) {
-                            var assignedToCell = $('tr[data-complaint-id="' + complaintId + '"]').find('.assigned-to-cell');
-                            if (assignedToCell.length) {
-                                assignedToCell.text(response.assigned_to);
+                        var row = $('tr[data-complaint-id="' + complaintId + '"]');
+                        if (row.length) {
+                            row.attr('data-status', response.status_name);
+                            row.attr('data-assigned-to', response.assigned_to_id);
+                            row.attr('data-is-unassigned', response.is_unassigned ? 'true' : 'false');
+                            row.attr('data-is-completed', response.is_completed ? 'true' : 'false');
+                            row.attr('data-is-closed', response.is_closed ? 'true' : 'false');
+                            
+                            if (response.assigned_to) {
+                                var assignedToCell = row.find('.assigned-to-cell');
+                                if (assignedToCell.length) {
+                                    assignedToCell.text(response.assigned_to);
+                                }
                             }
-                        }
-                        if (response.status && response.status_color) {
-                            var statusBadge = $('tr[data-complaint-id="' + complaintId + '"]').find('.status-badge');
-                            if (statusBadge.length) {
-                                statusBadge.removeClass('bg-warning bg-info bg-primary bg-secondary')
-                                    .addClass('bg-' + response.status_color)
-                                    .text(response.status);
+                            
+                            if (response.status && response.status_color) {
+                                var statusBadge = row.find('.status-badge');
+                                if (statusBadge.length) {
+                                    statusBadge.removeClass('bg-warning bg-info bg-primary bg-secondary')
+                                        .addClass('bg-' + response.status_color)
+                                        .text(response.status);
+                                }
+                            }
+                            
+                            var actionCell = row.find('.action-buttons');
+                            var userRole = row.attr('data-user-role');
+                            var currentUserId = $('meta[name="current-user-id"]').attr('content');
+                            
+                            actionCell.find('.btn-assign-reassign, .btn-revert, .btn-close-ticket').remove();
+                            
+                            if (userRole === 'manager') {
+                                if (response.status_name === 'completed') {
+                                    actionCell.append('<button type="button" class="btn btn-sm btn-success ms-1 btn-close-ticket" data-bs-toggle="modal" data-bs-target="#closeModal' + complaintId + '">Close</button>');
+                                }
+                                if (response.status_name !== 'completed' && response.status_name !== 'closed') {
+                                    var buttonText = response.assigned_to_id ? 'Reassign' : 'Assign';
+                                    actionCell.append('<button type="button" class="btn btn-sm btn-primary btn-assign-reassign" data-bs-toggle="modal" data-bs-target="#assignModal' + complaintId + '">' + buttonText + '</button>');
+                                }
+                            }
+                            else if (userRole === 'vm') {
+                                var canAssign = (response.is_unassigned || response.assigned_to_id == currentUserId) && response.status_name !== 'completed' && response.status_name !== 'closed';
+                                if (canAssign) {
+                                    actionCell.append('<button type="button" class="btn btn-sm btn-primary btn-assign-reassign" data-bs-toggle="modal" data-bs-target="#assignModal' + complaintId + '">Assign</button>');
+                                }
+                                var canRevert = response.assigned_to_id == currentUserId && response.status_name !== 'completed' && response.status_name !== 'closed';
+                                if (canRevert) {
+                                    actionCell.append('<button type="button" class="btn btn-sm btn-warning btn-revert" data-bs-toggle="modal" data-bs-target="#revertModal' + complaintId + '">Revert</button>');
+                                }
+                            }
+                            else if (userRole === 'nfo') {
+                                var canReassign = response.assigned_to_id == currentUserId && !response.is_completed && !response.is_closed;
+                                if (canReassign) {
+                                    actionCell.append('<button type="button" class="btn btn-sm btn-primary btn-assign-reassign" data-bs-toggle="modal" data-bs-target="#assignModal' + complaintId + '">Reassign</button>');
+                                }
                             }
                         }
                     }

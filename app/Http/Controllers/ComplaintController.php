@@ -457,11 +457,16 @@ class ComplaintController extends Controller
             if ($request->ajax() || $request->wantsJson()) {
                 $complaint->load(['assignedTo', 'status']);
                 return response()->json([
-                    'success' => true, 
+                    'success' => true,
                     'message' => 'Complaint assigned successfully.',
                     'assigned_to' => $complaint->assignedTo?->full_name ?? 'Not Assigned',
+                    'assigned_to_id' => $complaint->assigned_to,
                     'status' => $complaint->status->display_name ?? 'Unknown',
-                    'status_color' => $complaint->status_color
+                    'status_name' => $complaint->status->name,
+                    'status_color' => $complaint->status_color,
+                    'is_unassigned' => $complaint->isUnassigned(),
+                    'is_completed' => $complaint->isCompleted(),
+                    'is_closed' => $complaint->isClosed()
                 ]);
             }
 
@@ -562,11 +567,16 @@ class ComplaintController extends Controller
             if ($request->ajax() || $request->wantsJson()) {
                 $complaint->load(['assignedTo', 'status']);
                 return response()->json([
-                    'success' => true, 
+                    'success' => true,
                     'message' => 'Complaint reverted to manager successfully.',
                     'assigned_to' => $complaint->assignedTo?->full_name ?? 'Not Assigned',
+                    'assigned_to_id' => $complaint->assigned_to,
                     'status' => $complaint->status->display_name ?? 'Unknown',
-                    'status_color' => $complaint->status_color
+                    'status_name' => $complaint->status->name,
+                    'status_color' => $complaint->status_color,
+                    'is_unassigned' => $complaint->isUnassigned(),
+                    'is_completed' => $complaint->isCompleted(),
+                    'is_closed' => $complaint->isClosed()
                 ]);
             }
 

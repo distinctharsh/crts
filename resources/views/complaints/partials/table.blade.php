@@ -186,7 +186,7 @@
     </thead>
     <tbody>
         @foreach($complaints as $complaint)
-        <tr data-complaint-id="{{ $complaint->id }}">
+        <tr data-complaint-id="{{ $complaint->id }}" data-status="{{ $complaint->status->name }}" data-assigned-to="{{ $complaint->assigned_to }}" data-user-role="{{ auth()->check() ? auth()->user()->role->name : 'guest' }}" data-is-unassigned="{{ $complaint->isUnassigned() ? 'true' : 'false' }}" data-is-completed="{{ $complaint->isCompleted() ? 'true' : 'false' }}" data-is-closed="{{ $complaint->isClosed() ? 'true' : 'false' }}">
             <td>{{ $loop->iteration }}</td>
             <td style="word-break: break-all;">
                 {{ $complaint->reference_number }}
@@ -230,7 +230,7 @@
                             </button>
                         @endif
                     @if($complaint->status->name != 'completed' && $complaint->status->name != 'closed')
-                    <button type="button" class="btn btn-sm btn-primary" data-bs-toggle="modal" data-bs-target="#assignModal{{ $complaint->id }}">
+                    <button type="button" class="btn btn-sm btn-primary btn-assign-reassign" data-bs-toggle="modal" data-bs-target="#assignModal{{ $complaint->id }}">
                         @if($complaint->assigned_to)
                         Reassign
                         @else
@@ -240,18 +240,18 @@
                     @endif
                     @elseif(auth()->user()->isVM())
                     @if(($complaint->isUnassigned() || $complaint->assigned_to === auth()->user()->id) && $complaint->status->name != 'completed' && $complaint->status->name != 'closed')
-                    <button type="button" class="btn btn-sm btn-primary" data-bs-toggle="modal" data-bs-target="#assignModal{{ $complaint->id }}">
+                    <button type="button" class="btn btn-sm btn-primary btn-assign-reassign" data-bs-toggle="modal" data-bs-target="#assignModal{{ $complaint->id }}">
                         Assign
                     </button>
                     @if($complaint->assigned_to === auth()->user()->id && $complaint->status->name != 'completed' && $complaint->status->name != 'closed')
-                    <button type="button" class="btn btn-sm btn-warning" data-bs-toggle="modal" data-bs-target="#revertModal{{ $complaint->id }}">
+                    <button type="button" class="btn btn-sm btn-warning btn-revert" data-bs-toggle="modal" data-bs-target="#revertModal{{ $complaint->id }}">
                         Revert
                     </button>
                     @endif
                     @endif
                     @elseif(auth()->user()->isNFO())
                     @if($complaint->assigned_to === auth()->user()->id && !$complaint->isCompleted() && !$complaint->isClosed())
-                    <button type="button" class="btn btn-sm btn-primary" data-bs-toggle="modal" data-bs-target="#assignModal{{ $complaint->id }}">
+                    <button type="button" class="btn btn-sm btn-primary btn-assign-reassign" data-bs-toggle="modal" data-bs-target="#assignModal{{ $complaint->id }}">
                         Reassign
                     </button>
                     @endif
