@@ -189,21 +189,9 @@
                                             </div>
                                         </div>
                                     </td>
-                                    <td class="text-center">
-                                        <span class="badge rounded-pill bg-warning bg-opacity-25 text-warning p-2">
-                                            <i class="fas fa-clock me-1"></i> {{ $category['pending'] }}
-                                        </span>
-                                    </td>
-                                    <td class="text-center">
-                                        <span class="badge rounded-pill bg-success bg-opacity-25 text-success p-2">
-                                            <i class="fas fa-check-circle me-1"></i> {{ $category['completed'] }}
-                                        </span>
-                                    </td>
-                                    <td class="text-center">
-                                        <span class="badge rounded-pill bg-primary bg-opacity-25 text-primary p-2">
-                                            <i class="fas fa-tasks me-1"></i> {{ $category['total'] }}
-                                        </span>
-                                    </td>
+                                    <td class="text-center">{{ $category['pending'] }}</td>
+                                    <td class="text-center">{{ $category['completed'] }}</td>
+                                    <td class="text-center">{{ $category['total'] }}</td>
                                 </tr>
                                 @empty
                                 <tr>
@@ -268,21 +256,9 @@
                                             </div>
                                         </div>
                                     </td>
-                                    <td class="text-center">
-                                        <span class="badge rounded-pill bg-warning bg-opacity-25 text-warning p-2">
-                                            <i class="fas fa-clock me-1"></i> {{ $user['pending'] }}
-                                        </span>
-                                    </td>
-                                    <td class="text-center">
-                                        <span class="badge rounded-pill bg-success bg-opacity-25 text-success p-2">
-                                            <i class="fas fa-check-circle me-1"></i> {{ $user['completed'] }}
-                                        </span>
-                                    </td>
-                                    <td class="text-center">
-                                        <span class="badge rounded-pill bg-primary bg-opacity-25 text-primary p-2">
-                                            <i class="fas fa-tasks me-1"></i> {{ $user['total'] }}
-                                        </span>
-                                    </td>
+                                    <td class="text-center">{{ $user['pending'] }}</td>
+                                    <td class="text-center">{{ $user['completed'] }}</td>
+                                    <td class="text-center">{{ $user['total'] }}</td>
                                     <td>
                                         <div class="d-flex align-items-center">
                                             <div class="progress flex-grow-1 me-2" style="height: 6px;">
@@ -419,12 +395,6 @@ $(function () {
         padding: 1rem;
     }
     
-    .badge {
-        font-weight: 500;
-        padding: 0.35em 0.65em;
-        font-size: 0.75em;
-    }
-    
     .progress {
         height: 6px;
         border-radius: 3px;
@@ -478,11 +448,6 @@ $(function () {
             border: 1px solid #e3e6f0;
             border-radius: 0.35rem;
         }
-    }
-
-    .badge {
-        font-size: 0.9em;
-        padding: 5px 10px;
     }
 </style>
 @endpush
