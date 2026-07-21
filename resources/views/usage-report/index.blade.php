@@ -295,7 +295,6 @@
 @push('scripts')
 <script>
 $(function () {
-    // Initialize DataTable with export buttons for User Performance
     var table = $('#usageReportTable').DataTable({
         "paging": true,
         "lengthChange": true,
@@ -305,8 +304,6 @@ $(function () {
         "autoWidth": false,
         "responsive": true,
         "pageLength": 25,
-        "serverSide": false,
-        "processing": false,
         "dom": 'Bfrtip',
         "buttons": [
             {
@@ -320,21 +317,17 @@ $(function () {
             }
         ]
     });
-    // Add the export buttons to the DOM
     table.buttons().container().appendTo('#usageReportTable_wrapper .col-md-6:eq(0)');
 
-    // Initialize DataTable with export buttons for Category-wise Statistics
     var categoryTable = $('#categoryReportTable').DataTable({
         "paging": true,
         "lengthChange": true,
         "searching": true,
-        "ordering": true,
+        "ordering": false,
         "info": true,
         "autoWidth": false,
         "responsive": true,
         "pageLength": 25,
-        "serverSide": false,
-        "processing": false,
         "dom": 'Bfrtip',
         "buttons": [
             {
@@ -348,7 +341,6 @@ $(function () {
             }
         ]
     });
-    // Add the export buttons to the DOM
     categoryTable.buttons().container().appendTo('#categoryReportTable_wrapper .col-md-6:eq(0)');
 });
 </script>

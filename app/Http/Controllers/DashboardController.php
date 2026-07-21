@@ -27,12 +27,16 @@ class DashboardController extends Controller
                 } 
                 
             // VM: Filter by verticals
-                elseif ($user->isVM()) {
-                    $verticalIds = $user->verticals->pluck('id');
-                    $baseQuery->whereHas('verticals', function($q) use ($verticalIds) {
-                        $q->whereIn('verticals.id', $verticalIds);
-                    });
-                } 
+            elseif ($user->isVM()) {
+                $userVerticalIds = $user->verticals->pluck('id')->toArray();
+                $allSubVerticalIds = \App\Models\Vertical::whereIn('parent_id', $userVerticalIds)->pluck('id')->toArray();
+                $allGrandChildIds = [];
+                if (!empty($allSubVerticalIds)) {
+                    $allGrandChildIds = \App\Models\Vertical::whereIn('parent_id', $allSubVerticalIds)->pluck('id')->toArray();
+                }
+                $allAllowedVerticalIds = array_unique(array_merge($userVerticalIds, $allSubVerticalIds, $allGrandChildIds));
+                $baseQuery->whereIn('vertical_id', $allAllowedVerticalIds);
+            }
                 
             // NFO: Filter by verticals + assigned_to = user id
                 elseif ($user->isNFO()) {
@@ -58,7 +62,7 @@ class DashboardController extends Controller
 
             // Final data
             $todayComplaints = (clone $baseQuery)
-                ->with(['client', 'networkType', 'verticals', 'status', 'assignedTo'])
+                ->with(['client', 'networkType', 'vertical', 'status', 'assignedTo'])
                 ->latest()
                 ->get();
         

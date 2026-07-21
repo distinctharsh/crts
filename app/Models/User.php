@@ -149,7 +149,7 @@ class User extends Authenticatable
     /**
      * Get users that can be assigned to complaints based on current user's role
      */
-    public function getAssignableUsers($complaint = null, $verticalIds = null)
+    public function getAssignableUsers($complaint = null, $verticalId = null)
     {
         $query = User::query()->with(['role', 'verticals']);
 
@@ -163,9 +163,9 @@ class User extends Authenticatable
                 if (!$complaint || $complaint->assigned_to != $this->id) {
                     $q->where('id', $this->id);
                 }
-                $q->orWhereHas('role', function ($r) {
-                    $r->where('slug', 'nfo');
-                });
+                    $q->orWhereHas('role', function ($r) {
+                        $r->where('slug', 'nfo');
+                    });
             });
         } 
         elseif ($this->isNFO()) {
@@ -176,34 +176,19 @@ class User extends Authenticatable
             return collect();
         }
 
-        $allTargetVerticalIds = [];
-
-        if (!empty($verticalIds)) {
-            $allTargetVerticalIds = $verticalIds;
-        } elseif ($complaint) {
-            $allTargetVerticalIds = $complaint->verticals->pluck('id')->toArray();
-        }
-
-        if (!empty($allTargetVerticalIds)) {
-            $allTargetVerticalIds = array_map('intval', (array)$allTargetVerticalIds);
-            $parentCategoryIds = \App\Models\Vertical::whereIn('id', $allTargetVerticalIds)
-                ->get()
-                ->flatMap(function($v) {
-                    $parents = [];
-                    $current = $v;
-                    while($current) {
-                        $parents[] = $current->id;
-                        $current = $current->parent;
-                    }
-                    return $parents;
-                })
-                ->unique()
-                ->toArray();
-
-            $allowedVerticalIds = array_values(array_unique(array_merge($allTargetVerticalIds, $parentCategoryIds)));
-            $query->whereHas('verticals', function ($q) use ($allowedVerticalIds) {
-                $q->whereIn('verticals.id', $allowedVerticalIds);
-            });
+        $targetVerticalId = $verticalId ?? $complaint?->vertical_id;
+        if ($targetVerticalId) {
+            $allowedVerticalIds = [];
+            $currentVertical = \App\Models\Vertical::find($targetVerticalId);
+            while ($currentVertical) {
+                $allowedVerticalIds[] = $currentVertical->id;
+                $currentVertical = $currentVertical->parent;
+            }
+            if (!empty($allowedVerticalIds)) {
+                $query->whereHas('verticals', function ($q) use ($allowedVerticalIds) {
+                    $q->whereIn('verticals.id', $allowedVerticalIds);
+                });
+            }
         }
 
         return $query->get(['users.id', 'users.username', 'users.full_name', 'users.role_id']);

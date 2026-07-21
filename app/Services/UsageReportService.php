@@ -18,104 +18,65 @@ class UsageReportService
      */
     public function getCategoryWiseStatistics($dateFrom = null, $dateTo = null)
     {
-        $allVerticals = Vertical::with('children')->get();
-        $categoryData = [];
+        $completedStatusIds = Status::whereIn('name', ['completed', 'closed'])->pluck('id')->toArray();
+        $complaintsQuery = Complaint::whereNotNull('vertical_id');
         
-        $complaintsQuery = Complaint::with('verticals');
         if ($dateFrom) {
             $complaintsQuery->where('created_at', '>=', $dateFrom);
         }
         if ($dateTo) {
             $complaintsQuery->where('created_at', '<=', $dateTo);
         }
-        $complaints = $complaintsQuery->get();
-
-        $completedStatusIds = Status::whereIn('name', ['completed', 'closed'])->pluck('id');
-
-        $getDepth = function($verticalId) use ($allVerticals) {
-            $depth = 0;
-            $current = $allVerticals->where('id', $verticalId)->first();
-            while ($current && $current->parent_id) {
-                $depth++;
-                $current = $allVerticals->where('id', $current->parent_id)->first();
-            }
-            return $depth;
-        };
-
-        $getLevel = function($verticalId) use ($allVerticals) {
-            $level = 0;
-            $current = $allVerticals->where('id', $verticalId)->first();
-            while ($current && $current->parent_id) {
-                $level++;
-                $current = $allVerticals->where('id', $current->parent_id)->first();
-            }
-            return $level;
-        };
-
-        $verticalCounts = [];
-        foreach ($allVerticals as $vertical) {
-            $verticalCounts[$vertical->id] = [
-                'pending' => 0,
-                'completed' => 0,
-                'total' => 0,
-                'name' => $vertical->name,
-                'level' => $getLevel($vertical->id),
-                'has_children' => $vertical->children->count() > 0,
-            ];
-        }
-
+        $complaints = $complaintsQuery->get(['id', 'vertical_id', 'status_id']);
+        $exactCounts = [];
         foreach ($complaints as $complaint) {
-            if ($complaint->verticals->isEmpty()) {
-                continue;
-            }
+            $vId = $complaint->vertical_id;
 
-            $deepestVertical = null;
-            $maxDepth = -1;
-
-            foreach ($complaint->verticals as $vertical) {
-                $depth = $getDepth($vertical->id);
-                if ($depth > $maxDepth) {
-                    $maxDepth = $depth;
-                    $deepestVertical = $vertical;
-                }
-            }
-
-            if ($deepestVertical && isset($verticalCounts[$deepestVertical->id])) {
-                $verticalCounts[$deepestVertical->id]['total']++;
-                if (in_array($complaint->status_id, $completedStatusIds->toArray())) {
-                    $verticalCounts[$deepestVertical->id]['completed']++;
-                } else {
-                    $verticalCounts[$deepestVertical->id]['pending']++;
-                }
-            }
-        }
-
-        $processVertical = function($vertical, $level = 0) use (&$processVertical, &$verticalCounts, &$categoryData) {
-            $data = $verticalCounts[$vertical->id];
-            $total = $data['total'];
-            $completed = $data['completed'];
-            $pending = $data['pending'];
-
-            if ($total > 0 || $vertical->children->count() == 0) {
-                $categoryData[] = [
-                    'id' => $vertical->id,
-                    'name' => $data['name'],
-                    'pending' => $pending,
-                    'completed' => $completed,
-                    'total' => $total,
-                    'completion_rate' => $total > 0 ? round(($completed / $total) * 100, 2) : 0,
-                    'level' => $level,
-                    'has_children' => $data['has_children'],
+            if (!isset($exactCounts[$vId])) {
+                $exactCounts[$vId] = [
+                    'pending' => 0,
+                    'completed' => 0,
+                    'total' => 0,
                 ];
             }
 
-            foreach ($vertical->children as $child) {
-                $processVertical($child, $level + 1);
+            $exactCounts[$vId]['total']++;
+            if (in_array($complaint->status_id, $completedStatusIds)) {
+                $exactCounts[$vId]['completed']++;
+            } else {
+                $exactCounts[$vId]['pending']++;
             }
-        };
+        }
 
-        foreach ($allVerticals->where('parent_id', null) as $rootCategory) {
-            $processVertical($rootCategory, 0);
+        $activeVerticalIds = array_keys($exactCounts);
+        if (empty($activeVerticalIds)) {
+            return [];
+        }
+
+        $verticals = Vertical::whereIn('id', $activeVerticalIds)->get()->keyBy('id');
+        $categoryData = [];
+        foreach ($exactCounts as $verticalId => $counts) {
+            $vertical = $verticals->get($verticalId);
+            
+            if (!$vertical) {
+                continue;
+            }
+
+            $total = $counts['total'];
+            $completed = $counts['completed'];
+            $pending = $counts['pending'];
+
+            $categoryData[] = [
+                'id' => $vertical->id,
+                'name' => $vertical->name,
+                'full_path' => $vertical->full_path ?? $vertical->name,
+                'pending' => $pending,
+                'completed' => $completed,
+                'total' => $total,
+                'completion_rate' => $total > 0 ? round(($completed / $total) * 100, 2) : 0,
+                'level' => 0,
+                'has_children' => false,
+            ];
         }
 
         return $categoryData;

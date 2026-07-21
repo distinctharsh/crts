@@ -28,6 +28,7 @@ class Complaint extends Model
         'network_type_id',
         'section_id',
         'room_number',
+        'vertical_id',
     ];
 
     protected $casts = [
@@ -66,6 +67,11 @@ class Complaint extends Model
     public function networkType()
     {
         return $this->belongsTo(NetworkType::class, 'network_type_id')->withTrashed();
+    }
+
+    public function vertical()
+    {
+        return $this->belongsTo(Vertical::class, 'vertical_id')->withTrashed();
     }
 
     public function verticals()

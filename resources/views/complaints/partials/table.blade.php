@@ -205,7 +205,7 @@
             <td>{{ $complaint->section->name }}</td>
             <td>{{ $complaint->networkType->name ?? 'N/A' }}</td>
             <td>{{ $complaint->requestType->name ?? 'N/A' }}</td>
-            <td>{{ $complaint->verticals->pluck('name')->map(fn($name) => ucfirst($name))->implode(' - ') ?? 'N/A' }}</td>
+            <td>{{ $complaint->vertical ? $complaint->vertical->full_path : 'N/A' }}</td>
             <td class="assigned-to-cell">{{ $complaint->assignedTo?->full_name ?? 'Not Assigned' }}</td>
             <td style="word-break: break-word; min-width: 150px; max-width: 250px;" title="{{ $complaint->description }}">
                 {{ \Illuminate\Support\Str::limit($complaint->description, 50, '...') }}

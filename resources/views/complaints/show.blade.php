@@ -70,7 +70,7 @@ $breadcrumbs = [
                     <i class="fa-solid fa-network-wired"></i> {{ ucfirst($complaint->networkType->name ?? 'N/A') }}
                 </span>
                 <span class="badge bg-light text-dark">
-                    <i class="fa-solid fa-layer-group"></i> {{ $complaint->verticals->pluck('name')->map(fn($name) => ucfirst($name))->implode(', ') ?? 'N/A' }}
+                    <i class="fa-solid fa-layer-group"></i> {{ $complaint->vertical ? $complaint->vertical->full_path : 'N/A' }}
                 </span>
             </div>
         </div>
@@ -114,7 +114,13 @@ $breadcrumbs = [
                             <p class="mb-3 ps-3">{{ $complaint->requestType->name ?? 'N/A' }}</p>
 
                             <p class="mb-1 fw-semibold"><i class="bi bi-layers"></i> Category:</p>
-                            <p class="mb-3 ps-3">{{ $complaint->verticals->pluck('name')->map(fn($name) => ucfirst($name))->implode(' - ') ?? 'N/A' }}</p>
+                            <p class="mb-3 ps-3">
+                                @if($complaint->vertical)
+                                    <span class="fw-medium">{{ $complaint->vertical->full_path }}</span>
+                                @else
+                                    <span class="text-muted">N/A</span>
+                                @endif
+                            </p>
 
                         </div>
                         <div class="col-md-6">

@@ -44,6 +44,51 @@ class Vertical extends Model
         return $this->hasMany(Vertical::class, 'parent_id')->with('children');
     }
 
+    /**
+     * Parent Chain IDs Array (Root to Last Child)
+     * Output: [Root_ID, Sub_ID, Leaf_ID]
+     */
+    public function getAncestorIdsAttribute(): array
+    {
+        $ids = [$this->id];
+        $curr = $this;
+        while ($curr->parent) {
+            array_unshift($ids, $curr->parent->id);
+            $curr = $curr->parent;
+        }
+        return $ids;
+    }
+
+    /**
+     * Parent Chain Names String (example: Network > Router > Port issue)
+     */
+    public function getFullPathAttribute(): string
+    {
+        $names = [$this->name];
+        $curr = $this;
+        while ($curr->parent) {
+            array_unshift($names, $curr->parent->name);
+            $curr = $curr->parent;
+        }
+        return implode(' - ', $names);
+    }
+
+    /**
+     * Prefixes/Short Forms Combine
+     */
+    public function getCombinedPrefixAttribute(): string
+    {
+        $parts = [];
+        $curr = $this;
+        while ($curr) {
+            if ($curr->short_form) {
+                array_unshift($parts, strtoupper($curr->short_form));
+            }
+            $curr = $curr->parent;
+        }
+        return !empty($parts) ? implode('-', $parts) : 'CMP';
+    }
+
     public function getDepthAttribute()
     {
         $depth = 0;

@@ -35,7 +35,7 @@ class ComplaintController extends Controller
     {
         try {
             $user = Auth::user();
-            $query = Complaint::query()->with(['client', 'assignedTo', 'networkType', 'verticals', 'status', 'section']);
+            $query = Complaint::query()->with(['client', 'assignedTo', 'networkType', 'vertical', 'status', 'section']);
             if ($user) {
                 if ($user->isManager()) {
                     $activeStatusIds = Status::whereIn('name', [
@@ -43,10 +43,14 @@ class ComplaintController extends Controller
                     ])->pluck('id');
                     $query->whereIn('status_id', $activeStatusIds);
                 } elseif ($user->isVM()) {
-                    $verticalIds = $user->verticals->pluck('id');
-                    $query->whereHas('verticals', function($q) use ($verticalIds) {
-                        $q->whereIn('verticals.id', $verticalIds);
-                    });
+                    $userVerticalIds = $user->verticals->pluck('id')->toArray();
+                    $allSubVerticalIds = Vertical::whereIn('parent_id', $userVerticalIds)->pluck('id')->toArray();
+                    $allGrandChildIds = [];
+                    if (!empty($allSubVerticalIds)) {
+                        $allGrandChildIds = Vertical::whereIn('parent_id', $allSubVerticalIds)->pluck('id')->toArray();
+                    }
+                    $allAllowedVerticalIds = array_unique(array_merge($userVerticalIds, $allSubVerticalIds, $allGrandChildIds));
+                    $query->whereIn('vertical_id', $allAllowedVerticalIds);
                 } elseif ($user->isNFO()) {
                     $query->where('assigned_to', $user->id);
                 } else {
@@ -70,11 +74,8 @@ class ComplaintController extends Controller
                 $searchByStatus = (array) $request->input('status');
                 $query->whereIn('status_id', $searchByStatus);
             }
-            if ($request->filled('vertical')) {
-                $searchByVertical = (array) $request->input('vertical');
-                $query->whereHas('verticals', function($q) use ($searchByVertical) {
-                    $q->whereIn('verticals.id', $searchByVertical);
-                });
+            if ($request->filled('vertical_id')) {
+                $query->where('vertical_id', $request->input('vertical_id'));
             }
             if ($request->filled('networktype')) {
                 $searchBynetworkType = (array) $request->input('networktype');
@@ -110,6 +111,7 @@ class ComplaintController extends Controller
             foreach ($complaints as $complaint) {
                 $complaint->assignableUsers = $user->getAssignableUsers($complaint);
             }
+            $verticals = Vertical::whereDoesntHave('children')->get();
             $usersList = User::with('role')
                 ->select('users.id', 'users.full_name')
                 ->join('roles', 'roles.id', '=', 'users.role_id')
@@ -123,14 +125,13 @@ class ComplaintController extends Controller
                 ")
                 ->orderBy('users.full_name')
                 ->get();
-            $verticals = Vertical::get();
             $networkTypes = NetworkType::get();
             $sections = Section::get();
             $closeStatus = Status::where('name', 'closed')->first();
             return view('complaints.index', compact('complaints', 'usersList', 'managers', 'statuses', 'networkTypes', 'sections', 'verticals', 'closeStatus'));
         } catch (\Exception $e) {
             \Log::error('Complaint index error: ' . $e->getMessage());
-            return redirect('/home')->with('error', 'Something went wrong while loading complaints. Please try again. (कुछ गलत हो गया, कृपया फिर से कोशिश करें.)');
+            return redirect('/home')->with('error', 'Something went wrong while loading complaints. Please try again.');
         }
     }
 
@@ -156,8 +157,7 @@ class ComplaintController extends Controller
                 'request_type_id' => 'required|exists:request_types,id',
                 'priority' => 'nullable|in:high',
                 'description' => 'required|string',
-                'vertical_ids' => 'required|array|min:1',
-                'vertical_ids.*' => 'exists:verticals,id',
+                'vertical_id' => 'required|exists:verticals,id',
                 'user_name' => 'required|string|max:255',
                 'file' => 'nullable|file|max:2048',
                 'section_id' => 'required|exists:sections,id',
@@ -172,17 +172,8 @@ class ComplaintController extends Controller
 
             $date = Carbon::now()->format('Ymd');
             
-            $verticalsChain = Vertical::whereIn('id', $validated['vertical_ids'])
-                ->orderByRaw('FIELD(id, ' . implode(',', $validated['vertical_ids']) . ')')
-                ->get();
-
-            $prefixParts = [];
-            foreach ($verticalsChain as $v) {
-                if ($v->short_form) {
-                    $prefixParts[] = strtoupper($v->short_form);
-                }
-            }
-            $prefix = !empty($prefixParts) ? implode('-', $prefixParts) : 'CMP';
+            $leafVertical = Vertical::findOrFail($validated['vertical_id']);
+            $prefix = $leafVertical->combined_prefix;
             
             $complaintsToday = Complaint::whereDate('created_at', Carbon::today())->count();
             $referenceNumber = $prefix . '-' . $date . str_pad($complaintsToday + 1, 3, '0', STR_PAD_LEFT);
@@ -201,6 +192,7 @@ class ComplaintController extends Controller
                 'network_type_id' => $validated['network_type_id'],
                 'request_type_id' => $validated['request_type_id'],
                 'section_id' => $validated['section_id'],
+                'vertical_id' => $validated['vertical_id'],
                 'user_name' => $validated['user_name'],
                 'room_number' => $validated['room_number'],
                 'file_path' => $request->hasFile('file') ? $request->file('file')->store('complaint_files', 'public') : null,
@@ -210,10 +202,6 @@ class ComplaintController extends Controller
                 'updated_at' => Carbon::now()->setTimezone(config('app.timezone')),
             ]);
 
-            $complaint->verticals()->sync($validated['vertical_ids']);
-
-            $complaint->load('verticals');
-
             ComplaintAction::create([
                 'complaint_id' => $complaint->id,
                 'user_id' => Auth::user()->id ?? 0,
@@ -222,7 +210,7 @@ class ComplaintController extends Controller
                 'assigned_to' => $complaint->assigned_to ?: null,
                 'changes' => json_encode([
                     ...$complaint->getChanges(),
-                    'verticals' => $complaint->verticals->pluck('name')->toArray()
+                    'verticals' => $leafVertical->full_path
                 ])
             ]);
 
@@ -257,8 +245,8 @@ class ComplaintController extends Controller
             $requestTypes = RequestType::all();
             $statuses = Status::query()->ordered()->get();
             $intercoms = Complaint::whereNotNull('intercom')->distinct()->pluck('intercom');
-            $complaint->load(['client', 'assignedTo.role', 'status', 'verticals']);
-            $savedVerticals = $complaint->verticals->pluck('id')->toArray();
+            $complaint->load(['client', 'assignedTo.role', 'status', 'vertical']);
+            $savedVerticals = $complaint->vertical ? $complaint->vertical->ancestor_ids : [];
             $assignedUser = $complaint->assignedTo;
 
             return view('complaints.create', compact('complaint', 'networkTypes', 'verticals', 'sections', 'statuses', 'intercoms', 'savedVerticals', 'assignedUser', 'requestTypes'));
@@ -294,8 +282,7 @@ class ComplaintController extends Controller
                 'network_type_id' => 'required|exists:network_types,id',
                 'request_type_id' => 'required|exists:request_types,id',
                 'description' => 'required|string',
-                'vertical_ids' => 'required|array|min:1',
-                'vertical_ids.*' => 'exists:verticals,id',
+                'vertical_id' => 'required|exists:verticals,id',
                 'user_name' => 'required|string|max:255',
                 'section_id' => 'required|exists:sections,id',
                 'intercom' => 'required|string|max:255',
@@ -324,14 +311,11 @@ class ComplaintController extends Controller
             $oldAssignedTo = $complaint->assigned_to;
             $oldStatusId = $complaint->status_id;
             $oldRequestTypeId = $complaint->request_type_id;
+            $oldVerticalId = $complaint->vertical_id;
 
             if (array_key_exists('assigned_to', $validated) && $validated['assigned_to'] != $oldAssignedTo) {
                 $complaint->assigned_by = Auth::user()->id ?? 0;
             }
-
-            $verticalIds = $validated['vertical_ids'];
-
-            $oldVerticals = $complaint->verticals->pluck('name')->toArray();
 
             $complaint->user_name = $validated['user_name'];
             $complaint->network_type_id = $validated['network_type_id'];
@@ -342,15 +326,11 @@ class ComplaintController extends Controller
             $complaint->room_number = $validated['room_number'];
             $complaint->priority = $validated['priority'];
             $complaint->status_id = $validated['status_id'];
+            $complaint->vertical_id = $validated['vertical_id'];
             if ($request->has('assigned_to')) {
                 $complaint->assigned_to = $request->input('assigned_to') ?: null;
             }
             $complaint->save();
-
-            $complaint->verticals()->sync($verticalIds);
-
-            $complaint->load('verticals');
-            $newVerticals = $complaint->verticals->pluck('name')->toArray();
 
             $changes = [];
             if ($oldStatusId != $complaint->status_id) {
@@ -359,8 +339,8 @@ class ComplaintController extends Controller
             if ($oldAssignedTo != $complaint->assigned_to) {
                 $changes['assigned_to'] = ['old' => $oldAssignedTo, 'new' => $complaint->assigned_to];
             }
-            if ($oldVerticals != $newVerticals) {
-                $changes['verticals'] = ['old' => implode(', ', $oldVerticals), 'new' => implode(', ', $newVerticals)];
+            if ($oldVerticalId != $complaint->vertical_id) {
+                $changes['vertical_id'] = ['old' => $oldVerticalId, 'new' => $complaint->vertical_id];
             }
             if ($oldRequestTypeId != $complaint->request_type_id) {
                 $changes['request_type'] = ['old' => $oldRequestTypeId, 'new' => $complaint->request_type_id];
@@ -593,26 +573,30 @@ class ComplaintController extends Controller
         try {
             $user = Auth::user();
             $complaint = null;
-            $verticalIds = null;
+            $verticalId = null;
 
             if ($request->has('complaint_id')) {
                 $complaint = Complaint::find($request->complaint_id);
             }
 
-            if ($request->has('vertical_ids')) {
-                $verticalIds = $request->input('vertical_ids');
-                // Handle both array and comma-separated string
-                if (is_string($verticalIds)) {
-                    $verticalIds = explode(',', $verticalIds);
+            if ($request->has('vertical_id')) {
+                $verticalId = $request->input('vertical_id');
+            } elseif ($request->has('vertical_ids')) {
+                $verticalIdsInput = $request->input('vertical_ids');
+                if (is_array($verticalIdsInput)) {
+                    $verticalId = end($verticalIdsInput);
+                } elseif (is_string($verticalIdsInput)) {
+                    $parts = explode(',', $verticalIdsInput);
+                    $verticalId = end($parts);
                 }
             }
 
-            $assignableUsers = $user->getAssignableUsers($complaint, $verticalIds);
+            $assignableUsers = $user->getAssignableUsers($complaint, $verticalId);
 
             return response()->json($assignableUsers);
         } catch (\Exception $e) {
             \Log::error('Complaint getAssignableUsers error: ' . $e->getMessage());
-            return response()->json(['error' => 'Something went wrong while fetching assignable users. Please try again. (कुछ गलत हो गया, कृपया फिर से कोशिश करें.)'], 500);
+            return response()->json(['error' => 'Something went wrong while fetching assignable users. Please try again.'], 500);
         }
     }
 
@@ -674,7 +658,7 @@ class ComplaintController extends Controller
     public function show($id)
     {
         try {
-            $complaint = \App\Models\Complaint::with(['client', 'assignedTo', 'actions.user', 'networkType', 'verticals', 'section', 'status', 'requestType'])->find($id);
+            $complaint = \App\Models\Complaint::with(['client', 'assignedTo', 'actions.user', 'networkType', 'vertical', 'section', 'status', 'requestType'])->find($id);
             if (!$complaint) {
                 return redirect('/home')->with('error', 'The complaint you are looking for does not exist.');
             }
@@ -915,19 +899,11 @@ class ComplaintController extends Controller
 
             if ($user->isVM()) {
                 $verticalIds = $user->verticals->pluck('id');
-                $baseQuery->whereHas('verticals', function ($q) use ($verticalIds) {
-                    $q->whereIn('verticals.id', $verticalIds);
-                });
-            }
-
-            elseif ($user->isNFO()) {
-
+                $baseQuery->whereIn('vertical_id', $verticalIds);
+            } elseif ($user->isNFO()) {
                 $verticalIds = $user->verticals->pluck('id');
-
-                $baseQuery->whereHas('verticals', function ($q) use ($verticalIds) {
-                    $q->whereIn('verticals.id', $verticalIds);
-                })
-                ->where('assigned_to', $user->id);
+                $baseQuery->whereIn('vertical_id', $verticalIds)
+                        ->where('assigned_to', $user->id);
             }
 
             if ($user->isNFO()) {
@@ -942,9 +918,7 @@ class ComplaintController extends Controller
 
             if ($user->isVM() || $user->isNFO()) {
                 $verticalIds = $user->verticals->pluck('id');
-                $assignToMeQuery->whereHas('verticals', function ($q) use ($verticalIds) {
-                    $q->whereIn('verticals.id', $verticalIds);
-                });
+                $assignToMeQuery->whereIn('vertical_id', $verticalIds);
             }
 
             $assignToMeCount = $assignToMeQuery
@@ -960,7 +934,7 @@ class ComplaintController extends Controller
                 ->with([
                     'assignedTo',
                     'status',
-                    'verticals'
+                    'vertical'
                 ])
                 ->whereDate('created_at', today())
                 ->whereNotIn('status_id', [
@@ -972,7 +946,6 @@ class ComplaintController extends Controller
                 ->get();
 
             $complaints = $recentComplaints->map(function ($c) {
-
                 return [
                     'id' => $c->id,
                     'reference_number' => $c->reference_number,
@@ -981,10 +954,7 @@ class ComplaintController extends Controller
                     'priority' => ucfirst($c->priority),
                     'assigned_to_name' => $c->assignedTo?->full_name ?? 'Unassigned',
                     'description' => $c->description,
-                    'verticals' => $c->verticals
-                        ->pluck('name')
-                        ->map(fn ($name) => ucfirst($name))
-                        ->implode(', '),
+                    'verticals' => $c->vertical ? ($c->vertical->full_path ?? $c->vertical->name) : 'N/A',
                     'created_at' => $c->created_at->format('M d, Y H:i'),
                 ];
             });
@@ -1008,10 +978,7 @@ class ComplaintController extends Controller
             ]);
 
         } catch (\Exception $e) {
-
-            \Log::error(
-                'Complaint notificationData error: ' . $e->getMessage()
-            );
+            \Log::error('Complaint notificationData error: ' . $e->getMessage());
 
             return response()->json([
                 'error' => 'Something went wrong while fetching notification data.'
@@ -1363,24 +1330,23 @@ class ComplaintController extends Controller
                 $verticalPathString = $data['Vertical*'];
                 $pathNames = array_map('trim', explode('->', $verticalPathString));
                 
-                $verticalIds = [];
                 $currentParentId = null;
-                $lookupFailed = false;
+                $targetVertical = null;
 
                 foreach ($pathNames as $vName) {
                     $vNode = $allVerticals->where('name', $vName)
                                         ->where('parent_id', $currentParentId)
                                         ->first();
                     if ($vNode) {
-                        $verticalIds[] = $vNode->id;
+                        $targetVertical = $vNode;
                         $currentParentId = $vNode->id;
                     } else {
-                        $lookupFailed = true;
+                        $targetVertical = null;
                         break;
                     }
                 }
 
-                if ($lookupFailed || empty($verticalIds)) {
+                if (!$targetVertical) {
                     $errors[] = "Row {$row}: Vertical path '{$verticalPathString}' is invalid or broken";
                     continue;
                 }
@@ -1417,19 +1383,17 @@ class ComplaintController extends Controller
                     }
                 }
 
-                $date = Carbon::now()->format('Ymd');
-                
-                $verticalsChain = Vertical::whereIn('id', $verticalIds)
-                    ->orderByRaw('FIELD(id, ' . implode(',', $verticalIds) . ')')
-                    ->get();
-
                 $prefixParts = [];
-                foreach ($verticalsChain as $v) {
-                    if ($v->short_form) {
-                        $prefixParts[] = strtoupper($v->short_form);
+                $curr = $targetVertical;
+                while ($curr) {
+                    if (!empty($curr->short_form)) {
+                        array_unshift($prefixParts, strtoupper($curr->short_form));
                     }
+                    $curr = $curr->parent_id ? $allVerticals->firstWhere('id', $curr->parent_id) : null;
                 }
                 $prefix = !empty($prefixParts) ? implode('-', $prefixParts) : 'CMP';
+
+                $date = Carbon::now()->format('Ymd');
 
                 $complaintsToday = Complaint::whereDate('created_at', Carbon::today())->count();
                 $referenceNumber = $prefix . '-' . $date . str_pad($complaintsToday + 1, 3, '0', STR_PAD_LEFT);
@@ -1440,23 +1404,21 @@ class ComplaintController extends Controller
                     'description' => $data['Description*'],
                     'priority' => $priority,
                     'status_id' => $statusId,
+                    'vertical_id' => $targetVertical->id,
                     'network_type_id' => $networkType->id,
                     'request_type_id' => $requestType->id,
                     'section_id' => $section->id,
                     'user_name' => $data['User Name*'],
                     'room_number' => $data['Room Number*'],
-                    'intercom'=> (string)$data['Intercom*'],
+                    'intercom' => (string)$data['Intercom*'],
                     'assigned_to' => $assignedToId,
                     'assigned_by' => $assignedToId ? $currentUserId : null,
                     'created_at' => Carbon::now()->setTimezone(config('app.timezone')),
                     'updated_at' => Carbon::now()->setTimezone(config('app.timezone')),
                 ]);
 
-                $complaint->verticals()->sync($verticalIds);
-                $complaint->load('verticals');
-
                 $actionChanges = [
-                    'verticals' => $complaint->verticals->pluck('name')->toArray()
+                    'vertical' => $targetVertical->name
                 ];
 
                 if (!empty($assignedToId)) {

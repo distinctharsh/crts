@@ -119,15 +119,16 @@
 
                         <div class="col-md-4 mb-3 hierarchy-wrapper">
                             <label class="form-label">Category <span class="text-danger">*</span></label>
-                            <select class="form-select hierarchy-select" data-level="1" name="vertical_ids[]" required>
+                            <select class="form-select hierarchy-select" data-level="1" required>
                                 <option value="">Select Category</option>
                                 @foreach($verticals as $category)
-                                    <option value="{{ $category->id }}" {{ old('vertical_ids.0', isset($complaint) && isset($savedVerticals[0]) ? $savedVerticals[0] : '') == $category->id ? 'selected' : '' }}>
+                                    <option value="{{ $category->id }}" {{ old('vertical_ids.0', isset($savedVerticals[0]) ? $savedVerticals[0] : '') == $category->id ? 'selected' : '' }}>
                                         {{ $category->name }}
                                     </option>
                                 @endforeach
                             </select>
                         </div>
+                        <input type="hidden" name="vertical_id" id="final_vertical_id" value="{{ old('vertical_id', isset($complaint) ? $complaint->vertical_id : '') }}">
 
                         @auth 
                         @if(!auth()->user()->isNFO())
@@ -228,15 +229,12 @@ document.addEventListener('DOMContentLoaded', async () => {
     const container = document.getElementById('vertical-chain-container');
     const statusSelect = document.getElementById('status_id');
     const assignErrorMsg = document.getElementById('assign-error-msg');
-    const assignAsterisk = document.getElementById('assign-required-asterisk');
     const submitBtn = document.getElementById('submitTicketBtn');
     const form = document.querySelector('form');
 
-    const oldVerticals = @json(old('vertical_ids', isset($complaint) ? $complaint->verticals->pluck('id')->toArray() : []));
-    const selectedVertical = oldVerticals.length ? oldVerticals[oldVerticals.length - 1] : null;
+    const selectedVertical = @json(old('vertical_id', isset($complaint) ? $complaint->vertical_id : null));
     const selectedUser = @json(old('assigned_to', isset($assignedUser) ? $assignedUser->id : null));
-    const savedVerticals = @json(isset($complaint) && isset($savedVerticals) ? $savedVerticals : []);
-    const assignedUserData = @json(isset($assignedUser) ? $assignedUser : null);
+    const savedVerticals = @json(isset($savedVerticals) ? $savedVerticals : []);
     const isOriginallyAssigned = @json(isset($assignedUser) && $assignedUser !== null);
 
     @if(isset($complaint))
@@ -245,8 +243,6 @@ document.addEventListener('DOMContentLoaded', async () => {
     @endif
 
     document.querySelectorAll('.tom-select').forEach(el => {
-        if (el.id === 'vertical_ids') return; 
-
         const config = {
             searchField: ['text'],
             maxOptions: 100,
@@ -271,11 +267,11 @@ document.addEventListener('DOMContentLoaded', async () => {
 
         const currentValue = assignTom.getValue();
         if (!currentValue || currentValue === '') {
-            assignErrorMsg.style.display = 'block';
+            if (assignErrorMsg) assignErrorMsg.style.display = 'block';
             assignSelect.classList.add('is-invalid');
             return false;
         } else {
-            assignErrorMsg.style.display = 'none';
+            if (assignErrorMsg) assignErrorMsg.style.display = 'none';
             assignSelect.classList.remove('is-invalid');
             return true;
         }
@@ -291,12 +287,7 @@ document.addEventListener('DOMContentLoaded', async () => {
             return;
         }
         try {
-            let queryParam = verticalId;
-            if (Array.isArray(verticalId)) {
-                queryParam = verticalId.join(',');
-            }
-
-            const response = await fetch(`{{ route('api.assignable-users') }}?vertical_ids=${queryParam}`);
+            const response = await fetch(`{{ route('api.assignable-users') }}?vertical_ids=${verticalId}`);
             const users = await response.json();
 
             assignTom.clear();
@@ -318,7 +309,6 @@ document.addEventListener('DOMContentLoaded', async () => {
             if (selectedUserId && users.find(u => u.id == selectedUserId)) {
                 assignTom.setValue(String(selectedUserId), true);
             } else {
-                    // If no user selected or user not in new category, ensure the default empty option is selected
                 assignTom.setValue('', true);
                 validateAssignField();
             }
@@ -331,20 +321,18 @@ document.addEventListener('DOMContentLoaded', async () => {
         const allSelects = container.querySelectorAll('.hierarchy-select');
         let finalSelectedValue = '';
         for (let i = allSelects.length - 1; i >= 0; i--) {
-            if (allSelects[i].value) {
+            if (allSelects[i].value && allSelects[i].value !== '') {
                 finalSelectedValue = allSelects[i].value;
                 break;
             }
         }
+        const finalInput = document.getElementById('final_vertical_id');
+        if (finalInput) {
+            finalInput.value = finalSelectedValue;
+        }
 
         const userToSelect = userId !== null ? userId : selectedUser;
         loadAssignableUsers(finalSelectedValue, userToSelect);
-
-        if (!finalSelectedValue && statusSelect) {
-            @if(isset($complaint))
-                statusSelect.tomselect ? statusSelect.tomselect.setValue(UNASSIGNED_STATUS_ID) : statusSelect.value = UNASSIGNED_STATUS_ID;
-            @endif
-        }
     }
 
     if (container) {
@@ -360,7 +348,7 @@ document.addEventListener('DOMContentLoaded', async () => {
             while (nextEl) {
                 const toRemove = nextEl;
                 nextEl = nextEl.nextElementSibling;
-                if (toRemove.id !== 'assignToWrapper') {
+                if (toRemove.id !== 'assignToWrapper' && toRemove.id !== 'final_vertical_id') {
                     toRemove.remove();
                 }
             }
@@ -381,7 +369,7 @@ document.addEventListener('DOMContentLoaded', async () => {
                     const selectHtml = `
                         <div class="col-md-4 mb-3 hierarchy-wrapper">
                             <label class="form-label">${labelText} <span class="text-danger">*</span></label>
-                            <select class="form-select hierarchy-select" data-level="${nextLevel}" name="vertical_ids[]" required>
+                            <select class="form-select hierarchy-select" data-level="${nextLevel}" required>
                                 <option value="">Select ${labelText}</option>
                                 ${children.map(child => `<option value="${child.id}">${child.name}</option>`).join('')}
                             </select>
@@ -430,6 +418,7 @@ document.addEventListener('DOMContentLoaded', async () => {
 
     if (form) {
         form.addEventListener('submit', function(e) {
+            triggerDependentAPIs();
             if (!validateAssignField()) {
                 e.preventDefault();
                 assignWrapper.scrollIntoView({ behavior: 'smooth', block: 'center' });
@@ -462,7 +451,7 @@ document.addEventListener('DOMContentLoaded', async () => {
                         const selectHtml = `
                             <div class="col-md-4 mb-3 hierarchy-wrapper">
                                 <label class="form-label">${labelText} <span class="text-danger">*</span></label>
-                                <select class="form-select hierarchy-select" data-level="${currentLevel}" name="vertical_ids[]" required>
+                                <select class="form-select hierarchy-select" data-level="${currentLevel}" required>
                                     <option value="">Select ${labelText}</option>
                                     ${children.map(child => `<option value="${child.id}">${child.name}</option>`).join('')}
                                 </select>

@@ -68,12 +68,12 @@ $breadcrumbs = [
                                             </div>
                                             <div class="col-md-2">
                                                 <label class="form-label mb-1">Category</label>
-                                                <select name="vertical[]" class="form-select tom-select" multiple>
+                                                <select name="vertical_id" class="form-select tom-select">
                                                     <option value="">All Categories</option>
                                                     @foreach($verticals as $vertical)
-                                                    <option value="{{ $vertical->id }}" {{ in_array($vertical->id, (array) request('vertical')) ? 'selected' : '' }}>
-                                                        {{ $vertical->name }}
-                                                    </option>
+                                                        <option value="{{ $vertical->id }}" {{ request('vertical_id') == $vertical->id ? 'selected' : '' }}>
+                                                            {{ $vertical->full_path ?? $vertical->name }}
+                                                        </option>
                                                     @endforeach
                                                 </select>
                                             </div>
@@ -141,7 +141,7 @@ $breadcrumbs = [
         var dt = $('#complaintsTable').DataTable({
             responsive: false, // Disable responsive extension
             scrollX: true,     // Enable horizontal scrolling
-            order: [[1, 'desc']],
+            order: [],
             pageLength: 10,
             lengthMenu: [[10, 15, 20, 50, 100, -1], [10, 15, 20, 50, 100, 'All']],
             language: {
