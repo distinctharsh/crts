@@ -239,6 +239,8 @@ class ComplaintController extends Controller
                 return redirect()->route('complaints.index')->with('error', 'You are not authorized to edit a completed or closed ticket.');
             }
 
+            session()->put('complaint_edit_redirect', url()->previous());
+
             $networkTypes = NetworkType::all();
             $verticals = Vertical::whereNull('parent_id')->get();
             $sections = Section::all();
@@ -362,6 +364,15 @@ class ComplaintController extends Controller
                 } catch (\Exception $e) {
                     \Log::error('Email notification failed: ' . $e->getMessage());
                 }
+            }
+
+            $redirectTo = session()->get('complaint_edit_redirect', route('complaints.index'));
+            $dashboardUrl = route('dashboard');
+
+            session()->forget('complaint_edit_redirect');
+
+            if ($redirectTo === $dashboardUrl) {
+                return redirect()->route('dashboard')->with('success', 'Complaint updated successfully.');
             }
 
             return redirect()->route('complaints.index')->with('success', 'Complaint updated successfully.');
