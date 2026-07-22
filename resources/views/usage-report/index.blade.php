@@ -1,23 +1,28 @@
 @extends('layouts.app')
 
 @section('content')
-<div class="container-fluid">
-    <div class="row mb-4">
+<div class="container-fluid" id="printableArea">
+    <div class="row mb-4 print-hide">
         <div class="col-12">
             <div class="page-title-box d-flex align-items-center justify-content-between">
-                <h4 class="mb-0">Usage Report</h4>
-                <div class="page-title-right">
+                <div>
+                    <h4 class="mb-1">Usage Report</h4>
                     <ol class="breadcrumb m-0">
                         <li class="breadcrumb-item"><a href="{{ route('dashboard') }}">Home</a></li>
                         <li class="breadcrumb-item active">Usage Report</li>
                     </ol>
+                </div>
+                <div class="page-title-right">
+                    <button onclick="printReport()" class="btn btn-danger shadow-sm">
+                        <i class="fas fa-print me-1"></i> Print / Save PDF
+                    </button>
                 </div>
             </div>
         </div>
     </div>
 
     <!-- Date Range Picker -->
-    <div class="row mb-4">
+    <div class="row mb-4 print-hide">
         <div class="col-12">
             <div class="card shadow-sm">
                 <div class="card-body">
@@ -44,12 +49,18 @@
                                     </a>
                                     @endif
                                 </div>
-                            </div>
+                            </div>                         
                         </div>
                     </form>
                 </div>
             </div>
         </div>
+    </div>
+
+    <div class="d-none print-show mb-3">
+        <h3 style="text-align: center; margin-bottom: 5px;">Usage Report</h3>
+        <p style="text-align: center; font-size: 12px; color: #666; margin: 0;">Generated Date: {{ date('d-M-Y H:i A') }}</p>
+        <hr style="margin: 10px 0;">
     </div>
 
     <!-- Summary Cards -->
@@ -61,81 +72,38 @@
     @endphp
 
     <div class="row mb-4">
-        <div class="col-xl-3 col-md-6 mb-4">
-            <div class="card border-left-primary shadow h-100 py-2">
+        <div class="col-3 mb-3">
+            <div class="card border-left-primary shadow-sm h-100 py-2">
                 <div class="card-body">
-                    <div class="row no-gutters align-items-center">
-                        <div class="col mr-2">
-                            <div class="text-xs font-weight-bold text-primary text-uppercase mb-1">
-                                Total Assigned Tasks</div>
-                            <div class="h5 mb-0 font-weight-bold text-gray-800">{{ $totalTasks }}</div>
-                        </div>
-                        <div class="col-auto">
-                            <i class="fas fa-tasks fa-2x text-gray-300"></i>
-                        </div>
-                    </div>
+                    <div class="text-xs font-weight-bold text-primary text-uppercase mb-1">Total Assigned Tasks</div>
+                    <div class="h5 mb-0 font-weight-bold text-gray-800">{{ $totalTasks }}</div>
                 </div>
             </div>
         </div>
 
-        <div class="col-xl-3 col-md-6 mb-4">
-            <div class="card border-left-success shadow h-100 py-2">
+        <div class="col-3 mb-3">
+            <div class="card border-left-success shadow-sm h-100 py-2">
                 <div class="card-body">
-                    <div class="row no-gutters align-items-center">
-                        <div class="col mr-2">
-                            <div class="text-xs font-weight-bold text-success text-uppercase mb-1">
-                                Completed & Closed Tasks</div>
-                            <div class="h5 mb-0 font-weight-bold text-gray-800">{{ $totalCompleted }}</div>
-                        </div>
-                        <div class="col-auto">
-                            <i class="fas fa-check-circle fa-2x text-gray-300"></i>
-                        </div>
-                    </div>
+                    <div class="text-xs font-weight-bold text-success text-uppercase mb-1">Completed & Closed</div>
+                    <div class="h5 mb-0 font-weight-bold text-gray-800">{{ $totalCompleted }}</div>
                 </div>
             </div>
         </div>
 
-        <div class="col-xl-3 col-md-6 mb-4">
-            <div class="card border-left-warning shadow h-100 py-2">
+        <div class="col-3 mb-3">
+            <div class="card border-left-warning shadow-sm h-100 py-2">
                 <div class="card-body">
-                    <div class="row no-gutters align-items-center">
-                        <div class="col mr-2">
-                            <div class="text-xs font-weight-bold text-warning text-uppercase mb-1">
-                                Pending Tasks</div>
-                            <div class="h5 mb-0 font-weight-bold text-gray-800">{{ $totalPending }}</div>
-                        </div>
-                        <div class="col-auto">
-                            <i class="fas fa-clock fa-2x text-gray-300"></i>
-                        </div>
-                    </div>
+                    <div class="text-xs font-weight-bold text-warning text-uppercase mb-1">Pending Tasks</div>
+                    <div class="h5 mb-0 font-weight-bold text-gray-800">{{ $totalPending }}</div>
                 </div>
             </div>
         </div>
 
-        <div class="col-xl-3 col-md-6 mb-4">
-            <div class="card border-left-info shadow h-100 py-2">
+        <div class="col-3 mb-3">
+            <div class="card border-left-info shadow-sm h-100 py-2">
                 <div class="card-body">
-                    <div class="row no-gutters align-items-center">
-                        <div class="col mr-2">
-                            <div class="text-xs font-weight-bold text-info text-uppercase mb-1">
-                                Average Completion Rate</div>
-                            <div class="row no-gutters align-items-center">
-                                <div class="col-auto">
-                                    <div class="h5 mb-0 mr-3 font-weight-bold text-gray-800">{{ $avgCompletionRate }}%</div>
-                                </div>
-                                <div class="col">
-                                    <div class="progress progress-sm mr-2">
-                                        <div class="progress-bar bg-info" style="width: {{ $avgCompletionRate }}%" 
-                                             role="progressbar" aria-valuenow="{{ $avgCompletionRate }}" 
-                                             aria-valuemin="0" aria-valuemax="100"></div>
-                                    </div>
-                                </div>
-                            </div>
-                        </div>
-                        <div class="col-auto">
-                            <i class="fas fa-chart-line fa-2x text-gray-300"></i>
-                        </div>
-                    </div>
+                    <div class="text-xs font-weight-bold text-info text-uppercase mb-1">Avg Completion Rate</div>
+                    <div class="h5 mb-0 font-weight-bold text-gray-800">{{ $avgCompletionRate }}%</div>
                 </div>
             </div>
         </div>
@@ -149,60 +117,35 @@
                     <h5 class="card-title mb-0">Category-wise Statistics</h5>
                 </div>
                 <div class="card-body">
-                    <div class="table-responsive">
-                        <table id="categoryReportTable" class="table table-hover table-bordered table-nowrap align-middle mb-0">
+                    <div class="table-responsive-print">
+                        <table id="categoryReportTable" class="table table-hover table-bordered align-middle mb-0">
                             <thead class="table-light">
                                 <tr>
                                     <th class="text-center" width="5%">#</th>
                                     <th>Category Name</th>
-                                    <th class="text-center">Pending</th>
-                                    <th class="text-center">Completed</th>
-                                    <th class="text-center">Total</th>
+                                    <th class="text-center" width="15%">Pending</th>
+                                    <th class="text-center" width="15%">Completed</th>
+                                    <th class="text-center" width="15%">Total</th>
                                 </tr>
                             </thead>
                             <tbody>
-                                @forelse($categoryReportData as $index => $category)
-                                @php
-                                    if ($category['total'] == 0) {
-                                        continue;
-                                    }
-                                    
-                                    $performanceClass = '';
-                                    if ($category['completion_rate'] >= 80) {
-                                        $performanceClass = 'bg-success bg-opacity-10';
-                                    } elseif ($category['completion_rate'] >= 50) {
-                                        $performanceClass = 'bg-warning bg-opacity-10';
-                                    } else {
-                                        $performanceClass = 'bg-danger bg-opacity-10';
-                                    }
-                                    
-                                    // Add indentation based on level
-                                    $indent = str_repeat('&nbsp;&nbsp;&nbsp;&nbsp;', $category['level']);
-                                    $icon = $category['has_children'] ? '<i class="fas fa-folder text-warning me-1"></i>' : '<i class="fas fa-file text-muted me-1"></i>';
-                                @endphp
-                                <tr class="{{ $performanceClass }}">
-                                    <td class="text-center">{{ $index + 1 }}</td>
-                                    <td>
-                                        <div class="d-flex align-items-center">
-                                            <div>
-                                                <h6 class="mb-0">{!! $indent . $icon !!}{{ $category['name'] }}</h6>
-                                            </div>
-                                        </div>
-                                    </td>
-                                    <td class="text-center">{{ $category['pending'] }}</td>
-                                    <td class="text-center">{{ $category['completed'] }}</td>
-                                    <td class="text-center">{{ $category['total'] }}</td>
-                                </tr>
+                                @php $catSn = 1; @endphp
+                                @forelse($categoryReportData as $category)
+                                    @php
+                                        if ($category['total'] == 0) continue;
+                                        $indent = str_repeat('&nbsp;&nbsp;&nbsp;&nbsp;', $category['level']);
+                                    @endphp
+                                    <tr>
+                                        <td class="text-center font-weight-bold">{{ $catSn++ }}</td>
+                                        <td>{!! $indent !!}{{ $category['name'] }}</td>
+                                        <td class="text-center">{{ $category['pending'] }}</td>
+                                        <td class="text-center">{{ $category['completed'] }}</td>
+                                        <td class="text-center">{{ $category['total'] }}</td>
+                                    </tr>
                                 @empty
-                                <tr>
-                                    <td colspan="6" class="text-center py-4">
-                                        <div class="d-flex flex-column align-items-center">
-                                            <i class="fas fa-inbox fa-3x text-muted mb-2"></i>
-                                            <h5 class="text-muted">No data available</h5>
-                                            <p class="text-muted mb-0">Try adjusting your filters or check back later.</p>
-                                        </div>
-                                    </td>
-                                </tr>
+                                    <tr>
+                                        <td colspan="5" class="text-center py-4">No data available</td>
+                                    </tr>
                                 @endforelse
                             </tbody>
                         </table>
@@ -219,68 +162,38 @@
                     <h5 class="card-title mb-0">User Performance</h5>
                 </div>
                 <div class="card-body">
-                    <div class="table-responsive">
-                        <table id="usageReportTable" class="table table-hover table-bordered table-nowrap align-middle mb-0">
+                    <div class="table-responsive-print">
+                        <table id="usageReportTable" class="table table-hover table-bordered align-middle mb-0">
                             <thead class="table-light">
                                 <tr>
                                     <th class="text-center" width="5%">#</th>
                                     <th>User Name</th>
-                                    <th class="text-center">Pending</th>
-                                    <th class="text-center">Completed</th>
-                                    <th class="text-center">Total</th>
-                                    <th class="text-center">Completion Rate</th>
+                                    <th class="text-center" width="15%">Pending</th>
+                                    <th class="text-center" width="15%">Completed</th>
+                                    <th class="text-center" width="15%">Total</th>
+                                    <th class="text-center" width="20%">Completion Rate</th>
                                 </tr>
                             </thead>
                             <tbody>
-                                @forelse($reportData as $index => $user)
-                                @php
-                                    if ($user['total'] == 0) {
-                                        continue;
-                                    }
-                                    
-                                    $performanceClass = '';
-                                    if ($user['completion_rate'] >= 80) {
-                                        $performanceClass = 'bg-success bg-opacity-10';
-                                    } elseif ($user['completion_rate'] >= 50) {
-                                        $performanceClass = 'bg-warning bg-opacity-10';
-                                    } else {
-                                        $performanceClass = 'bg-danger bg-opacity-10';
-                                    }
-                                @endphp
-                                <tr class="{{ $performanceClass }}">
-                                    <td class="text-center">{{ $index + 1 }}</td>
-                                    <td>
-                                        <div class="d-flex align-items-center">
-                                            <div>
-                                                <h6 class="mb-0">{{ $user['name'] }}</h6>
-                                            </div>
-                                        </div>
-                                    </td>
-                                    <td class="text-center">{{ $user['pending'] }}</td>
-                                    <td class="text-center">{{ $user['completed'] }}</td>
-                                    <td class="text-center">{{ $user['total'] }}</td>
-                                    <td>
-                                        <div class="d-flex align-items-center">
-                                            <div class="progress flex-grow-1 me-2" style="height: 6px;">
-                                                <div class="progress-bar bg-{{ $user['completion_rate'] >= 50 ? 'success' : ($user['completion_rate'] >= 30 ? 'warning' : 'danger') }}" 
-                                                     role="progressbar" style="width: {{ $user['completion_rate'] }}%" 
-                                                     aria-valuenow="{{ $user['completion_rate'] }}" 
-                                                     aria-valuemin="0" aria-valuemax="100"></div>
-                                            </div>
-                                            <span class="text-nowrap">{{ $user['completion_rate'] }}%</span>
-                                        </div>
-                                    </td>
-                                </tr>
+                                @php $sn = 1; @endphp
+                                @forelse($reportData as $user)
+                                    @php
+                                        if ($user['total'] == 0) continue;
+                                    @endphp
+                                    <tr>
+                                        <td class="text-center font-weight-bold">{{ $sn++ }}</td>
+                                        <td>{{ $user['name'] }}</td>
+                                        <td class="text-center">{{ $user['pending'] }}</td>
+                                        <td class="text-center">{{ $user['completed'] }}</td>
+                                        <td class="text-center">{{ $user['total'] }}</td>
+                                        <td class="text-center">
+                                            <span class="badge bg-soft-info text-info fs-6">{{ $user['completion_rate'] }}%</span>
+                                        </td>
+                                    </tr>
                                 @empty
-                                <tr>
-                                    <td colspan="7" class="text-center py-4">
-                                        <div class="d-flex flex-column align-items-center">
-                                            <i class="fas fa-inbox fa-3x text-muted mb-2"></i>
-                                            <h5 class="text-muted">No data available</h5>
-                                            <p class="text-muted mb-0">Try adjusting your filters or check back later.</p>
-                                        </div>
-                                    </td>
-                                </tr>
+                                    <tr>
+                                        <td colspan="6" class="text-center py-4">No data available</td>
+                                    </tr>
                                 @endforelse
                             </tbody>
                         </table>
@@ -294,152 +207,65 @@
 
 @push('scripts')
 <script>
-$(function () {
-    var table = $('#usageReportTable').DataTable({
-        "paging": true,
-        "lengthChange": true,
-        "searching": true,
-        "ordering": true,
-        "info": true,
-        "autoWidth": false,
-        "responsive": true,
-        "pageLength": 25,
-        "dom": 'Bfrtip',
-        "buttons": [
-            {
-                extend: 'excel',
-                text: '<i class="fa fa-file-excel"></i> Excel',
-                className: 'btn btn-light btn-sm me-1',
-                titleAttr: 'Export as Excel',
-                exportOptions: {
-                    columns: ':not(.no-export)'
-                }
-            }
-        ]
-    });
-    table.buttons().container().appendTo('#usageReportTable_wrapper .col-md-6:eq(0)');
+function printReport() {
+    var usageTable = $('#usageReportTable').DataTable();
+    var catTable = $('#categoryReportTable').DataTable();
+    usageTable.page.len(-1).draw();
+    catTable.page.len(-1).draw();
 
-    var categoryTable = $('#categoryReportTable').DataTable({
+    setTimeout(function() {
+        var printContents = document.getElementById('printableArea').innerHTML;
+        var printWindow = window.open('', '_blank', 'width=1000,height=800');
+        
+        printWindow.document.write('<html><head><title>Usage Report</title>');
+        $('link[rel="stylesheet"]').each(function() {
+            printWindow.document.write('<link rel="stylesheet" href="' + $(this).attr('href') + '">');
+        });
+        printWindow.document.write(`
+            <style>
+                body { padding: 15px; background: #fff; font-family: Arial, sans-serif; }
+                .print-hide, .dataTables_filter, .dataTables_length, .dataTables_paginate, .dataTables_info, .dt-buttons { display: none !important; }
+                .print-show { display: block !important; }
+                .card { border: 1px solid #ddd !important; box-shadow: none !important; margin-bottom: 15px !important; }
+                table { width: 100% !important; border-collapse: collapse !important; }
+                th, td { border: 1px solid #dee2e6 !important; padding: 6px 8px !important; text-align: left; font-size: 12px; }
+                tr { page-break-inside: avoid !important; break-inside: avoid !important; }
+                thead { display: table-header-group !important; }
+                @page { size: A4 portrait; margin: 10mm; }
+            </style>
+        `);
+        
+        printWindow.document.write('</head><body>');
+        printWindow.document.write(printContents);
+        printWindow.document.write('</body></html>');
+        printWindow.document.close();
+
+        setTimeout(function() {
+            printWindow.focus();
+            printWindow.print();
+            printWindow.close();
+            usageTable.page.len(25).draw();
+            catTable.page.len(25).draw();
+        }, 500);
+
+    }, 300);
+}
+
+$(function () {
+    $('#usageReportTable').DataTable({
         "paging": true,
-        "lengthChange": true,
-        "searching": true,
-        "ordering": false,
-        "info": true,
-        "autoWidth": false,
-        "responsive": true,
         "pageLength": 25,
+        "responsive": true,
         "dom": 'Bfrtip',
-        "buttons": [
-            {
-                extend: 'excel',
-                text: '<i class="fa fa-file-excel"></i> Excel',
-                className: 'btn btn-light btn-sm me-1',
-                titleAttr: 'Export as Excel',
-                exportOptions: {
-                    columns: ':not(.no-export)'
-                }
-            }
-        ]
+        "buttons": [{ extend: 'excel', text: '<i class="fa fa-file-excel"></i> Excel', className: 'btn btn-light btn-sm me-1' }]
     });
-    categoryTable.buttons().container().appendTo('#categoryReportTable_wrapper .col-md-6:eq(0)');
+    $('#categoryReportTable').DataTable({
+        "paging": true,
+        "pageLength": 25,
+        "responsive": true,
+        "dom": 'Bfrtip',
+        "buttons": [{ extend: 'excel', text: '<i class="fa fa-file-excel"></i> Excel', className: 'btn btn-light btn-sm me-1' }]
+    });
 });
 </script>
-@endpush
-
-@push('styles')
-<style>
-    /* Custom styles for the usage report */
-    .card {
-        border: none;
-        box-shadow: 0 0.15rem 1.75rem 0 rgba(58, 59, 69, 0.15);
-        margin-bottom: 1.5rem;
-        transition: transform 0.2s ease-in-out;
-    }
-    
-    .card:hover {
-        transform: translateY(-2px);
-    }
-    
-    .card-header {
-        background-color: #f8f9fc;
-        border-bottom: 1px solid #e3e6f0;
-        padding: 1rem 1.25rem;
-    }
-    
-    .card-title {
-        color: #4e73df;
-        font-weight: 600;
-        margin-bottom: 0;
-    }
-    
-    .table th {
-        font-weight: 600;
-        text-transform: uppercase;
-        font-size: 0.7rem;
-        letter-spacing: 0.5px;
-        padding: 0.75rem 1rem;
-        background-color: #f8f9fc;
-        border-bottom-width: 1px;
-    }
-    
-    .table td {
-        vertical-align: middle;
-        padding: 1rem;
-    }
-    
-    .progress {
-        height: 6px;
-        border-radius: 3px;
-        background-color: #eaecf4;
-    }
-    
-    .progress-bar {
-        font-size: 0.65rem;
-        line-height: 1.5;
-    }
-    
-    .table-hover tbody tr:hover {
-        background-color: rgba(0, 0, 0, 0.02);
-    }
-    
-    .avatar-title {
-        display: flex;
-        align-items: center;
-        justify-content: center;
-        height: 32px;
-        width: 32px;
-        font-weight: 600;
-    }
-    
-    /* Custom scrollbar */
-    ::-webkit-scrollbar {
-        width: 8px;
-        height: 8px;
-    }
-    
-    ::-webkit-scrollbar-track {
-        background: #f1f1f1;
-    }
-    
-    ::-webkit-scrollbar-thumb {
-        background: #c1c1c1;
-        border-radius: 4px;
-    }
-    
-    ::-webkit-scrollbar-thumb:hover {
-        background: #a8a8a8;
-    }
-    
-    /* Responsive adjustments */
-    @media (max-width: 768px) {
-        .card-body {
-            padding: 1rem;
-        }
-        
-        .table-responsive {
-            border: 1px solid #e3e6f0;
-            border-radius: 0.35rem;
-        }
-    }
-</style>
 @endpush
