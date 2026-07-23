@@ -65,24 +65,23 @@ class ComplaintController extends Controller
                 });
             }
             if ($request->filled('by')) {
-                $searchByUserId = $request->input('by');
-                $query->whereHas('assignedTo', function ($q) use ($searchByUserId) {
-                    $q->where('id', $searchByUserId);
-                });
+                $searchByUserId = is_array($request->input('by')) ? $request->input('by') : explode(',', $request->input('by'));
+                $query->whereIn('assigned_to', $searchByUserId);
             }
             if ($request->filled('status')) {
-                $searchByStatus = (array) $request->input('status');
+                $searchByStatus = is_array($request->input('status')) ? $request->input('status') : explode(',', $request->input('status'));
                 $query->whereIn('status_id', $searchByStatus);
             }
             if ($request->filled('vertical_id')) {
-                $query->where('vertical_id', $request->input('vertical_id'));
+                $searchByVerticalId = is_array($request->input('vertical_id')) ? $request->input('vertical_id') : explode(',', $request->input('vertical_id'));
+                $query->whereIn('vertical_id', $searchByVerticalId);
             }
             if ($request->filled('networktype')) {
-                $searchBynetworkType = (array) $request->input('networktype');
+                $searchBynetworkType = is_array($request->input('networktype')) ? $request->input('networktype') : explode(',', $request->input('networktype'));
                 $query->whereIn('network_type_id', $searchBynetworkType);
             }
             if ($request->filled('section')) {
-                $searchBySection = (array) $request->input('section');
+                $searchBySection = is_array($request->input('section')) ? $request->input('section') : explode(',', $request->input('section'));
                 $query->whereIn('section_id', $searchBySection);
             }
             if ($request->filled('date_from')) {

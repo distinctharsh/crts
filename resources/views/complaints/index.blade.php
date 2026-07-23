@@ -42,14 +42,14 @@ $breadcrumbs = [
                             </div>
                             <div class="collapse{{ (request('status') || request('by') || request('vertical') || request('networktype') || request('section') || request('date_from') || request('date_to')) ? ' show' : '' }}" id="filterCollapse">
                                 <div class="card-body py-3">
-                                    <form method="GET" action="{{ route('complaints.index') }}">
+                                    <form method="GET" action="{{ route('complaints.index') }}" id="filterForm">
                                         <div class="row g-3 align-items-end">
                                             <div class="col-md-2">
                                                 <label class="form-label mb-1">Status</label>
-                                                <select name="status" class="form-select tom-select">
+                                                <select name="status[]" class="form-select tom-select" multiple>
                                                     <option value="">All Status</option>
                                                     @foreach($statuses as $status)
-                                                    <option value="{{ $status->id }}" {{ collect(request('status'))->contains($status->id) ? 'selected' : '' }}>
+                                                    <option value="{{ $status->id }}" {{ in_array($status->id, is_array(request('status')) ? request('status') : explode(',', request('status', ''))) ? 'selected' : '' }}>
                                                         {{ $status->display_name }}
                                                     </option>
                                                     @endforeach
@@ -57,10 +57,10 @@ $breadcrumbs = [
                                             </div>
                                             <div class="col-md-2">
                                                 <label class="form-label mb-1">Assigned To</label>
-                                                <select name="by" class="form-select tom-select">
+                                                <select name="by[]" class="form-select tom-select" multiple>
                                                     <option value="">Assigned To</option>
                                                     @foreach($usersList as $user)
-                                                    <option value="{{ $user->id }}" {{ request('by') == $user->id ? 'selected' : '' }}>
+                                                    <option value="{{ $user->id }}" {{ in_array($user->id, is_array(request('by')) ? request('by') : explode(',', request('by', ''))) ? 'selected' : '' }}>
                                                         {{ $user->full_name }}
                                                     </option>
                                                     @endforeach
@@ -68,10 +68,10 @@ $breadcrumbs = [
                                             </div>
                                             <div class="col-md-2">
                                                 <label class="form-label mb-1">Category</label>
-                                                <select name="vertical_id" class="form-select tom-select">
+                                                <select name="vertical_id[]" class="form-select tom-select" multiple>
                                                     <option value="">All Categories</option>
                                                     @foreach($verticals as $vertical)
-                                                        <option value="{{ $vertical->id }}" {{ request('vertical_id') == $vertical->id ? 'selected' : '' }}>
+                                                        <option value="{{ $vertical->id }}" {{ in_array($vertical->id, is_array(request('vertical_id')) ? request('vertical_id') : explode(',', request('vertical_id', ''))) ? 'selected' : '' }}>
                                                             {{ $vertical->full_path ?? $vertical->name }}
                                                         </option>
                                                     @endforeach
@@ -79,10 +79,10 @@ $breadcrumbs = [
                                             </div>
                                             <div class="col-md-2">
                                                 <label class="form-label mb-1">Network Type</label>
-                                                <select name="networktype" class="form-select tom-select">
+                                                <select name="networktype[]" class="form-select tom-select" multiple>
                                                     <option value="">All Issue Type</option>
                                                     @foreach($networkTypes as $networktype)
-                                                    <option value="{{ $networktype->id }}" {{ request('networktype') == $networktype->id ? 'selected' : '' }}>
+                                                    <option value="{{ $networktype->id }}" {{ in_array($networktype->id, is_array(request('networktype')) ? request('networktype') : explode(',', request('networktype', ''))) ? 'selected' : '' }}>
                                                         {{ $networktype->name }}
                                                     </option>
                                                     @endforeach
@@ -90,10 +90,10 @@ $breadcrumbs = [
                                             </div>
                                             <div class="col-md-2">
                                                 <label class="form-label mb-1">Section</label>
-                                                <select name="section" class="form-select tom-select">
+                                                <select name="section[]" class="form-select tom-select" multiple>
                                                     <option value="">All Section</option>
                                                     @foreach($sections as $section)
-                                                    <option value="{{ $section->id }}" {{ request('section') == $section->id ? 'selected' : '' }}>
+                                                    <option value="{{ $section->id }}" {{ in_array($section->id, is_array(request('section')) ? request('section') : explode(',', request('section', ''))) ? 'selected' : '' }}>
                                                         {{ $section->name }}
                                                     </option>
                                                     @endforeach
@@ -122,12 +122,16 @@ $breadcrumbs = [
                         </div>
                     </div>
                     <!-- End Filter Form -->
-                    @include('complaints.partials.table', ['complaints' => $complaints, 'tableId' => 'complaintsTable'])
-                    @foreach($complaints as $complaint)
-                        @include('complaints.partials.assign-modal', ['complaint' => $complaint])
-                        @include('complaints.partials.revert-modal', ['complaint' => $complaint, 'managers' => $managers])
-                        @include('complaints.partials.close-modal', ['complaint' => $complaint, 'closeStatus' => $closeStatus])
-                    @endforeach
+                    <div id="complaintsTableContainer">
+                        @include('complaints.partials.table', ['complaints' => $complaints, 'tableId' => 'complaintsTable'])
+                    </div>
+                    <div id="complaintsModalsContainer">
+                        @foreach($complaints as $complaint)
+                            @include('complaints.partials.assign-modal', ['complaint' => $complaint])
+                            @include('complaints.partials.revert-modal', ['complaint' => $complaint, 'managers' => $managers])
+                            @include('complaints.partials.close-modal', ['complaint' => $complaint, 'closeStatus' => $closeStatus])
+                        @endforeach
+                    </div>
                 </div>
             </div>
         </div>
@@ -138,9 +142,9 @@ $breadcrumbs = [
 @push('scripts')
 <script>
     $(document).ready(function() {
-        var dt = $('#complaintsTable').DataTable({
-            responsive: false, // Disable responsive extension
-            scrollX: true,     // Enable horizontal scrolling
+        $('#complaintsTable').DataTable({
+            responsive: false,
+            scrollX: true,
             order: [],
             pageLength: 10,
             lengthMenu: [[10, 15, 20, 50, 100, -1], [10, 15, 20, 50, 100, 'All']],
@@ -183,10 +187,7 @@ $breadcrumbs = [
             ],
             columnDefs: [
                 { orderable: false, targets: 0 }
-            ],
-            drawCallback: function() {
-                // Re-initialize modals or tooltips if needed
-            }
+            ]
         });
     });
 
@@ -245,8 +246,8 @@ $breadcrumbs = [
                 }
             };
 
-            // Enable multiple selection for verticals filter
-            if(el.name === 'vertical[]'){
+            // Enable multiple selection for all multi-select filters
+            if(el.name === 'status[]' || el.name === 'by[]' || el.name === 'vertical_id[]' || el.name === 'networktype[]' || el.name === 'section[]'){
                 config.maxItems = null;
                 config.plugins = {
                     remove_button:{
@@ -256,6 +257,75 @@ $breadcrumbs = [
             }
 
             new TomSelect(el, config);
+        });
+
+        // AJAX form submission for filtering
+        $('#filterForm').on('submit', function(e) {
+            e.preventDefault();
+            $('#complaintsTableContainer').html('<div class="text-center py-5"><div class="spinner-border text-primary" role="status"><span class="visually-hidden">Loading...</span></div></div>');
+            const formData = $(this).serialize();
+            $.ajax({
+                url: $(this).attr('action'),
+                type: 'GET',
+                data: formData,
+                success: function(response) {
+                    $('#complaintsTableContainer').html($(response).find('#complaintsTableContainer').html());
+                    $('#complaintsModalsContainer').html($(response).find('#complaintsModalsContainer').html());
+                    if ($.fn.DataTable.isDataTable('#complaintsTable')) {
+                        $('#complaintsTable').DataTable().destroy();
+                    }
+                    $('#complaintsTable').DataTable({
+                        responsive: false,
+                        scrollX: true,
+                        order: [],
+                        pageLength: 10,
+                        lengthMenu: [[10, 15, 20, 50, 100, -1], [10, 15, 20, 50, 100, 'All']],
+                        language: {
+                            search: "",
+                            searchPlaceholder: "Search complaints..."
+                        },
+                        dom: '<"d-flex justify-content-between align-items-center mb-2"Bfl>rtip',
+                        buttons: [
+                            {
+                                extend: 'copy',
+                                text: '<i class="bi bi-clipboard"></i>',
+                                className: 'btn btn-light btn-sm me-1',
+                                titleAttr: 'Copy'
+                            },
+                            {
+                                extend: 'csv',
+                                text: '<i class="bi bi-filetype-csv"></i>',
+                                className: 'btn btn-light btn-sm me-1',
+                                titleAttr: 'Export as CSV'
+                            },
+                            {
+                                extend: 'excel',
+                                text: '<i class="bi bi-file-earmark-excel"></i>',
+                                className: 'btn btn-light btn-sm me-1',
+                                titleAttr: 'Export as Excel'
+                            },
+                            {
+                                extend: 'pdf',
+                                text: '<i class="bi bi-file-earmark-pdf"></i>',
+                                className: 'btn btn-light btn-sm me-1',
+                                titleAttr: 'Export as PDF'
+                            },
+                            {
+                                extend: 'print',
+                                text: '<i class="bi bi-printer"></i>',
+                                className: 'btn btn-light btn-sm',
+                                titleAttr: 'Print'
+                            }
+                        ],
+                        columnDefs: [
+                            { orderable: false, targets: 0 }
+                        ]
+                    });
+                },
+                error: function() {
+                    $('#complaintsTableContainer').html('<div class="alert alert-danger">Error loading complaints. Please try again.</div>');
+                }
+            });
         });
 
         // Custom date picker for dd/mm/yyyy format
