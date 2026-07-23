@@ -21,6 +21,9 @@
           <a class="nav-link" href="{{ route('home') }}">Home</a>
         </li>
         @endif
+        <li class="nav-item mt-1">
+          <a class="nav-link {{ request()->routeIs('complaints.create') ? 'active fw-bold text-primary' : '' }}" href="{{ route('complaints.create') }}">Create Ticket</a>
+        </li>
         @auth
         <li class="nav-item mt-1">
           <a class="nav-link {{ request()->routeIs('dashboard') ? 'active fw-bold text-primary' : '' }}" href="{{ route('dashboard') }}">Dashboard</a>
