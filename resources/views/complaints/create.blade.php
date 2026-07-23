@@ -203,6 +203,10 @@
                                     @continue
                                 @endif
 
+                                @if($status->name === 'assigned' && !isset($assignedUser))
+                                    @continue
+                                @endif
+
                                 <option value="{{ $status->id }}" data-name="{{ $status->name }}" {{ old('status_id', $complaint->status_id) == $status->id ? 'selected' : '' }}>
                                     {{ $status->display_name }}
                                 </option>
@@ -236,6 +240,8 @@ document.addEventListener('DOMContentLoaded', async () => {
     const selectedUser = @json(old('assigned_to', isset($assignedUser) ? $assignedUser->id : null));
     const savedVerticals = @json(isset($savedVerticals) ? $savedVerticals : []);
     const isOriginallyAssigned = @json(isset($assignedUser) && $assignedUser !== null);
+    const verticalHierarchy = @json(isset($verticalHierarchy) ? $verticalHierarchy : []);
+    const assignableUsersByVertical = @json(isset($assignableUsersByVertical) ? $assignableUsersByVertical : []);
 
     @if(isset($complaint))
         const ASSIGNED_STATUS_ID = {{ $statuses->firstWhere('name', 'assigned')?->id ?? 0 }};
@@ -277,7 +283,7 @@ document.addEventListener('DOMContentLoaded', async () => {
         }
     }
 
-    async function loadAssignableUsers(verticalId, selectedUserId = null) {
+    function loadAssignableUsers(verticalId, selectedUserId = null) {
         if (!assignTom || !assignWrapper) return;
 
         if (!verticalId) {
@@ -286,34 +292,29 @@ document.addEventListener('DOMContentLoaded', async () => {
             assignWrapper.style.display = 'none';
             return;
         }
-        try {
-            const response = await fetch(`{{ route('api.assignable-users') }}?vertical_ids=${verticalId}`);
-            const users = await response.json();
+        const users = assignableUsersByVertical[verticalId] || [];
 
-            assignTom.clear();
-            assignTom.clearOptions();
+        assignTom.clear();
+        assignTom.clearOptions();
 
-            assignWrapper.style.display = 'block';
-            if (!isOriginallyAssigned) {
-                assignTom.addOption({ id: '', full_name: '-- Leave Unassigned --' });
-            }
-            users.forEach(user => {
-                assignTom.addOption({
-                    id: user.id,
-                    full_name: `${user.full_name} (${user.role?.name?.toUpperCase() ?? ''})`
-                });
+        assignWrapper.style.display = 'block';
+        if (!isOriginallyAssigned) {
+            assignTom.addOption({ id: '', full_name: '-- Leave Unassigned --' });
+        }
+        users.forEach(user => {
+            assignTom.addOption({
+                id: user.id,
+                full_name: `${user.full_name} (${user.role?.name?.toUpperCase() ?? ''})`
             });
+        });
 
-            assignTom.refreshOptions(false);
+        assignTom.refreshOptions(false);
 
-            if (selectedUserId && users.find(u => u.id == selectedUserId)) {
-                assignTom.setValue(String(selectedUserId), true);
-            } else {
-                assignTom.setValue('', true);
-                validateAssignField();
-            }
-        } catch (error) {
-            console.error('Failed to load assignable users:', error);
+        if (selectedUserId && users.find(u => u.id == selectedUserId)) {
+            assignTom.setValue(String(selectedUserId), true);
+        } else {
+            assignTom.setValue('', true);
+            validateAssignField();
         }
     }
 
@@ -358,32 +359,27 @@ document.addEventListener('DOMContentLoaded', async () => {
                 return;
             }
 
-            try {
-                const response = await fetch(`/api/get-child-verticals?parent_id=${parentId}`);
-                const children = await response.json();
+            const children = verticalHierarchy[parentId] || [];
 
-                if (children && children.length > 0) {
-                    const nextLevel = currentLevel + 1;
-                    let labelText = 'Sub-Category';
+            if (children && children.length > 0) {
+                const nextLevel = currentLevel + 1;
+                let labelText = 'Sub-Category';
 
-                    const selectHtml = `
-                        <div class="col-md-4 mb-3 hierarchy-wrapper">
-                            <label class="form-label">${labelText} <span class="text-danger">*</span></label>
-                            <select class="form-select hierarchy-select" data-level="${nextLevel}" required>
-                                <option value="">Select ${labelText}</option>
-                                ${children.map(child => `<option value="${child.id}">${child.name}</option>`).join('')}
-                            </select>
-                        </div>
-                    `;
-                    
-                    if (assignWrapper) {
-                        assignWrapper.insertAdjacentHTML('beforebegin', selectHtml);
-                    } else {
-                        container.insertAdjacentHTML('beforeend', selectHtml);
-                    }
+                const selectHtml = `
+                    <div class="col-md-4 mb-3 hierarchy-wrapper">
+                        <label class="form-label">${labelText}</label>
+                        <select class="form-select hierarchy-select" data-level="${nextLevel}">
+                            <option value="">Select ${labelText}</option>
+                            ${children.map(child => `<option value="${child.id}">${child.name}</option>`).join('')}
+                        </select>
+                    </div>
+                `;
+                
+                if (assignWrapper) {
+                    assignWrapper.insertAdjacentHTML('beforebegin', selectHtml);
+                } else {
+                    container.insertAdjacentHTML('beforeend', selectHtml);
                 }
-            } catch (error) {
-                console.error('Failed to load deep hierarchy levels:', error);
             }
 
             triggerDependentAPIs();
@@ -393,14 +389,6 @@ document.addEventListener('DOMContentLoaded', async () => {
     if (assignSelect) {
         assignSelect.addEventListener('change', function () {
             validateAssignField();
-            if (!statusSelect) return;
-            @if(isset($complaint))
-                if (this.value) {
-                    statusSelect.tomselect ? statusSelect.tomselect.setValue(ASSIGNED_STATUS_ID) : statusSelect.value = ASSIGNED_STATUS_ID;
-                } else {
-                    statusSelect.tomselect ? statusSelect.tomselect.setValue(UNASSIGNED_STATUS_ID) : statusSelect.value = UNASSIGNED_STATUS_ID;
-                }
-            @endif
         });
     }
 
@@ -431,44 +419,64 @@ document.addEventListener('DOMContentLoaded', async () => {
 
         let currentSelect = container.querySelector('.hierarchy-select[data-level="1"]');
         let currentLevel = 1;
+        let lastVerticalId = null;
 
         for (let i = 0; i < savedVerticals.length; i++) {
             const verticalId = savedVerticals[i];
+            lastVerticalId = verticalId;
 
             if (currentSelect) {
                 currentSelect.value = verticalId;
             }
 
             if (i < savedVerticals.length - 1) {
-                try {
-                    const response = await fetch(`/api/get-child-verticals?parent_id=${verticalId}`);
-                    const children = await response.json();
+                const children = verticalHierarchy[verticalId] || [];
 
-                    if (children && children.length > 0) {
-                        currentLevel = currentLevel + 1;
-                        let labelText = 'Sub-Category';
+                if (children && children.length > 0) {
+                    currentLevel = currentLevel + 1;
+                    let labelText = 'Sub-Category';
 
-                        const selectHtml = `
-                            <div class="col-md-4 mb-3 hierarchy-wrapper">
-                                <label class="form-label">${labelText} <span class="text-danger">*</span></label>
-                                <select class="form-select hierarchy-select" data-level="${currentLevel}" required>
-                                    <option value="">Select ${labelText}</option>
-                                    ${children.map(child => `<option value="${child.id}">${child.name}</option>`).join('')}
-                                </select>
-                            </div>
-                        `;
+                    const selectHtml = `
+                        <div class="col-md-4 mb-3 hierarchy-wrapper">
+                            <label class="form-label">${labelText}</label>
+                            <select class="form-select hierarchy-select" data-level="${currentLevel}">
+                                <option value="">Select ${labelText}</option>
+                                ${children.map(child => `<option value="${child.id}">${child.name}</option>`).join('')}
+                            </select>
+                        </div>
+                    `;
 
-                        if (assignWrapper) {
-                            assignWrapper.insertAdjacentHTML('beforebegin', selectHtml);
-                        } else {
-                            container.insertAdjacentHTML('beforeend', selectHtml);
-                        }
-
-                        currentSelect = container.querySelector(`.hierarchy-select[data-level="${currentLevel}"]`);
+                    if (assignWrapper) {
+                        assignWrapper.insertAdjacentHTML('beforebegin', selectHtml);
+                    } else {
+                        container.insertAdjacentHTML('beforeend', selectHtml);
                     }
-                } catch (error) {
-                    console.error('Failed to load child verticals:', error);
-                    break;
+
+                    currentSelect = container.querySelector(`.hierarchy-select[data-level="${currentLevel}"]`);
+                }
+            }
+        }
+
+        if (lastVerticalId) {
+            const children = verticalHierarchy[lastVerticalId] || [];
+            if (children && children.length > 0) {
+                currentLevel = currentLevel + 1;
+                let labelText = 'Sub-Category';
+
+                const selectHtml = `
+                    <div class="col-md-4 mb-3 hierarchy-wrapper">
+                        <label class="form-label">${labelText}</label>
+                        <select class="form-select hierarchy-select" data-level="${currentLevel}">
+                            <option value="">Select ${labelText}</option>
+                            ${children.map(child => `<option value="${child.id}">${child.name}</option>`).join('')}
+                        </select>
+                    </div>
+                `;
+
+                if (assignWrapper) {
+                    assignWrapper.insertAdjacentHTML('beforebegin', selectHtml);
+                } else {
+                    container.insertAdjacentHTML('beforeend', selectHtml);
                 }
             }
         }

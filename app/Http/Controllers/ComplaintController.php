@@ -145,7 +145,51 @@ class ComplaintController extends Controller
         ->distinct()
         ->pluck('intercom');
         
-        return view('complaints.create', compact('networkTypes', 'verticals', 'sections', 'intercoms', 'requestTypes'));
+        $allVerticals = Vertical::all(['id', 'name', 'parent_id']);
+        $verticalHierarchy = [];
+        foreach ($allVerticals as $vertical) {
+            if ($vertical->parent_id) {
+                if (!isset($verticalHierarchy[$vertical->parent_id])) {
+                    $verticalHierarchy[$vertical->parent_id] = [];
+                }
+                $verticalHierarchy[$vertical->parent_id][] = [
+                    'id' => $vertical->id,
+                    'name' => $vertical->name
+                ];
+            }
+        }
+        
+        $users = User::with('role')->get(['id', 'full_name', 'role_id']);
+        $assignableUsersByVertical = [];
+        foreach ($users as $user) {
+            if ($user->role && ($user->isVM() || $user->isNFO())) {
+                foreach ($user->verticals as $vertical) {
+                    // Add user to their assigned vertical
+                    if (!isset($assignableUsersByVertical[$vertical->id])) {
+                        $assignableUsersByVertical[$vertical->id] = [];
+                    }
+                    $assignableUsersByVertical[$vertical->id][] = [
+                        'id' => $user->id,
+                        'full_name' => $user->full_name,
+                        'role' => ['name' => $user->role->name]
+                    ];
+
+                    $ancestors = $vertical->ancestors ?? collect();
+                    foreach ($ancestors as $ancestor) {
+                        if (!isset($assignableUsersByVertical[$ancestor->id])) {
+                            $assignableUsersByVertical[$ancestor->id] = [];
+                        }
+                        $assignableUsersByVertical[$ancestor->id][] = [
+                            'id' => $user->id,
+                            'full_name' => $user->full_name,
+                            'role' => ['name' => $user->role->name]
+                        ];
+                    }
+                }
+            }
+        }
+        
+        return view('complaints.create', compact('networkTypes', 'verticals', 'sections', 'intercoms', 'requestTypes', 'verticalHierarchy', 'assignableUsersByVertical'));
     }
 
     public function store(Request $request)
@@ -170,9 +214,9 @@ class ComplaintController extends Controller
             $unassignedStatus = Status::where('name', 'unassigned')->first();
 
             $date = Carbon::now()->format('Ymd');
-            
-            $leafVertical = Vertical::findOrFail($validated['vertical_id']);
-            $prefix = $leafVertical->combined_prefix;
+
+            $selectedVertical = Vertical::findOrFail($validated['vertical_id']);
+            $prefix = $selectedVertical->combined_prefix;
             
             $complaintsToday = Complaint::whereDate('created_at', Carbon::today())->count();
             $referenceNumber = $prefix . '-' . $date . str_pad($complaintsToday + 1, 3, '0', STR_PAD_LEFT);
@@ -209,7 +253,7 @@ class ComplaintController extends Controller
                 'assigned_to' => $complaint->assigned_to ?: null,
                 'changes' => json_encode([
                     ...$complaint->getChanges(),
-                    'verticals' => $leafVertical->full_path
+                    'verticals' => $selectedVertical->full_path
                 ])
             ]);
 
@@ -250,7 +294,52 @@ class ComplaintController extends Controller
             $savedVerticals = $complaint->vertical ? $complaint->vertical->ancestor_ids : [];
             $assignedUser = $complaint->assignedTo;
 
-            return view('complaints.create', compact('complaint', 'networkTypes', 'verticals', 'sections', 'statuses', 'intercoms', 'savedVerticals', 'assignedUser', 'requestTypes'));
+            $allVerticals = Vertical::all(['id', 'name', 'parent_id']);
+            $verticalHierarchy = [];
+            foreach ($allVerticals as $vertical) {
+                if ($vertical->parent_id) {
+                    if (!isset($verticalHierarchy[$vertical->parent_id])) {
+                        $verticalHierarchy[$vertical->parent_id] = [];
+                    }
+                    $verticalHierarchy[$vertical->parent_id][] = [
+                        'id' => $vertical->id,
+                        'name' => $vertical->name
+                    ];
+                }
+            }
+
+            $users = User::with('role')->get(['id', 'full_name', 'role_id']);
+            $assignableUsersByVertical = [];
+            foreach ($users as $user) {
+                if ($user->role && ($user->isVM() || $user->isNFO())) {
+                    foreach ($user->verticals as $vertical) {
+                        // Add user to their assigned vertical
+                        if (!isset($assignableUsersByVertical[$vertical->id])) {
+                            $assignableUsersByVertical[$vertical->id] = [];
+                        }
+                        $assignableUsersByVertical[$vertical->id][] = [
+                            'id' => $user->id,
+                            'full_name' => $user->full_name,
+                            'role' => ['name' => $user->role->name]
+                        ];
+
+                        // Also add user to all ancestor verticals of their assigned vertical
+                        $ancestors = $vertical->ancestors ?? collect();
+                        foreach ($ancestors as $ancestor) {
+                            if (!isset($assignableUsersByVertical[$ancestor->id])) {
+                                $assignableUsersByVertical[$ancestor->id] = [];
+                            }
+                            $assignableUsersByVertical[$ancestor->id][] = [
+                                'id' => $user->id,
+                                'full_name' => $user->full_name,
+                                'role' => ['name' => $user->role->name]
+                            ];
+                        }
+                    }
+                }
+            }
+
+            return view('complaints.create', compact('complaint', 'networkTypes', 'verticals', 'sections', 'statuses', 'intercoms', 'savedVerticals', 'assignedUser', 'requestTypes', 'verticalHierarchy', 'assignableUsersByVertical'));
         } catch (\Exception $e) {
             \Log::error('Complaint edit error: ' . $e->getMessage());
             return redirect()->back()->with('error', 'Something went wrong while editing complaint.');
@@ -295,6 +384,11 @@ class ComplaintController extends Controller
                 'assigned_to' => 'nullable|exists:users,id',
             ]);
 
+            $assignedStatus = Status::where('name', 'assigned')->first();
+            if ($assignedStatus && $validated['status_id'] == $assignedStatus->id && empty($validated['assigned_to'])) {
+                return redirect()->back()->with('error', 'Cannot set status to assigned without assigning a user.');
+            }
+
             $validated['priority'] = $validated['priority'] ?? 'medium';
 
             if ($request->boolean('delete_file') && $complaint->file_path) {
@@ -331,6 +425,13 @@ class ComplaintController extends Controller
             if ($request->has('assigned_to')) {
                 $complaint->assigned_to = $request->input('assigned_to') ?: null;
             }
+
+            $unassignedStatus = Status::where('name', 'unassigned')->first();
+            $assignedStatus = Status::where('name', 'assigned')->first();
+            if ($complaint->assigned_to && $unassignedStatus && $assignedStatus && $complaint->status_id == $unassignedStatus->id) {
+                $complaint->status_id = $assignedStatus->id;
+            }
+
             $complaint->save();
 
             $changes = [];
