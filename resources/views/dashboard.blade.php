@@ -54,7 +54,7 @@
                                 </div>
                                 @endif
                                 <div class="col-md-3">
-                                    <a href="{{ route('complaints.index', ['status' => $completedStatusId ?? '']) }}" class="card-link-stretched text-decoration-none">
+                                    <a href="{{ route('complaints.index', ['status' => [$completedStatusId ?? '', $closedStatusId ?? '']]) }}" class="card-link-stretched text-decoration-none">
                                         <div class="card shadow-lg border-0 rounded-4 bg-success text-white h-100 clickable-card">
                                             <div class="card-body text-center py-4">
                                                 <h5 class="card-title mb-2">Completed & Closed</h5>

@@ -94,6 +94,7 @@ class DashboardController extends Controller
                 'todayComplaints' => $todayComplaints,
                 'unassignedStatusId' => $statusIds->get('unassigned'),
                 'completedStatusId' => $statusIds->get('completed'),
+                'closedStatusId' => $statusIds->get('closed'),
                 'assignToMeStatusId' => null,
                 'managers' => $managers,
                 'closeStatus' => $closeStatus,
