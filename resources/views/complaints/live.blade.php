@@ -659,12 +659,12 @@
     </div>
 
     <div class="complaints-grid-container">
-        <h2 class="section-heading">📅 Today's Complaints</h2>
+        <h2 class="section-heading">📅 Today's Complaints <span id="todayCount" class="badge bg-primary ms-2">0</span></h2>
         <div class="complaints-grid" id="todayComplaintsGrid"></div>
         <hr class="section-divider">
 
         <!-- Older Pending Section -->
-        <h2 class="section-heading older">⚠️ Older Pending Complaints</h2>
+        <h2 class="section-heading older">⚠️ Older Pending Complaints <span id="olderCount" class="badge bg-danger ms-2">0</span></h2>
         <div class="complaints-grid" id="olderComplaintsGrid"></div>
     </div>
 
@@ -751,6 +751,7 @@ function renderComplaintCard(complaint, isNew = false) {
     const timeAgo = getTimeAgo(complaint.created_at);
     const isNewIndicator = isNew ? '<div class="new-indicator">NEW</div>' : '';
     const description = complaint.description || 'No description provided';
+    const createdAtFormatted = complaint.created_at ? `(${complaint.created_at})` : '';
 
     return `
         <div class="complaint-card ${priorityClass}" data-id="${complaint.id}" onclick="showComplaintModal(${complaint.id})">
@@ -764,7 +765,7 @@ function renderComplaintCard(complaint, isNew = false) {
             <div class="card-description" data-full-text="${description.replace(/"/g, '&quot;')}">
                 ${description}
             </div>
-            <div class="card-time">🕐 ${timeAgo}</div>
+            <div class="card-time">🕐 ${timeAgo} ${createdAtFormatted}</div>
             <div class="card-assigned ${!complaint.assigned_to_name ? 'not-assigned' : ''}">
                 ${assignedName}
             </div>
@@ -801,6 +802,9 @@ function filterComplaints(complaints) {
 function renderComplaints(todayList, olderList, newComplaintIds = []) {
     const filteredToday = filterComplaints(todayList);
     const filteredOlder = filterComplaints(olderList);
+
+    $('#todayCount').text(`${filteredToday.length}`);
+    $('#olderCount').text(`${filteredOlder.length}`);
     
     let todayHtml = '';
     let olderHtml = '';
@@ -936,7 +940,7 @@ function showComplaintModal(complaintId) {
             </div>
 
             <div class="modal-meta-card">
-                <span class="meta-label">🕐 Logged Time</span>
+                <span class="meta-label">🕐 Generate Time</span>
                 <span class="meta-value">${timeAgo} <small style="color:#64748b; font-weight:400;">(${complaint.created_at})</small></span>
             </div>
 
