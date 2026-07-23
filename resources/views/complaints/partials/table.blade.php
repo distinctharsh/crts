@@ -239,11 +239,15 @@
                     </button>
                     @endif
                     @elseif(auth()->user()->isVM())
-                    @if(($complaint->isUnassigned() || $complaint->assigned_to === auth()->user()->id) && $complaint->status->name != 'completed' && $complaint->status->name != 'closed')
+                    @if($complaint->status->name != 'completed' && $complaint->status->name != 'closed')
                     <button type="button" class="btn btn-sm btn-primary btn-assign-reassign" data-bs-toggle="modal" data-bs-target="#assignModal{{ $complaint->id }}">
+                        @if($complaint->assigned_to)
+                        Reassign
+                        @else
                         Assign
+                        @endif
                     </button>
-                    @if($complaint->assigned_to === auth()->user()->id && $complaint->status->name != 'completed' && $complaint->status->name != 'closed')
+                    @if($complaint->assigned_to === auth()->user()->id)
                     <button type="button" class="btn btn-sm btn-warning btn-revert" data-bs-toggle="modal" data-bs-target="#revertModal{{ $complaint->id }}">
                         Revert
                     </button>
