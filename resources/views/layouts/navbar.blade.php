@@ -64,11 +64,10 @@
           <ul class="dropdown-menu dropdown-menu-end">
             <li class="dropdown-header text-center">
               <strong>{{ auth()->user()->full_name }}</strong><br>
-              <small class="text-muted">{{ auth()->user()->role->name ?? 'No Role' }}
-
+              <small class="text-muted">
                 @unless(auth()->user()->isAdmin() || auth()->user()->isManager())
                 @if(auth()->user()->verticals && auth()->user()->verticals->count())
-                (Verticals: {{ auth()->user()->verticals->pluck('name')->implode(', ') }})
+                Categories: {{ auth()->user()->verticals->pluck('name')->implode(', ') }}
                 @endif
                 @endunless
               </small>

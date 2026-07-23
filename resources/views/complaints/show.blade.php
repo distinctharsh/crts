@@ -100,11 +100,7 @@ $breadcrumbs = [
                         <div class="col-md-6">
                             <p class="mb-1 fw-semibold"><i class="bi bi-person"></i> User:</p>
                             <p class="mb-3 ps-3">
-                                @if ($complaint->client)
-                                {{ $complaint->client->full_name }}
-                                @else
-                                {{ $complaint->user_name }} <span class="badge bg-secondary">Guest</span>
-                                @endif
+                                {{ $complaint->user_name ?? 'N/A' }}
                             </p>
 
                             <p class="mb-1 fw-semibold"><i class="bi bi-hdd-network"></i> Network Type:</p>
@@ -228,9 +224,6 @@ $breadcrumbs = [
 
                     <form action="{{ route('complaints.comment', $complaint) }}" method="POST" class="mb-4">
                         @csrf
-                        {{-- Debugging --}}
-                        {{-- <div>auth id: {{ auth()->id() }}, assigned_to: {{ $complaint->assigned_to }}, isManager: {{ auth()->user() && auth()->user()->isManager() ? 'yes' : 'no' }}
-                </div> --}}
                 @if(auth()->check() && $complaint->assigned_to && auth()->user()->id == $complaint->assigned_to && !$isManager && !$complaint->isCompleted())
                 <div class="mb-3">
                     <label for="status_id" class="form-label">Status <span class="text-danger">*</span></label>
@@ -280,38 +273,7 @@ $breadcrumbs = [
 </div>
 
 <!-- Assign Modal (inline) -->
-<div class="modal fade" id="assignModal{{ $complaint->id }}" tabindex="-1">
-    <div class="modal-dialog">
-        <div class="modal-content">
-            <form action="{{ route('complaints.assign', $complaint) }}" method="POST">
-                @csrf
-                <div class="modal-header">
-                    <h5 class="modal-title">Assign Ticket</h5>
-                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
-                </div>
-                <div class="modal-body">
-                    <div class="mb-3">
-                        <label for="assigned_to{{ $complaint->id }}" class="form-label">Assign To</label>
-                        <select class="form-select" name="assigned_to" id="assigned_to{{ $complaint->id }}" required>
-                            <option value="">Select User</option>
-                        </select>
-                    </div>
-                    <div class="mb-3">
-                        <label for="description" class="form-label">Remarks</label>
-                        <textarea class="form-control" name="description" rows="3"></textarea>
-                    </div>
-                </div>
-                <div class="modal-footer">
-                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
-                    <button type="submit" class="btn btn-primary">Assign</button>
-                </div>
-            </form>
-        </div>
-    </div>
-</div>
-
-@include('complaints.modals.resolve')
-@include('complaints.modals.revert')
+@include('complaints.partials.assign-modal', ['complaint' => $complaint])
 
 @push('scripts')
 <script>
@@ -321,32 +283,6 @@ $breadcrumbs = [
         tooltipTriggerList.map(function(tooltipTriggerEl) {
             return new bootstrap.Tooltip(tooltipTriggerEl);
         });
-
-        // Fetch assignable users for modal
-        async function fetchAssignableUsers() {
-            try {
-                const response = await fetch(`/api/assignable-users?complaint_id={{ $complaint->id }}`);
-                const users = await response.json();
-                const select = document.querySelector('#assignModal{{ $complaint->id }} select[name="assigned_to"]');
-                if (select) {
-                    select.innerHTML = '<option value="">Select User</option>';
-                    users.forEach(user => {
-                        const option = new Option(
-                            `${user.full_name} (${user.role.name.toUpperCase()})`,
-                            user.id
-                        );
-                        select.add(option);
-                    });
-                }
-            } catch (error) {
-                console.error('Error fetching assignable users:', error);
-            }
-        }
-        // Set up modal event listeners
-        const assignModal = document.getElementById('assignModal{{ $complaint->id }}');
-        if (assignModal) {
-            assignModal.addEventListener('show.bs.modal', fetchAssignableUsers);
-        }
     });
 </script>
 @endpush

@@ -1,6 +1,6 @@
 @php /** @var \App\Models\Complaint $complaint */ @endphp
 <div class="modal fade" id="revertModal{{ $complaint->id }}" tabindex="-1" aria-labelledby="revertModalLabel{{ $complaint->id }}" aria-hidden="true">
-    <div class="modal-dialog">
+    <div class="modal-dialog modal-dialog-centered">
         <div class="modal-content">
             <form class="revert-ticket-form" data-complaint-id="{{ $complaint->id }}" action="{{ route('complaints.revert', $complaint) }}" method="POST">
                 @csrf

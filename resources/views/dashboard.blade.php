@@ -17,13 +17,15 @@
                 <div class="card-body">
                     <!-- Welcome Message -->
                     <div class="alert alert-info">
-                        Welcome back, {{ auth()->user()->name }}!
+                        👋 Welcome back, {{ auth()->user()->full_name }}! 
                         @if(auth()->user()->isManager())
-                        As a Manager, you can view and assign all complaints.
+                            Have a great day ahead! You're all set to manage and oversee the tickets smoothly.
                         @elseif(auth()->user()->isVM())
-                        As a Team Lead, you can self-assign complaints and assign them to NFOs.
+                            Ready to make an impact today? Let's guide the team and keep things moving!
                         @elseif(auth()->user()->isNFO())
-                        As a Network Field Officer, you can resolve complaints and reassign them.
+                            Thank you for keeping everything running smoothly! Ready to solve today's challenges?
+                        @else
+                            We’re glad to have you here. Have a productive and wonderful day ahead!
                         @endif
                     </div>
 

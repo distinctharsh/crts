@@ -673,6 +673,9 @@ class ComplaintController extends Controller
                 return redirect('/home')->with('error', 'The complaint you are looking for does not exist.');
             }
 
+            $user = Auth::user();
+            $complaint->assignableUsers = $user ? $user->getAssignableUsers($complaint) : [];
+
             // Statuses for assigned user to update
             $statusOptions = \App\Models\Status::where('visible_to_user', true)
                 ->ordered()
@@ -680,7 +683,6 @@ class ComplaintController extends Controller
 
             // Show close/assign for manager (or VM if assigned to NFO) when status is completed
             $showCloseOrAssign = false;
-            $user = Auth::user();
             if ($complaint->isCompleted()) {
                 if (($user && $user->isManager()) || ($user && $user->isVM() && $complaint->assignedTo && $complaint->assignedTo->isNFO())) {
                     $showCloseOrAssign = true;
