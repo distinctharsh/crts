@@ -186,8 +186,16 @@
                                         <td class="text-center">{{ $user['pending'] }}</td>
                                         <td class="text-center">{{ $user['completed'] }}</td>
                                         <td class="text-center">{{ $user['total'] }}</td>
-                                        <td class="text-center">
-                                            <span class="badge bg-soft-info text-info fs-6">{{ $user['completion_rate'] }}%</span>
+                                        <td>
+                                            <div class="d-flex align-items-center">
+                                                <div class="progress flex-grow-1 me-2" style="height: 6px;">
+                                                    <div class="progress-bar bg-{{ $user['completion_rate'] >= 50 ? 'success' : ($user['completion_rate'] >= 30 ? 'warning' : 'danger') }}" 
+                                                        role="progressbar" style="width: {{ $user['completion_rate'] }}%" 
+                                                        aria-valuenow="{{ $user['completion_rate'] }}" 
+                                                        aria-valuemin="0" aria-valuemax="100"></div>
+                                                </div>
+                                                <span class="text-nowrap">{{ $user['completion_rate'] }}%</span>
+                                            </div>
                                         </td>
                                     </tr>
                                 @empty
@@ -223,6 +231,11 @@ function printReport() {
         });
         printWindow.document.write(`
             <style>
+                * {
+                    -webkit-print-color-adjust: exact !important;
+                    print-color-adjust: exact !important;
+                    color-adjust: exact !important;
+                }
                 body { padding: 15px; background: #fff; font-family: Arial, sans-serif; }
                 .print-hide, .dataTables_filter, .dataTables_length, .dataTables_paginate, .dataTables_info, .dt-buttons { display: none !important; }
                 .print-show { display: block !important; }
@@ -231,6 +244,12 @@ function printReport() {
                 th, td { border: 1px solid #dee2e6 !important; padding: 6px 8px !important; text-align: left; font-size: 12px; }
                 tr { page-break-inside: avoid !important; break-inside: avoid !important; }
                 thead { display: table-header-group !important; }
+                .progress {background-color: #e9ecef !important; height: 10px !important; border: 1px solid #ccc !important; display: block !important; overflow: hidden !important; }
+                .progress-bar {height: 100% !important; display: block !important; }
+                .bg-success { background-color: #198754 !important; }
+                .bg-warning { background-color: #ffc107 !important; }
+                .bg-danger { background-color: #dc3545 !important; }
+
                 @page { size: A4 portrait; margin: 10mm; }
             </style>
         `);
