@@ -137,7 +137,13 @@
                                     @endphp
                                     <tr>
                                         <td class="text-center font-weight-bold">{{ $catSn++ }}</td>
-                                        <td>{!! $indent !!}{{ $category['name'] }}</td>
+                                        <td>
+                                            @if(isset($category['full_path']) && $category['full_path'] != $category['name'])
+                                                <span class="text-center">{{ $category['full_path'] }}</span>
+                                            @else
+                                                {{ $category['name'] }}
+                                            @endif
+                                        </td>
                                         <td class="text-center">{{ $category['pending'] }}</td>
                                         <td class="text-center">{{ $category['completed'] }}</td>
                                         <td class="text-center">{{ $category['total'] }}</td>
