@@ -155,7 +155,7 @@ class User extends Authenticatable
 
         if ($this->isAdmin() || $this->isManager()) {
             $query->whereHas('role', function ($q) {
-                $q->whereIn('slug', ['vm', 'nfo']);
+                $q->whereIn('slug', ['manager', 'vm', 'nfo']);
             });
         } 
         elseif ($this->isVM()) {
@@ -163,14 +163,14 @@ class User extends Authenticatable
                 if (!$complaint || $complaint->assigned_to != $this->id) {
                     $q->where('id', $this->id);
                 }
-                    $q->orWhereHas('role', function ($r) {
-                        $r->where('slug', 'nfo');
-                    });
+                $q->orWhereHas('role', function ($r) {
+                    $r->whereIn('slug', ['manager', 'nfo']);
+                });
             });
         } 
         elseif ($this->isNFO()) {
             $query->whereHas('role', function ($q) {
-                $q->where('slug', 'vm');
+                $q->whereIn('slug', ['manager', 'vm']);
             });
         } else {
             return collect();
@@ -185,15 +185,20 @@ class User extends Authenticatable
                 $currentVertical = $currentVertical->parent;
             }
             if (!empty($allowedVerticalIds)) {
-                $query->whereHas('verticals', function ($q) use ($allowedVerticalIds) {
-                    $q->whereIn('verticals.id', $allowedVerticalIds);
+                $query->where(function($q) use ($allowedVerticalIds) {
+                    $q->whereHas('verticals', function ($vQ) use ($allowedVerticalIds) {
+                        $vQ->whereIn('verticals.id', $allowedVerticalIds);
+                    })
+                    ->orWhereHas('role', function ($rQ) {
+                        $rQ->where('slug', 'manager');
+                    });
                 });
             }
         }
 
         return $query->get(['users.id', 'users.username', 'users.full_name', 'users.role_id']);
     }
-
+    
 
     public function getAuthIdentifierName()
     {

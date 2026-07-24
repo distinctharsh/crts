@@ -304,7 +304,7 @@ document.addEventListener('DOMContentLoaded', async () => {
         users.forEach(user => {
             assignTom.addOption({
                 id: user.id,
-                full_name: `${user.full_name} (${user.role?.name?.toUpperCase() ?? ''})`
+                full_name: `${user.full_name}`
             });
         });
 
