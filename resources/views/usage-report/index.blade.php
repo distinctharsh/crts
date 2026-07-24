@@ -2,7 +2,7 @@
 
 @section('content')
 <div class="container-fluid" id="printableArea">
-    <div class="row mb-4 print-hide">
+    <div class="row mb-4">
         <div class="col-12">
             <div class="page-title-box d-flex align-items-center justify-content-between">
                 <div>
@@ -12,7 +12,7 @@
                         <li class="breadcrumb-item active">Usage Report</li>
                     </ol>
                 </div>
-                <div class="page-title-right">
+                <div class="page-title-right print-hide">
                     <button onclick="printReport()" class="btn btn-danger shadow-sm">
                         <i class="fas fa-print me-1"></i> Print / Save PDF
                     </button>
@@ -22,7 +22,7 @@
     </div>
 
     <!-- Date Range Picker -->
-    <div class="row mb-4 print-hide">
+    <div class="row mb-4">
         <div class="col-12">
             <div class="card shadow-sm">
                 <div class="card-body">
@@ -38,7 +38,7 @@
                                 <input type="date" name="date_to" id="date_to" class="form-control" 
                                        value="{{ $dateTo ?? '' }}">
                             </div>
-                            <div class="col-md-3 d-flex align-items-end">
+                            <div class="col-md-3 d-flex align-items-end print-hide">
                                 <div class="btn-group gap-2" role="group">
                                     <button type="submit" class="btn btn-primary mt-4">
                                         <i class="fas fa-filter me-1"></i> Apply Filter
@@ -55,12 +55,6 @@
                 </div>
             </div>
         </div>
-    </div>
-
-    <div class="d-none print-show mb-3">
-        <h3 style="text-align: center; margin-bottom: 5px;">Usage Report</h3>
-        <p style="text-align: center; font-size: 12px; color: #666; margin: 0;">Generated Date: {{ date('d-M-Y H:i A') }}</p>
-        <hr style="margin: 10px 0;">
     </div>
 
     <!-- Summary Cards -->
@@ -118,7 +112,7 @@
                 </div>
                 <div class="card-body">
                     <div class="table-responsive-print">
-                        <table id="categoryReportTable" class="table table-hover table-bordered align-middle mb-0">
+                        <table id="categoryReportTable" class="table table-hover table-bordered align-middle mb-0 printable-table">
                             <thead class="table-light">
                                 <tr>
                                     <th class="text-center" width="5%">#</th>
@@ -169,7 +163,7 @@
                 </div>
                 <div class="card-body">
                     <div class="table-responsive-print">
-                        <table id="usageReportTable" class="table table-hover table-bordered align-middle mb-0">
+                        <table id="usageReportTable" class="table table-hover table-bordered align-middle mb-0 printable-table">
                             <thead class="table-light">
                                 <tr>
                                     <th class="text-center" width="5%">#</th>
@@ -222,14 +216,14 @@
 @push('scripts')
 <script>
 function printReport() {
-    var usageTable = $('#usageReportTable').DataTable();
-    var catTable = $('#categoryReportTable').DataTable();
-    usageTable.page.len(-1).draw();
-    catTable.page.len(-1).draw();
+    var tables = $.fn.dataTable.fnTables(true);
+    $(tables).each(function() {
+        $(this).DataTable().page.len(-1).draw();
+    });
 
     setTimeout(function() {
         var printContents = document.getElementById('printableArea').innerHTML;
-        var printWindow = window.open('', '_blank', 'width=1000,height=800');
+        var printWindow = window.open('', '_blank', 'width=1100,height=800');
         
         printWindow.document.write('<html><head><title>Usage Report</title>');
         $('link[rel="stylesheet"]').each(function() {
@@ -242,16 +236,24 @@ function printReport() {
                     print-color-adjust: exact !important;
                     color-adjust: exact !important;
                 }
-                body { padding: 15px; background: #fff; font-family: Arial, sans-serif; }
-                .print-hide, .dataTables_filter, .dataTables_length, .dataTables_paginate, .dataTables_info, .dt-buttons { display: none !important; }
-                .print-show { display: block !important; }
-                .card { border: 1px solid #ddd !important; box-shadow: none !important; margin-bottom: 15px !important; }
+                body { padding: 15px; background: #fff; font-family: system-ui, -apple-system, "Segoe UI", Roboto, sans-serif; }
+                .print-hide, 
+                .dataTables_filter, 
+                .dataTables_length, 
+                .dataTables_paginate, 
+                .dataTables_info, 
+                .dt-buttons { 
+                    display: none !important; 
+                }
+                .card { border: 1px solid #dee2e6 !important; box-shadow: none !important; margin-bottom: 20px !important; }
+                .card-header { background-color: #f8f9fa !important; border-bottom: 1px solid #dee2e6 !important; }
+                input[type="date"] { border: 1px solid #ced4da !important; background-color: #fff !important; padding: 4px 8px !important; }
                 table { width: 100% !important; border-collapse: collapse !important; }
-                th, td { border: 1px solid #dee2e6 !important; padding: 6px 8px !important; text-align: left; font-size: 12px; }
+                th, td { border: 1px solid #dee2e6 !important; padding: 8px 10px !important; font-size: 12px; }
                 tr { page-break-inside: avoid !important; break-inside: avoid !important; }
                 thead { display: table-header-group !important; }
-                .progress {background-color: #e9ecef !important; height: 10px !important; border: 1px solid #ccc !important; display: block !important; overflow: hidden !important; }
-                .progress-bar {height: 100% !important; display: block !important; }
+                .progress { background-color: #e9ecef !important; height: 8px !important; border: 1px solid #ccc !important; display: block !important; overflow: hidden !important; }
+                .progress-bar { height: 100% !important; display: block !important; }
                 .bg-success { background-color: #198754 !important; }
                 .bg-warning { background-color: #ffc107 !important; }
                 .bg-danger { background-color: #dc3545 !important; }
@@ -269,22 +271,16 @@ function printReport() {
             printWindow.focus();
             printWindow.print();
             printWindow.close();
-            usageTable.page.len(25).draw();
-            catTable.page.len(25).draw();
+            $(tables).each(function() {
+                $(this).DataTable().page.len(25).draw();
+            });
         }, 500);
 
     }, 300);
 }
 
 $(function () {
-    $('#usageReportTable').DataTable({
-        "paging": true,
-        "pageLength": 25,
-        "responsive": true,
-        "dom": 'Bfrtip',
-        "buttons": [{ extend: 'excel', text: '<i class="fa fa-file-excel"></i> Excel', className: 'btn btn-light btn-sm me-1' }]
-    });
-    $('#categoryReportTable').DataTable({
+    $('.printable-table').DataTable({
         "paging": true,
         "pageLength": 25,
         "responsive": true,
