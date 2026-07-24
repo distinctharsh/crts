@@ -2,7 +2,7 @@
 
 @section('content')
 <div class="container-fluid" id="printableArea">
-    <div class="row mb-4">
+    <div class="row mb-4  print-hide">
         <div class="col-12">
             <div class="page-title-box d-flex align-items-center justify-content-between">
                 <div>
@@ -22,7 +22,7 @@
     </div>
 
     <!-- Date Range Picker -->
-    <div class="row mb-4">
+    <div class="row mb-4  print-hide">
         <div class="col-12">
             <div class="card shadow-sm">
                 <div class="card-body">
@@ -221,14 +221,43 @@ function printReport() {
         $(this).DataTable().page.len(-1).draw();
     });
 
+    var dateFromVal = $('#date_from').val();
+    var dateToVal = $('#date_to').val();
+    
+    function formatDate(dateStr) {
+        if (!dateStr) return '';
+        var parts = dateStr.split('-');
+        return parts.length === 3 ? parts[2] + '/' + parts[1] + '/' + parts[0] : dateStr;
+    }
+
+    var formattedFrom = formatDate(dateFromVal);
+    var formattedTo = formatDate(dateToVal);
+
+    // Dynamic Header HTML Construction
+    var printHeaderHtml = '<div class="print-header-center">';
+    printHeaderHtml += '<h2 class="print-title">Usage Report</h2>';
+    
+    if (formattedFrom || formattedTo) {
+        printHeaderHtml += '<p class="print-dates">';
+        if (formattedFrom) printHeaderHtml += '' + formattedFrom;
+        if (formattedFrom && formattedTo) printHeaderHtml += ' - ';
+        if (formattedTo) printHeaderHtml += ' - ' + formattedTo;
+        printHeaderHtml += '</p>';
+    }
+    
+    printHeaderHtml += '<hr class="print-divider">';
+    printHeaderHtml += '</div>';
+
     setTimeout(function() {
         var printContents = document.getElementById('printableArea').innerHTML;
         var printWindow = window.open('', '_blank', 'width=1100,height=800');
         
-        printWindow.document.write('<html><head><title>Usage Report</title>');
+        printWindow.document.write('<html><head><title>Usage Reports</title>');
+        
         $('link[rel="stylesheet"]').each(function() {
             printWindow.document.write('<link rel="stylesheet" href="' + $(this).attr('href') + '">');
         });
+
         printWindow.document.write(`
             <style>
                 * {
@@ -237,7 +266,33 @@ function printReport() {
                     color-adjust: exact !important;
                 }
                 body { padding: 15px; background: #fff; font-family: system-ui, -apple-system, "Segoe UI", Roboto, sans-serif; }
+                
+                /* Center Top Header Styling */
+                .print-header-center {
+                    text-align: center !important;
+                    margin-bottom: 20px !important;
+                }
+                .print-title {
+                    font-size: 22px !important;
+                    font-weight: bold !important;
+                    margin-bottom: 5px !important;
+                    color: #000 !important;
+                    text-transform: uppercase;
+                }
+                .print-dates {
+                    font-size: 13px !important;
+                    color: #333 !important;
+                    font-weight: 600 !important;
+                    margin: 0 !important;
+                }
+                .print-divider {
+                    margin: 10px 0 20px 0 !important;
+                    border: 0;
+                    border-top: 1px solid #ccc !important;
+                }
                 .print-hide, 
+                #dateRangeForm,
+                .page-title-box,
                 .dataTables_filter, 
                 .dataTables_length, 
                 .dataTables_paginate, 
@@ -247,7 +302,6 @@ function printReport() {
                 }
                 .card { border: 1px solid #dee2e6 !important; box-shadow: none !important; margin-bottom: 20px !important; }
                 .card-header { background-color: #f8f9fa !important; border-bottom: 1px solid #dee2e6 !important; }
-                input[type="date"] { border: 1px solid #ced4da !important; background-color: #fff !important; padding: 4px 8px !important; }
                 table { width: 100% !important; border-collapse: collapse !important; }
                 th, td { border: 1px solid #dee2e6 !important; padding: 8px 10px !important; font-size: 12px; }
                 tr { page-break-inside: avoid !important; break-inside: avoid !important; }
@@ -258,11 +312,12 @@ function printReport() {
                 .bg-warning { background-color: #ffc107 !important; }
                 .bg-danger { background-color: #dc3545 !important; }
 
-                @page { size: A4 portrait; margin: 10mm; }
+                @page { size: A4 portrait; margin: 0mm; }
             </style>
         `);
         
         printWindow.document.write('</head><body>');
+        printWindow.document.write(printHeaderHtml);
         printWindow.document.write(printContents);
         printWindow.document.write('</body></html>');
         printWindow.document.close();
