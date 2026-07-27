@@ -16,9 +16,9 @@ class UsageReportController extends Controller
         $dateFrom = $request->input('date_from') ? Carbon::parse($request->input('date_from'))->startOfDay() : null;
         $dateTo = $request->input('date_to') ? Carbon::parse($request->input('date_to'))->endOfDay() : null;
 
-        // Get all VMs and NFOs
+        // Get all Managers, VMs and NFOs
         $users = User::whereHas('role', function($query) {
-            $query->whereIn('slug', ['vm', 'nfo']);
+            $query->whereIn('slug', ['vm', 'nfo', 'manager']); 
         })->with(['role'])->get();
 
         $reportData = [];

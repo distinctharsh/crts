@@ -103,6 +103,52 @@
         </div>
     </div>
 
+       <!-- Main Parent Category-wise Statistics (Aggregated) -->
+    <div class="row mb-4">
+        <div class="col-12">
+            <div class="card shadow-sm">
+                <div class="card-header bg-white d-flex justify-content-between align-items-center">
+                    <h5 class="card-title mb-0">Main Category Aggregated Statistics</h5>
+                    <span class="badge bg-light text-dark font-weight-normal border">Excludes disabled categories</span>
+                </div>
+                <div class="card-body">
+                    <div class="table-responsive-print">
+                        <table id="parentCategoryReportTable" class="table table-hover table-bordered align-middle mb-0 printable-table">
+                            <thead class="table-light">
+                                <tr>
+                                    <th class="text-center" width="5%">#</th>
+                                    <th>Main Category Name</th>
+                                    <th class="text-center" width="15%">Pending</th>
+                                    <th class="text-center" width="15%">Completed</th>
+                                    <th class="text-center" width="15%">Total</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                @php $parentSn = 1; @endphp
+                                @forelse($parentCategoryReportData as $pCategory)
+                                    @php
+                                        if ($pCategory['total'] == 0) continue;
+                                    @endphp
+                                    <tr>
+                                        <td class="text-center font-weight-bold">{{ $parentSn++ }}</td>
+                                        <td class="font-weight-bold">{{ $pCategory['name'] }}</td>
+                                        <td class="text-center">{{ $pCategory['pending'] }}</td>
+                                        <td class="text-center">{{ $pCategory['completed'] }}</td>
+                                        <td class="text-center">{{ $pCategory['total'] }}</td>
+                                    </tr>
+                                @empty
+                                    <tr>
+                                        <td colspan="5" class="text-center py-4">No data available</td>
+                                    </tr>
+                                @endforelse
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
     <!-- Category-wise Statistics -->
     <div class="row mb-4">
         <div class="col-12">
@@ -141,52 +187,6 @@
                                         <td class="text-center">{{ $category['pending'] }}</td>
                                         <td class="text-center">{{ $category['completed'] }}</td>
                                         <td class="text-center">{{ $category['total'] }}</td>
-                                    </tr>
-                                @empty
-                                    <tr>
-                                        <td colspan="5" class="text-center py-4">No data available</td>
-                                    </tr>
-                                @endforelse
-                            </tbody>
-                        </table>
-                    </div>
-                </div>
-            </div>
-        </div>
-    </div>
-
-    <!-- Main Parent Category-wise Statistics (Aggregated) -->
-    <div class="row mb-4">
-        <div class="col-12">
-            <div class="card shadow-sm">
-                <div class="card-header bg-white d-flex justify-content-between align-items-center">
-                    <h5 class="card-title mb-0">Main Category Aggregated Statistics</h5>
-                    <span class="badge bg-light text-dark font-weight-normal border">Excludes disabled categories</span>
-                </div>
-                <div class="card-body">
-                    <div class="table-responsive-print">
-                        <table id="parentCategoryReportTable" class="table table-hover table-bordered align-middle mb-0 printable-table">
-                            <thead class="table-light">
-                                <tr>
-                                    <th class="text-center" width="5%">#</th>
-                                    <th>Main Category Name</th>
-                                    <th class="text-center" width="15%">Pending</th>
-                                    <th class="text-center" width="15%">Completed</th>
-                                    <th class="text-center" width="15%">Total</th>
-                                </tr>
-                            </thead>
-                            <tbody>
-                                @php $parentSn = 1; @endphp
-                                @forelse($parentCategoryReportData as $pCategory)
-                                    @php
-                                        if ($pCategory['total'] == 0) continue;
-                                    @endphp
-                                    <tr>
-                                        <td class="text-center font-weight-bold">{{ $parentSn++ }}</td>
-                                        <td class="font-weight-bold">{{ $pCategory['name'] }}</td>
-                                        <td class="text-center">{{ $pCategory['pending'] }}</td>
-                                        <td class="text-center">{{ $pCategory['completed'] }}</td>
-                                        <td class="text-center">{{ $pCategory['total'] }}</td>
                                     </tr>
                                 @empty
                                     <tr>

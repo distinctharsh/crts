@@ -111,6 +111,10 @@ class UsageReportService
             }
         }
 
+        if (empty($vCounts)) {
+            return [];
+        }
+
         $allVerticals = Vertical::where('is_excluded', 0)->get()->keyBy('id');
         $getTopParentId = function ($vId) use ($allVerticals, &$getTopParentId) {
             if (!isset($allVerticals[$vId])) {
@@ -123,28 +127,42 @@ class UsageReportService
             return $getTopParentId($vertical->parent_id);
         };
 
-        $parentData = [];
+        $groupedData = [];
         foreach ($vCounts as $vId => $counts) {
-            $topParentId = $getTopParentId($vId);
-            if (!$topParentId || !isset($allVerticals[$topParentId])) {
-                continue;
-            }
+            if (!isset($allVerticals[$vId])) continue;
 
-            if (!isset($parentData[$topParentId])) {
-                $parentData[$topParentId] = [
+            $topParentId = $getTopParentId($vId);
+            if (!$topParentId || !isset($allVerticals[$topParentId])) continue;
+
+            if (!isset($groupedData[$topParentId])) {
+                $groupedData[$topParentId] = [
                     'id' => $topParentId,
                     'name' => $allVerticals[$topParentId]->name,
                     'pending' => 0,
                     'completed' => 0,
                     'total' => 0,
+                    'is_parent' => true,
+                    'children' => []
                 ];
             }
 
-            $parentData[$topParentId]['pending'] += $counts['pending'];
-            $parentData[$topParentId]['completed'] += $counts['completed'];
-            $parentData[$topParentId]['total'] += $counts['total'];
+            $groupedData[$topParentId]['pending'] += $counts['pending'];
+            $groupedData[$topParentId]['completed'] += $counts['completed'];
+            $groupedData[$topParentId]['total'] += $counts['total'];
+
+            if ($vId != $topParentId) {
+                $childVertical = $allVerticals[$vId];
+                $groupedData[$topParentId]['children'][] = [
+                    'id' => $childVertical->id,
+                    'name' => $childVertical->full_path ?? $childVertical->name,
+                    'pending' => $counts['pending'],
+                    'completed' => $counts['completed'],
+                    'total' => $counts['total'],
+                    'is_parent' => false
+                ];
+            }
         }
 
-        return array_values($parentData);
+        return array_values($groupedData);
     }
 }
