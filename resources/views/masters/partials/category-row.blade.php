@@ -14,6 +14,19 @@
         <td class="ps-4">
             {{ $category->parent ? $category->parent->name : 'Main Category' }}
         </td>
+        
+        <td class="ps-4">
+            @if($category->users->isNotEmpty())
+                @foreach($category->users as $assignedUser)
+                    <span class="badge bg-info text-dark mb-1">
+                        <i class="fas fa-user me-1"></i>{{ $assignedUser->full_name ?? $assignedUser->name }}
+                    </span>
+                @endforeach
+            @else
+                <span class="text-muted small">No User Assigned</span>
+            @endif
+        </td>
+
         <td class="ps-4">
             <span class="badge bg-{{ $category->send_email ? 'success' : 'danger' }}">
                 {{ $category->send_email ? 'Yes' : 'No' }}
@@ -58,7 +71,7 @@
                     </div>
                     <div class="modal-body text-start">
                         <div class="mb-3">
-                            <label class="form-label text-dark fw-bold">Name</label>
+                            <label class="form-label text-dark fw-bold">Name <span class="text-danger">*</span></label>
                             <input type="text" name="name" class="form-control" value="{{ $category->name }}" required>
                         </div>
                         <div class="mb-3">
@@ -66,6 +79,33 @@
                             <input type="text" name="short_form" class="form-control" value="{{ $category->short_form ?? '' }}" placeholder="e.g., CS for Cyber Security" maxlength="10">
                             <small class="text-muted">Used for ticket reference number generation (e.g., CS-20260525001)</small>
                         </div>
+
+                        <div class="mb-3">
+                            <label class="form-label text-dark fw-bold">
+                                Assigned User(s) <span class="text-danger">*</span>
+                            </label>
+                            @php
+                                $assignedUserIds = $category->users->pluck('id')->toArray();
+                            @endphp
+                            
+                            <div class="border rounded p-2 bg-light" style="max-height: 160px; overflow-y: auto;">
+                                @foreach($assignableUsers as $user)
+                                    <div class="form-check">
+                                        <input class="form-check-input" 
+                                            type="checkbox" 
+                                            name="user_ids[]" 
+                                            value="{{ $user->id }}" 
+                                            id="user_{{ $category->id }}_{{ $user->id }}"
+                                            {{ in_array($user->id, $assignedUserIds) ? 'checked' : '' }}>
+                                        <label class="form-check-label text-dark" for="user_{{ $category->id }}_{{ $user->id }}">
+                                            {{ $user->full_name ?? $user->name }} ({{ strtoupper($user->role->slug ?? 'USER') }})
+                                        </label>
+                                    </div>
+                                @endforeach
+                            </div>
+                            <small class="text-muted">Check the checkbox to select or deselect the user.</small>
+                        </div>
+
                         <div class="form-check mb-3">
                             <input class="form-check-input" type="checkbox" name="send_email" id="send_email_{{ $category->id }}" value="1" {{ $category->send_email ? 'checked' : '' }}>
                             <label class="form-check-label text-dark" for="send_email_{{ $category->id }}">
@@ -109,7 +149,8 @@
     @if($category->children()->withTrashed()->count() > 0)
         @include('masters.partials.category-row', [
             'categories' => $category->children()->withTrashed()->orderBy('name')->get(),
-            'level' => $level + 1
+            'level' => $level + 1,
+            'assignableUsers' => $assignableUsers
         ])
     @endif
 @endforeach

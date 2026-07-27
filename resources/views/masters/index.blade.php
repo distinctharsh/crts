@@ -372,6 +372,7 @@
                                 <th class="ps-4">Name</th>
                                 <th class="ps-4">Short Form</th>
                                 <th class="ps-4">Parent Name</th>
+                                <th class="ps-4">Users</th>
                                 <th class="ps-4">Send Email</th>
                                 <th class="text-end pe-4">Actions</th>
                             </tr>
@@ -655,27 +656,25 @@
             <div class="modal-content">
                 <form action="{{ route('masters.verticals.store') }}" method="POST">
                     @csrf
-                    <div class="modal-header">
+                    <div class="modal-header bg-warning text-dark rounded-top-4">
                         <h5 class="modal-title">Add Category</h5>
                         <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
                     </div>
                     <div class="modal-body">
                         <div class="mb-3">
-                            <label class="form-label">Name</label>
+                            <label class="form-label text-dark fw-bold">Name <span class="text-danger">*</span></label>
                             <input type="text" name="name" class="form-control tom-select" required>
                         </div>
                         <div class="mb-3">
-                            <label class="form-label">Short Form</label>
+                            <label class="form-label text-dark fw-bold">Short Form</label>
                             <input type="text" name="short_form" class="form-control" placeholder="e.g., CS for Cyber Security" maxlength="10">
                             <small class="text-muted">Used for ticket reference number generation (e.g., CS-20260525001)</small>
                         </div>
                         @if(isset($allVerticals))
                         <div class="mb-3">
-                            <!-- Label se * hata diya gaya hai -->
-                            <label id="parent_id_label" for="parent_id" class="form-label">Select Parent (Optional)</label>
+                            <label id="parent_id_label" for="parent_id" class="form-label text-dark fw-bold">Select Parent (Optional)</label>
                             <select class="form-select tom-select @error('parent_id') is-invalid @enderror"
                                 id="parent_id" name="parent_id">
-                                <!-- Naya root-level blank selection option -->
                                 <option value="">None (Make it a Main Category)</option>
                             @foreach($allVerticals as $vertical)
                                     <option value="{{ $vertical->id }}">
@@ -689,6 +688,32 @@
                             @enderror
                         </div>
                         @endif
+
+                        <div class="mb-3">
+                            <label class="form-label text-dark fw-bold">
+                                Assigned User(s) <span class="text-danger">*</span>
+                            </label>
+                            <div class="border rounded p-2 bg-light" style="max-height: 160px; overflow-y: auto;" id="addCategoryUsersGroup">
+                                @foreach($assignableUsers as $user)
+                                    <div class="form-check">
+                                        <input class="form-check-input add-user-checkbox" 
+                                            type="checkbox" 
+                                            name="user_ids[]" 
+                                            value="{{ $user->id }}" 
+                                            id="add_user_{{ $user->id }}"
+                                            required>
+                                        <label class="form-check-label text-dark" for="add_user_{{ $user->id }}">
+                                            {{ $user->full_name ?? $user->name }} ({{ strtoupper($user->role->slug ?? 'USER') }})
+                                        </label>
+                                    </div>
+                                @endforeach
+                            </div>
+                            <div class="invalid-feedback d-none id="add_user_error" style="display: block; color: #dc3545;">
+                                Please select at least one assigned user.
+                            </div>
+                        </div>
+
+                    
                         <div class="form-check mb-3">
                             <input class="form-check-input" type="checkbox" name="send_email" id="send_email_new" value="1" checked>
                             <label class="form-check-label" for="send_email_new">
@@ -698,7 +723,7 @@
                     </div>
                     <div class="modal-footer">
                         <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
-                        <button type="submit" class="btn btn-primary">Save</button>
+                        <button type="submit" class="btn btn-warning text-dark fw-bold">Save</button>
                     </div>
                 </form>
             </div>
@@ -777,9 +802,7 @@
         tooltipTriggerList.forEach(function (tooltipTriggerEl) {
             new bootstrap.Tooltip(tooltipTriggerEl);
         });
-    });
 
-    document.addEventListener('DOMContentLoaded', function() {
         document.querySelectorAll('select.tom-select').forEach(function(el) {
             new TomSelect(el, {
                 create: false,
@@ -790,6 +813,20 @@
                 }
             });
         });
+
+        const addUserCheckboxes = document.querySelectorAll('.add-user-checkbox');
+        function validateUserCheckboxes() {
+            const isChecked = Array.from(addUserCheckboxes).some(cb => cb.checked);
+            addUserCheckboxes.forEach(cb => {
+                cb.required = !isChecked;
+            });
+        }
+
+        addUserCheckboxes.forEach(cb => {
+            cb.addEventListener('change', validateUserCheckboxes);
+        });
+
+        validateUserCheckboxes();
     });
 </script>
 @endpush

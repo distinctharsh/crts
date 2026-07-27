@@ -8,6 +8,7 @@ use App\Models\Section;
 use App\Models\Status;
 use App\Models\RequestType;
 use App\Models\Vertical;
+use App\Models\User;
 use App\Models\SubCategory;
 use Illuminate\Support\Str;
 
@@ -34,7 +35,12 @@ class MastersController extends Controller
             ->orderBy('name')
             ->get();
         $requestTypes = RequestType::withTrashed()->orderBy('name')->get();
-        return view('masters.index', compact('networkTypes', 'sections', 'statuses', 'verticals', 'allVerticals', 'requestTypes'));
+
+        $assignableUsers = User::whereHas('role', function($q) {
+            $q->whereIn('slug', ['manager', 'vm', 'nfo']);
+        })->orderBy('full_name')->get();
+
+        return view('masters.index', compact('networkTypes', 'sections', 'statuses', 'verticals', 'allVerticals', 'requestTypes', 'assignableUsers'));
     }
 
     public function storeNetworkType(Request $request)
@@ -193,14 +199,22 @@ class MastersController extends Controller
                 'short_form' => 'nullable|string|max:10|unique:verticals,short_form',
                 'parent_id' => 'nullable',
                 'send_email' => 'nullable|boolean',
+                'user_ids'   => 'required|array|min:1',
+                'user_ids.*' => 'exists:users,id',
+            ], [
+                'user_ids.required' => 'At least one user must be assigned to this category.'
             ]);
-            Vertical::create([
+
+            $vertical = Vertical::create([
                 'name' => $request->name,
                 'short_form' => $request->short_form ? strtoupper($request->short_form) : null,
                 'parent_id' => $request['parent_id'] ? $request['parent_id'] : null,
                 'send_email' => $request->has('send_email'),
             ]);
-            return redirect()->route('masters.index')->with('success', 'Category added successfully.');
+
+            $vertical->users()->sync($request->input('user_ids', []));
+
+            return redirect()->route('masters.index')->with('success', 'Category added and users assigned successfully.');
         } catch (\Exception $e) {
             return redirect()->route('masters.index')->with('error', 'Category add failed: ' . $e->getMessage());
         }
@@ -214,14 +228,20 @@ class MastersController extends Controller
                 'short_form' => 'nullable|string|max:10|unique:verticals,short_form,' . $vertical->id,
                 'parent_id' => 'nullable|exists:verticals,id', 
                 'send_email' => 'nullable|boolean',
+                'user_ids'   => 'required|array|min:1',
+                'user_ids.*' => 'exists:users,id',
             ]);
+
             $vertical->update([
                 'name' => $request->name,
                 'short_form' => $request->short_form ? strtoupper($request->short_form) : null,
                 'parent_id' => $request->has('parent_id') ? ($request->parent_id ?: null) : $vertical->parent_id,
                 'send_email' => $request->has('send_email'),
             ]);
-            return redirect()->route('masters.index')->with('success', 'Categroy updated successfully.');
+
+            $vertical->users()->sync($request->input('user_ids', []));
+
+            return redirect()->route('masters.index')->with('success', 'Category updated successfully.');
         } catch (\Exception $e) {
             return redirect()->route('masters.index')->with('error', 'Category update failed: ' . $e->getMessage());
         }
