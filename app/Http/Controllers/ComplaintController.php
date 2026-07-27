@@ -74,7 +74,21 @@ class ComplaintController extends Controller
             }
             if ($request->filled('vertical_id')) {
                 $searchByVerticalId = is_array($request->input('vertical_id')) ? $request->input('vertical_id') : explode(',', $request->input('vertical_id'));
-                $query->whereIn('vertical_id', $searchByVerticalId);
+                $allVerticalIdsToSearch = [];
+                foreach ($searchByVerticalId as $vId) {
+                    if (empty($vId)) continue;
+                    $allVerticalIdsToSearch[] = (int) $vId;
+                    $childIds = Vertical::where('parent_id', $vId)->pluck('id')->toArray();
+                    if (!empty($childIds)) {
+                        $allVerticalIdsToSearch = array_merge($allVerticalIdsToSearch, $childIds);
+                        $grandChildIds = Vertical::whereIn('parent_id', $childIds)->pluck('id')->toArray();
+                        if (!empty($grandChildIds)) {
+                            $allVerticalIdsToSearch = array_merge($allVerticalIdsToSearch, $grandChildIds);
+                        }
+                    }
+                }
+                $allVerticalIdsToSearch = array_unique($allVerticalIdsToSearch);
+                $query->whereIn('vertical_id', $allVerticalIdsToSearch);
             }
             if ($request->filled('networktype')) {
                 $searchBynetworkType = is_array($request->input('networktype')) ? $request->input('networktype') : explode(',', $request->input('networktype'));
@@ -114,7 +128,9 @@ class ComplaintController extends Controller
             foreach ($complaints as $complaint) {
                 $complaint->assignableUsers = $user->getAssignableUsers($complaint);
             }
-            $verticals = Vertical::whereDoesntHave('children')->get();
+            $verticals = Vertical::with('parent')->get()->sortBy(function($vertical) {
+                return $vertical->full_path ?? $vertical->name;
+            });
             $usersList = User::with('role')
                 ->select('users.id', 'users.full_name')
                 ->join('roles', 'roles.id', '=', 'users.role_id')
