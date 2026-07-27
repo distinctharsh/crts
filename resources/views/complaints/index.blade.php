@@ -89,6 +89,17 @@ $breadcrumbs = [
                                                 </select>
                                             </div>
                                             <div class="col-md-2">
+                                                <label class="form-label mb-1">Request Type</label>
+                                                <select name="request_type_id[]" class="form-select tom-select" multiple>
+                                                    <option value="">All Request Type</option>
+                                                    @foreach($requestTypes as $requestType)
+                                                        <option value="{{ $requestType->id }}" {{ in_array($requestType->id, is_array(request('request_type_id')) ? request('request_type_id') : explode(',', request('request_type_id', ''))) ? 'selected' : '' }}>
+                                                            {{ $requestType->name }}
+                                                        </option>
+                                                    @endforeach
+                                                </select>
+                                            </div>
+                                            <div class="col-md-2">
                                                 <label class="form-label mb-1">Section</label>
                                                 <select name="section[]" class="form-select tom-select" multiple>
                                                     <option value="">All Section</option>
@@ -247,7 +258,7 @@ $breadcrumbs = [
             };
 
             // Enable multiple selection for all multi-select filters
-            if(el.name === 'status[]' || el.name === 'by[]' || el.name === 'vertical_id[]' || el.name === 'networktype[]' || el.name === 'section[]'){
+            if(el.name === 'status[]' || el.name === 'by[]' || el.name === 'vertical_id[]' || el.name === 'networktype[]' || el.name === 'section[]' || el.name === 'request_type_id[]'){
                 config.maxItems = null;
                 config.plugins = {
                     remove_button:{

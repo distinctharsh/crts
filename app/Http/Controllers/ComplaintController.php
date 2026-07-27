@@ -35,7 +35,7 @@ class ComplaintController extends Controller
     {
         try {
             $user = Auth::user();
-            $query = Complaint::query()->with(['client', 'assignedTo', 'networkType', 'vertical', 'status', 'section']);
+            $query = Complaint::query()->with(['client', 'assignedTo', 'networkType', 'vertical', 'status', 'section', 'requestType']);
             if ($user) {
                 if ($user->isManager()) {
                     $activeStatusIds = Status::whereIn('name', [
@@ -79,6 +79,10 @@ class ComplaintController extends Controller
             if ($request->filled('networktype')) {
                 $searchBynetworkType = is_array($request->input('networktype')) ? $request->input('networktype') : explode(',', $request->input('networktype'));
                 $query->whereIn('network_type_id', $searchBynetworkType);
+            }
+            if ($request->filled('request_type_id')) {
+                $searchByRequestType = is_array($request->input('request_type_id')) ? $request->input('request_type_id') : explode(',', $request->input('request_type_id'));
+                $query->whereIn('request_type_id', $searchByRequestType);
             }
             if ($request->filled('section')) {
                 $searchBySection = is_array($request->input('section')) ? $request->input('section') : explode(',', $request->input('section'));
@@ -127,7 +131,8 @@ class ComplaintController extends Controller
             $networkTypes = NetworkType::get();
             $sections = Section::get();
             $closeStatus = Status::where('name', 'closed')->first();
-            return view('complaints.index', compact('complaints', 'usersList', 'managers', 'statuses', 'networkTypes', 'sections', 'verticals', 'closeStatus'));
+            $requestTypes = RequestType::all();
+            return view('complaints.index', compact('complaints', 'usersList', 'managers', 'statuses', 'networkTypes', 'sections', 'verticals', 'closeStatus', 'requestTypes'));
         } catch (\Exception $e) {
             \Log::error('Complaint index error: ' . $e->getMessage());
             return redirect('/home')->with('error', 'Something went wrong while loading complaints. Please try again.');
