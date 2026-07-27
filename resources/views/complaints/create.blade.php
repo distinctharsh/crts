@@ -255,7 +255,11 @@ document.addEventListener('DOMContentLoaded', async () => {
             persist: false
         };
 
-        if (el.id === 'intercom') config.create = true;
+        if (el.id === 'intercom') {
+            config.create = true;
+            config.createOnBlur = true;
+        }
+
         new TomSelect(el, config);
     });
 
