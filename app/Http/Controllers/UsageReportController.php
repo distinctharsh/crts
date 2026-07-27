@@ -55,10 +55,12 @@ class UsageReportController extends Controller
         // Get category-wise statistics using service
         $usageReportService = new UsageReportService();
         $categoryReportData = $usageReportService->getCategoryWiseStatistics($dateFrom, $dateTo);
+        $parentCategoryReportData = $usageReportService->getParentCategoryWiseStatistics($dateFrom, $dateTo);
 
         return view('usage-report.index', [
             'reportData' => $reportData,
             'categoryReportData' => $categoryReportData,
+            'parentCategoryReportData' => $parentCategoryReportData,
             'dateFrom' => $request->input('date_from'),
             'dateTo' => $request->input('date_to')
         ]);

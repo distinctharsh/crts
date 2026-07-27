@@ -81,4 +81,70 @@ class UsageReportService
 
         return $categoryData;
     }
+
+    public function getParentCategoryWiseStatistics($dateFrom = null, $dateTo = null)
+    {
+        $completedStatusIds = Status::whereIn('name', ['completed', 'closed'])->pluck('id')->toArray();
+        $complaintsQuery = Complaint::whereHas('vertical', function ($q) {
+            $q->where('is_excluded', 0);
+        });
+
+        if ($dateFrom) {
+            $complaintsQuery->where('created_at', '>=', $dateFrom);
+        }
+        if ($dateTo) {
+            $complaintsQuery->where('created_at', '<=', $dateTo);
+        }
+
+        $complaints = $complaintsQuery->get(['id', 'vertical_id', 'status_id']);
+        $vCounts = [];
+        foreach ($complaints as $complaint) {
+            $vId = $complaint->vertical_id;
+            if (!isset($vCounts[$vId])) {
+                $vCounts[$vId] = ['pending' => 0, 'completed' => 0, 'total' => 0];
+            }
+            $vCounts[$vId]['total']++;
+            if (in_array($complaint->status_id, $completedStatusIds)) {
+                $vCounts[$vId]['completed']++;
+            } else {
+                $vCounts[$vId]['pending']++;
+            }
+        }
+
+        $allVerticals = Vertical::where('is_excluded', 0)->get()->keyBy('id');
+        $getTopParentId = function ($vId) use ($allVerticals, &$getTopParentId) {
+            if (!isset($allVerticals[$vId])) {
+                return null;
+            }
+            $vertical = $allVerticals[$vId];
+            if (empty($vertical->parent_id)) {
+                return $vertical->id;
+            }
+            return $getTopParentId($vertical->parent_id);
+        };
+
+        $parentData = [];
+        foreach ($vCounts as $vId => $counts) {
+            $topParentId = $getTopParentId($vId);
+            if (!$topParentId || !isset($allVerticals[$topParentId])) {
+                continue;
+            }
+
+            if (!isset($parentData[$topParentId])) {
+                $parentData[$topParentId] = [
+                    'id' => $topParentId,
+                    'name' => $allVerticals[$topParentId]->name,
+                    'pending' => 0,
+                    'completed' => 0,
+                    'total' => 0,
+                ];
+            }
+
+            $parentData[$topParentId]['pending'] += $counts['pending'];
+            $parentData[$topParentId]['completed'] += $counts['completed'];
+            $parentData[$topParentId]['total'] += $counts['total'];
+        }
+
+        return array_values($parentData);
+    }
 }
