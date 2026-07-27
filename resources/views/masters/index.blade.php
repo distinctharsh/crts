@@ -14,7 +14,7 @@
     <h2 class="fw-bold mb-4 text-center">Master Management</h2>
     <ul class="nav nav-tabs mb-3" id="masterTabs" role="tablist">
         <li class="nav-item" role="presentation">
-            <button class="nav-link active" id="network-types-tab" data-bs-toggle="tab" data-bs-target="#network-types" type="button" role="tab">Network Types</button>
+            <button class="nav-link active" id="network-types-tab" data-bs-toggle="tab" data-bs-target="#network-types" type="button" role="tab">Issue Types</button>
         </li>
         <li class="nav-item" role="presentation">
             <button class="nav-link" id="sections-tab" data-bs-toggle="tab" data-bs-target="#sections" type="button" role="tab">Sections</button>
@@ -34,7 +34,7 @@
         <div class="tab-pane fade show active" id="network-types" role="tabpanel">
             <div class="card mb-4 shadow rounded-4 border-0">
                 <div class="card-header d-flex justify-content-between align-items-center bg-primary text-white rounded-top-4">
-                    <h5 class="mb-0 fw-bold"><i class="fas fa-network-wired me-2"></i>Network Types</h5>
+                    <h5 class="mb-0 fw-bold"><i class="fas fa-network-wired me-2"></i>Issue Types</h5>
                     <button class="btn btn-light btn-sm fw-semibold px-3 py-1" data-bs-toggle="modal" data-bs-target="#addNetworkTypeModal"><i class="fas fa-plus"></i> </button>
                 </div>
                 <div class="card-body p-0">
