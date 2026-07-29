@@ -236,7 +236,7 @@
             <div class="card mb-4 shadow rounded-4 border-0">
                 <div class="card-header d-flex justify-content-between align-items-center bg-info text-white rounded-top-4">
                     <h5 class="mb-0 fw-bold"><i class="fas fa-flag me-2"></i>Status</h5>
-                    <button class="btn btn-light btn-sm fw-semibold px-3 py-1" data-bs-toggle="modal" data-bs-target="#addStatusModal"><i class="fas fa-plus"></i> </button>
+                    <button class="btn btn-light btn-sm fw-semibold px-3 py-1" onclick="openStatusModal('add')"><i class="fas fa-plus"></i> </button>
                 </div>
                 <div class="card-body p-0">
                     <div class="table-responsive">
@@ -272,57 +272,13 @@
                                             </button>
                                         </form>
                                     @else
-                                        <button class="btn btn-outline-info btn-sm me-1" data-bs-toggle="tooltip" title="Edit" data-bs-target="#editStatusModal{{ $status->id }}" onclick="$('#editStatusModal{{ $status->id }}').modal('show')"><i class="fas fa-pen"></i></button>
+                                        <!-- <button class="btn btn-outline-info btn-sm me-1" data-bs-toggle="tooltip" title="Edit" onclick="openStatusModal('edit', {{ $status->id }}, '{{ $status->name }}', '{{ $status->color }}', {{ $status->visible_to_user ? 'true' : 'false' }})"><i class="fas fa-pen"></i></button> -->
                                         <button class="btn btn-outline-danger btn-sm" data-bs-toggle="tooltip" title="Delete" data-bs-target="#deleteStatusModal{{ $status->id }}" data-bs-toggle2="modal" onclick="$('#deleteStatusModal{{ $status->id }}').modal('show')"><i class="fas fa-trash"></i></button>
                                     @endif
                                 </td>
                             </tr>
-                            
+
                             @if(!$status->trashed())
-                            <!-- Edit Modal for this Status -->
-                            <div class="modal fade" id="editStatusModal{{ $status->id }}" tabindex="-1">
-                                <div class="modal-dialog">
-                                    <div class="modal-content rounded-4">
-                                        <form action="{{ route('masters.statuses.update', $status) }}" method="POST">
-                                            @csrf
-                                            @method('PUT')
-                                            <div class="modal-header bg-info text-white rounded-top-4">
-                                                <h5 class="modal-title"><i class="fas fa-pen me-2"></i>Edit Status</h5>
-                                                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
-                                            </div>
-                                            <div class="modal-body">
-                                                <div class="mb-3">
-                                                    <label class="form-label">Name</label>
-                                                    <input type="text" name="name" class="form-control tom-select" value="{{ $status->name }}" required>
-                                                </div>
-                                                <div class="mb-3">
-                                                    <label class="form-label">Color</label>
-                                                    <select name="color" class="form-select" required>
-                                                        <option value="primary" {{ $status->color == 'primary' ? 'selected' : '' }}>Primary</option>
-                                                        <option value="secondary" {{ $status->color == 'secondary' ? 'selected' : '' }}>Secondary</option>
-                                                        <option value="success" {{ $status->color == 'success' ? 'selected' : '' }}>Success</option>
-                                                        <option value="danger" {{ $status->color == 'danger' ? 'selected' : '' }}>Danger</option>
-                                                        <option value="warning" {{ $status->color == 'warning' ? 'selected' : '' }}>Warning</option>
-                                                        <option value="info" {{ $status->color == 'info' ? 'selected' : '' }}>Info</option>
-                                                        <option value="light" {{ $status->color == 'light' ? 'selected' : '' }}>Light</option>
-                                                        <option value="dark" {{ $status->color == 'dark' ? 'selected' : '' }}>Dark</option>
-                                                    </select>
-                                                </div>
-                                                <div class="form-check mb-3">
-                                                    <input class="form-check-input" type="checkbox" name="visible_to_user" id="visible_to_user_{{ $status->id }}" value="1" {{ $status->visible_to_user ? 'checked' : '' }}>
-                                                    <label class="form-check-label" for="visible_to_user_{{ $status->id }}">
-                                                        Show to user in status dropdown?
-                                                    </label>
-                                                </div>
-                                            </div>
-                                            <div class="modal-footer">
-                                                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
-                                                <button type="submit" class="btn btn-info">Update</button>
-                                            </div>
-                                        </form>
-                                    </div>
-                                </div>
-                            </div>
                             <!-- Delete Modal for this Status -->
                             <div class="modal fade" id="deleteStatusModal{{ $status->id }}" tabindex="-1">
                                 <div class="modal-dialog modal-dialog-centered">
@@ -582,24 +538,25 @@
             </div>
         </div>
     </div>
-    <!-- Status Modals -->
-    <div class="modal fade" id="addStatusModal" tabindex="-1">
+    <!-- Status Modal -->
+    <div class="modal fade" id="statusModal" tabindex="-1">
         <div class="modal-dialog">
-            <div class="modal-content">
-                <form action="{{ route('masters.statuses.store') }}" method="POST">
-                    @csrf
-                    <div class="modal-header">
-                        <h5 class="modal-title">Add Status</h5>
-                        <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            <div class="modal-content rounded-4">
+                <form id="statusForm" action="" method="POST">
+                    <input type="hidden" name="_token" value="{{ csrf_token() }}">
+                    <input type="hidden" name="_method" id="statusFormMethod" value="POST">
+                    <div class="modal-header bg-info text-white rounded-top-4">
+                        <h5 class="modal-title" id="statusModalTitle">Add Status</h5>
+                        <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
                     </div>
                     <div class="modal-body">
                         <div class="mb-3">
-                            <label class="form-label">Name</label>
-                            <input type="text" name="name" class="form-control tom-select" required>
+                            <label class="form-label text-dark fw-bold">Name <span class="text-danger">*</span></label>
+                            <input type="text" id="status_name" name="name" class="form-control" required>
                         </div>
                         <div class="mb-3">
-                            <label class="form-label">Color</label>
-                            <select name="color" class="form-select" required>
+                            <label class="form-label text-dark fw-bold">Color <span class="text-danger">*</span></label>
+                            <select id="status_color" name="color" class="form-select" required>
                                 <option value="primary">Primary</option>
                                 <option value="secondary">Secondary</option>
                                 <option value="success">Success</option>
@@ -611,41 +568,15 @@
                             </select>
                         </div>
                         <div class="form-check mb-3">
-                            <input class="form-check-input" type="checkbox" name="visible_to_user" id="visible_to_user_new" value="1" checked>
-                            <label class="form-check-label" for="visible_to_user_new">
+                            <input class="form-check-input" type="checkbox" name="visible_to_user" id="status_visible_to_user" value="1" checked>
+                            <label class="form-check-label text-dark" for="status_visible_to_user">
                                 Show to user in status dropdown?
                             </label>
                         </div>
                     </div>
                     <div class="modal-footer">
                         <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
-                        <button type="submit" class="btn btn-primary">Save</button>
-                    </div>
-                </form>
-            </div>
-        </div>
-    </div>
-    <div class="modal fade" id="editStatusModal" tabindex="-1">
-        <div class="modal-dialog">
-            <div class="modal-content">
-                <form>
-                    <div class="modal-header">
-                        <h5 class="modal-title">Edit Status</h5>
-                        <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
-                    </div>
-                    <div class="modal-body">
-                        <div class="mb-3">
-                            <label class="form-label">Name</label>
-                            <input type="text" class="form-control tom-select" required>
-                        </div>
-                        <div class="mb-3">
-                            <label class="form-label">Color</label>
-                            <input type="color" class="form-control form-control-color" value="#0d6efd" title="Choose color">
-                        </div>
-                    </div>
-                    <div class="modal-footer">
-                        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
-                        <button type="submit" class="btn btn-primary">Update</button>
+                        <button type="submit" class="btn btn-info" id="statusSubmitBtn">Save</button>
                     </div>
                 </form>
             </div>
@@ -878,6 +809,34 @@
             methodInput.value = 'POST';
             form.action = '/masters/verticals';
             document.getElementById('category_send_email').checked = true;
+        }
+
+        modal.show();
+    }
+
+    function openStatusModal(mode, id = null, name = '', color = '', visibleToUser = false) {
+        const modal = new bootstrap.Modal(document.getElementById('statusModal'));
+        const form = document.getElementById('statusForm');
+        const title = document.getElementById('statusModalTitle');
+        const submitBtn = document.getElementById('statusSubmitBtn');
+        const methodInput = document.getElementById('statusFormMethod');
+
+        form.reset();
+
+        if (mode === 'edit') {
+            title.textContent = 'Edit Status';
+            submitBtn.textContent = 'Update';
+            methodInput.value = 'PUT';
+            form.action = '/masters/statuses/' + id;
+            document.getElementById('status_name').value = name;
+            document.getElementById('status_color').value = color;
+            document.getElementById('status_visible_to_user').checked = visibleToUser;
+        } else {
+            title.textContent = 'Add Status';
+            submitBtn.textContent = 'Save';
+            methodInput.value = 'POST';
+            form.action = '/masters/statuses';
+            document.getElementById('status_visible_to_user').checked = true;
         }
 
         modal.show();

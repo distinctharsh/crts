@@ -1,7 +1,6 @@
 @foreach($categories as $category)
     <tr class="{{ $category->trashed() ? 'table-light text-muted opacity-75' : '' }}">
         <td class="ps-3 py-1" style="font-size: 0.85rem;">
-            {{-- Level ke hisab se indentation/arrow lagane ke liye --}}
             @if($level > 0)
                 {!! str_repeat('&nbsp;&nbsp;', $level) !!} ↳
             @endif
@@ -47,7 +46,6 @@
         </td>
         <td class="text-end pe-3 py-1">
             @if($category->trashed())
-                {{-- CHECK: Agar iska parent khud deleted (trashed) hai, toh Restore button NAHI dikhega --}}
                 @if($category->parent_id && $category->parent()->withTrashed()->first()->trashed())
                     <span class="text-muted" style="font-size: 0.75rem;">Parent is deleted</span>
                 @else
