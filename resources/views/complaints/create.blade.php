@@ -258,6 +258,17 @@ document.addEventListener('DOMContentLoaded', async () => {
         if (el.id === 'intercom') {
             config.create = true;
             config.createOnBlur = true;
+            config.persist = true;
+            config.createFilter = function(input) {
+                return input.trim().length > 0; 
+            };
+            config.onBlur = function() { 
+                if (this.getValue() === '' && this.inputValue !== '') {
+                    const val = this.inputValue.trim();
+                    this.addOption({ value: val, text: val });
+                    this.addItem(val);
+                }
+            };
         }
 
         new TomSelect(el, config);
