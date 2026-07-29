@@ -752,54 +752,83 @@
         modal.show();
     }
 
-    function openNetworkTypeModal(mode, id = null, name = '') {
-        const modal = new bootstrap.Modal(document.getElementById('networkTypeModal'));
-        const form = document.getElementById('networkTypeForm');
-        const title = document.getElementById('networkTypeModalTitle');
-        const submitBtn = document.getElementById('networkTypeSubmitBtn');
-        const methodInput = document.getElementById('networkTypeFormMethod');
+    function openMasterModal(config) {
+        const modal = new bootstrap.Modal(document.getElementById(config.modalId));
+        const form = document.getElementById(config.formId);
+        const title = document.getElementById(config.titleId);
+        const submitBtn = document.getElementById(config.submitBtnId);
+        const methodInput = document.getElementById(config.methodInputId);
 
         form.reset();
 
-        if (mode === 'edit') {
-            title.textContent = 'Edit Issue Type';
+        if (config.mode === 'edit') {
+            title.textContent = 'Edit ' + config.entityName;
             submitBtn.textContent = 'Update';
             methodInput.value = 'PUT';
-            form.action = '/masters/network-types/' + id;
-            document.getElementById('network_type_name').value = name;
+            form.action = '/masters/' + config.routePrefix + '/' + config.id;
+            for (const [fieldId, value] of Object.entries(config.fields)) {
+                const element = document.getElementById(fieldId);
+                if (element) {
+                    if (element.type === 'checkbox') {
+                        element.checked = value;
+                    } else {
+                        element.value = value;
+                    }
+                }
+            }
         } else {
-            title.textContent = 'Add Issue Type';
+            title.textContent = 'Add ' + config.entityName;
             submitBtn.textContent = 'Save';
             methodInput.value = 'POST';
-            form.action = '/masters/network-types';
+            form.action = '/masters/' + config.routePrefix;
         }
 
         modal.show();
     }
 
+    function openSectionModal(mode, id = null, name = '') {
+        openMasterModal({
+            mode: mode,
+            modalId: 'sectionModal',
+            formId: 'sectionForm',
+            titleId: 'sectionModalTitle',
+            submitBtnId: 'sectionSubmitBtn',
+            methodInputId: 'sectionFormMethod',
+            routePrefix: 'sections',
+            entityName: 'Section',
+            id: id,
+            fields: { section_name: name }
+        });
+    }
+
+    function openNetworkTypeModal(mode, id = null, name = '') {
+        openMasterModal({
+            mode: mode,
+            modalId: 'networkTypeModal',
+            formId: 'networkTypeForm',
+            titleId: 'networkTypeModalTitle',
+            submitBtnId: 'networkTypeSubmitBtn',
+            methodInputId: 'networkTypeFormMethod',
+            routePrefix: 'network-types',
+            entityName: 'Issue Type',
+            id: id,
+            fields: { network_type_name: name }
+        });
+    }
+
     function openRequestTypeModal(mode, id = null, name = '') {
-        const modal = new bootstrap.Modal(document.getElementById('requestTypeModal'));
-        const form = document.getElementById('requestTypeForm');
-        const title = document.getElementById('requestTypeModalTitle');
-        const submitBtn = document.getElementById('requestTypeSubmitBtn');
-        const methodInput = document.getElementById('requestTypeFormMethod');
-
-        form.reset();
-
-        if (mode === 'edit') {
-            title.textContent = 'Edit Request Type';
-            submitBtn.textContent = 'Update';
-            methodInput.value = 'PUT';
-            form.action = '/masters/request-types/' + id;
-            document.getElementById('request_type_name').value = name;
-        } else {
-            title.textContent = 'Add Request Type';
-            submitBtn.textContent = 'Save';
-            methodInput.value = 'POST';
-            form.action = '/masters/request-types';
-        }
-
-        modal.show();
+        openMasterModal({
+            mode: mode,
+            modalId: 'requestTypeModal',
+            formId: 'requestTypeForm',
+            titleId: 'requestTypeModalTitle',
+            submitBtnId: 'requestTypeSubmitBtn',
+            methodInputId: 'requestTypeFormMethod',
+            routePrefix: 'request-types',
+            entityName: 'Request Type',
+            id: id,
+            fields: { request_type_name: name }
+        });
     }
 </script>
 @endpush

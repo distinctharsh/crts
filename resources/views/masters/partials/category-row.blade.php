@@ -82,7 +82,7 @@
                         <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
                     </div>
                     <div class="modal-body text-start">
-                        <p class="mb-0 text-dark">Are you sure you want to delete <strong>{{ $category->name }}</strong>? Iske andar ke sabhi sub-categories bhi delete ho jayenge.</p>
+                        <p class="mb-0 text-dark">Are you sure you want to delete <strong>{{ $category->name }}</strong>? All sub-categories within this will also be deleted.</p>
                     </div>
                     <div class="modal-footer">
                         <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
