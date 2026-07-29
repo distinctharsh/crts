@@ -630,6 +630,10 @@ class ComplaintController extends Controller
         try {
             $user = Auth::user();
 
+            if (!$user) {
+                return is_null($request) || !$request->expectsJson() ? [] : response()->json([]);
+            }
+
             if (is_null($request) || (!$request->has('complaint_id') && !$request->has('vertical_id') && !$request->has('vertical_ids'))) {
                 $allVerticals = Vertical::all(['id', 'name', 'parent_id']);
                 $assignableUsersByVertical = [];
