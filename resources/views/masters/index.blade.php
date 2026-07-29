@@ -35,7 +35,7 @@
             <div class="card mb-4 shadow rounded-4 border-0">
                 <div class="card-header d-flex justify-content-between align-items-center bg-primary text-white rounded-top-4">
                     <h5 class="mb-0 fw-bold"><i class="fas fa-network-wired me-2"></i>Issue Types</h5>
-                    <button class="btn btn-light btn-sm fw-semibold px-3 py-1" data-bs-toggle="modal" data-bs-target="#addNetworkTypeModal"><i class="fas fa-plus"></i> </button>
+                    <button class="btn btn-light btn-sm fw-semibold px-3 py-1" onclick="openNetworkTypeModal('add')"><i class="fas fa-plus"></i> </button>
                 </div>
                 <div class="card-body p-0">
                     <div class="table-responsive">
@@ -64,38 +64,13 @@
                                             </button>
                                         </form>
                                     @else
-                                        <button class="btn btn-outline-primary btn-sm me-1" data-bs-toggle="tooltip" title="Edit" data-bs-target="#editNetworkTypeModal{{ $networkType->id }}" data-bs-toggle2="modal" onclick="$('#editNetworkTypeModal{{ $networkType->id }}').modal('show')"><i class="fas fa-pen"></i></button>
+                                        <button class="btn btn-outline-primary btn-sm me-1" data-bs-toggle="tooltip" title="Edit" onclick="openNetworkTypeModal('edit', {{ $networkType->id }}, '{{ $networkType->name }}')"><i class="fas fa-pen"></i></button>
                                         <button class="btn btn-outline-danger btn-sm" data-bs-toggle="tooltip" title="Delete" data-bs-target="#deleteNetworkTypeModal{{ $networkType->id }}" data-bs-toggle2="modal" onclick="$('#deleteNetworkTypeModal{{ $networkType->id }}').modal('show')"><i class="fas fa-trash"></i></button>
                                     @endif
                                 </td>
                             </tr>
                             
                             @if(!$networkType->trashed())
-                            <!-- Edit Modal for this NetworkType -->
-                            <div class="modal fade" id="editNetworkTypeModal{{ $networkType->id }}" tabindex="-1">
-                                <div class="modal-dialog">
-                                    <div class="modal-content rounded-4">
-                                        <form action="{{ route('masters.network-types.update', $networkType) }}" method="POST">
-                                            @csrf
-                                            @method('PUT')
-                                            <div class="modal-header bg-primary text-white rounded-top-4">
-                                                <h5 class="modal-title"><i class="fas fa-pen me-2"></i>Edit Network Type</h5>
-                                                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
-                                            </div>
-                                            <div class="modal-body">
-                                                <div class="mb-3">
-                                                    <label class="form-label">Name</label>
-                                                    <input type="text" name="name" class="form-control tom-select" value="{{ $networkType->name }}" required>
-                                                </div>
-                                            </div>
-                                            <div class="modal-footer">
-                                                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
-                                                <button type="submit" class="btn btn-primary">Update</button>
-                                            </div>
-                                        </form>
-                                    </div>
-                                </div>
-                            </div>
                             <!-- Delete Modal for this NetworkType -->
                             <div class="modal fade" id="deleteNetworkTypeModal{{ $networkType->id }}" tabindex="-1">
                                 <div class="modal-dialog modal-dialog-centered">
@@ -135,7 +110,7 @@
             <div class="card mb-4 shadow rounded-4 border-0">
                 <div class="card-header d-flex justify-content-between align-items-center bg-success text-white rounded-top-4">
                     <h5 class="mb-0 fw-bold"><i class="fas fa-layer-group me-2"></i>Sections</h5>
-                    <button class="btn btn-light btn-sm fw-semibold px-3 py-1" data-bs-toggle="modal" data-bs-target="#addSectionModal"><i class="fas fa-plus"></i> </button>
+                    <button class="btn btn-light btn-sm fw-semibold px-3 py-1" onclick="openSectionModal('add')"><i class="fas fa-plus"></i> </button>
                 </div>
                 <div class="card-body p-0">
                     <div class="table-responsive">
@@ -164,38 +139,13 @@
                                             </button>
                                         </form>
                                     @else
-                                        <button class="btn btn-outline-success btn-sm me-1" data-bs-toggle="tooltip" title="Edit" data-bs-target="#editSectionModal{{ $section->id }}" onclick="$('#editSectionModal{{ $section->id }}').modal('show')"><i class="fas fa-pen"></i></button>
+                                        <button class="btn btn-outline-success btn-sm me-1" data-bs-toggle="tooltip" title="Edit" onclick="openSectionModal('edit', {{ $section->id }}, '{{ $section->name }}')"><i class="fas fa-pen"></i></button>
                                         <button class="btn btn-outline-danger btn-sm" data-bs-toggle="tooltip" title="Delete" data-bs-target="#deleteSectionModal{{ $section->id }}" data-bs-toggle2="modal" onclick="$('#deleteSectionModal{{ $section->id }}').modal('show')"><i class="fas fa-trash"></i></button>
                                     @endif
                                 </td>
                             </tr>
                             
                             @if(!$section->trashed())
-                            <!-- Edit Modal for this Section -->
-                            <div class="modal fade" id="editSectionModal{{ $section->id }}" tabindex="-1">
-                                <div class="modal-dialog">
-                                    <div class="modal-content rounded-4">
-                                        <form action="{{ route('masters.sections.update', $section) }}" method="POST">
-                                            @csrf
-                                            @method('PUT')
-                                            <div class="modal-header bg-success text-white rounded-top-4">
-                                                <h5 class="modal-title"><i class="fas fa-pen me-2"></i>Edit Section</h5>
-                                                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
-                                            </div>
-                                            <div class="modal-body">
-                                                <div class="mb-3">
-                                                    <label class="form-label">Name</label>
-                                                    <input type="text" name="name" class="form-control tom-select" value="{{ $section->name }}" required>
-                                                </div>
-                                            </div>
-                                            <div class="modal-footer">
-                                                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
-                                                <button type="submit" class="btn btn-success">Update</button>
-                                            </div>
-                                        </form>
-                                    </div>
-                                </div>
-                            </div>
                             <!-- Delete Modal for this Section -->
                             <div class="modal fade" id="deleteSectionModal{{ $section->id }}" tabindex="-1">
                                 <div class="modal-dialog modal-dialog-centered">
@@ -350,7 +300,7 @@
             <div class="card mb-4 shadow rounded-4 border-0">
                 <div class="card-header d-flex justify-content-between align-items-center text-white rounded-top-4" style="background-color: #6f42c1;">
                     <h5 class="mb-0 fw-bold"><i class="fas fa-list-alt me-2"></i>Request Types</h5>
-                    <button class="btn btn-light btn-sm fw-semibold px-3 py-1" data-bs-toggle="modal" data-bs-target="#addRequestTypeModal"><i class="fas fa-plus"></i> </button>
+                    <button class="btn btn-light btn-sm fw-semibold px-3 py-1" onclick="openRequestTypeModal('add')"><i class="fas fa-plus"></i> </button>
                 </div>
                 <div class="card-body p-0">
                     <div class="table-responsive">
@@ -379,38 +329,13 @@
                                             </button>
                                         </form>
                                     @else
-                                        <button class="btn btn-outline-purple btn-sm me-1" style="color: #6f42c1; border-color: #6f42c1;" data-bs-toggle="tooltip" title="Edit" onclick="$('#editRequestTypeModal{{ $requestType->id }}').modal('show')"><i class="fas fa-pen"></i></button>
+                                        <button class="btn btn-outline-purple btn-sm me-1" style="color: #6f42c1; border-color: #6f42c1;" data-bs-toggle="tooltip" title="Edit" onclick="openRequestTypeModal('edit', {{ $requestType->id }}, '{{ $requestType->name }}')"><i class="fas fa-pen"></i></button>
                                         <button class="btn btn-outline-danger btn-sm" data-bs-toggle="tooltip" title="Delete" onclick="$('#deleteRequestTypeModal{{ $requestType->id }}').modal('show')"><i class="fas fa-trash"></i></button>
                                     @endif
                                 </td>
                             </tr>
                             
                             @if(!$requestType->trashed())
-                            <!-- Edit Modal -->
-                            <div class="modal fade" id="editRequestTypeModal{{ $requestType->id }}" tabindex="-1">
-                                <div class="modal-dialog">
-                                    <div class="modal-content rounded-4">
-                                        <form action="{{ route('masters.request-types.update', $requestType) }}" method="POST">
-                                            @csrf
-                                            @method('PUT')
-                                            <div class="modal-header text-white rounded-top-4" style="background-color: #6f42c1;">
-                                                <h5 class="modal-title"><i class="fas fa-pen me-2"></i>Edit Request Type</h5>
-                                                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
-                                            </div>
-                                            <div class="modal-body">
-                                                <div class="mb-3">
-                                                    <label class="form-label text-dark">Name</label>
-                                                    <input type="text" name="name" class="form-control" value="{{ $requestType->name }}" required>
-                                                </div>
-                                            </div>
-                                            <div class="modal-footer">
-                                                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
-                                                <button type="submit" class="btn text-white" style="background-color: #6f42c1;">Update</button>
-                                            </div>
-                                        </form>
-                                    </div>
-                                </div>
-                            </div>
                             <!-- Delete Modal -->
                             <div class="modal fade" id="deleteRequestTypeModal{{ $requestType->id }}" tabindex="-1">
                                 <div class="modal-dialog modal-dialog-centered">
@@ -447,92 +372,51 @@
         </div>
     </div>
 
-    <div class="modal fade" id="addNetworkTypeModal" tabindex="-1">
+    <!-- Network Type Modal -->
+    <div class="modal fade" id="networkTypeModal" tabindex="-1">
         <div class="modal-dialog">
             <div class="modal-content rounded-4">
-                <form action="{{ route('masters.network-types.store') }}" method="POST">
-                    @csrf
+                <form id="networkTypeForm" action="" method="POST">
+                    <input type="hidden" name="_token" value="{{ csrf_token() }}">
+                    <input type="hidden" name="_method" id="networkTypeFormMethod" value="POST">
                     <div class="modal-header bg-primary text-white rounded-top-4">
-                        <h5 class="modal-title"><i class="fas fa-plus me-2"></i>Add Network Type</h5>
+                        <h5 class="modal-title" id="networkTypeModalTitle">Add Issue Type</h5>
                         <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
                     </div>
                     <div class="modal-body">
                         <div class="mb-3">
-                            <label class="form-label">Name</label>
-                            <input type="text" name="name" class="form-control tom-select" required>
+                            <label class="form-label text-dark fw-bold">Name <span class="text-danger">*</span></label>
+                            <input type="text" id="network_type_name" name="name" class="form-control" required>
                         </div>
                     </div>
                     <div class="modal-footer">
                         <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
-                        <button type="submit" class="btn btn-primary">Save</button>
+                        <button type="submit" class="btn btn-primary" id="networkTypeSubmitBtn">Save</button>
                     </div>
                 </form>
             </div>
         </div>
     </div>
-    <div class="modal fade" id="editNetworkTypeModal" tabindex="-1">
+    <!-- Section Modal -->
+    <div class="modal fade" id="sectionModal" tabindex="-1">
         <div class="modal-dialog">
-            <div class="modal-content">
-                <form>
-                    <div class="modal-header">
-                        <h5 class="modal-title">Edit Network Type</h5>
-                        <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            <div class="modal-content rounded-4">
+                <form id="sectionForm" action="" method="POST">
+                    <input type="hidden" name="_token" value="{{ csrf_token() }}">
+                    <input type="hidden" name="_method" id="sectionFormMethod" value="POST">
+                    <div class="modal-header bg-success text-white rounded-top-4">
+                        <h5 class="modal-title" id="sectionModalTitle">Add Section</h5>
+                        <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
                     </div>
                     <div class="modal-body">
                         <div class="mb-3">
-                            <label class="form-label">Name</label>
-                            <input type="text" class="form-control tom-select" required>
+                            <label class="form-label text-dark fw-bold">Name <span class="text-danger">*</span></label>
+                            <input type="text" id="section_name" name="name" class="form-control" required>
                         </div>
                     </div>
                     <div class="modal-footer">
                         <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
-                        <button type="submit" class="btn btn-primary">Update</button>
-                    </div>
-                </form>
-            </div>
-        </div>
-    </div>
-    <!-- Section Modals -->
-    <div class="modal fade" id="addSectionModal" tabindex="-1">
-        <div class="modal-dialog">
-            <div class="modal-content">
-                  <form action="{{ route('masters.sections.store') }}" method="POST">
-                    @csrf
-                    <div class="modal-header">
-                        <h5 class="modal-title">Add Section</h5>
-                        <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
-                    </div>
-                    <div class="modal-body">
-                        <div class="mb-3">
-                            <label class="form-label">Name</label>
-                            <input type="text" name="name" class="form-control tom-select" required>
-                        </div>
-                    </div>
-                    <div class="modal-footer">
-                        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
-                        <button type="submit" class="btn btn-primary">Save</button>
-                    </div>
-                </form>
-            </div>
-        </div>
-    </div>
-    <div class="modal fade" id="editSectionModal" tabindex="-1">
-        <div class="modal-dialog">
-            <div class="modal-content">
-                <form>
-                    <div class="modal-header">
-                        <h5 class="modal-title">Edit Section</h5>
-                        <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
-                    </div>
-                    <div class="modal-body">
-                        <div class="mb-3">
-                            <label class="form-label">Name</label>
-                            <input type="text" class="form-control tom-select" required>
-                        </div>
-                    </div>
-                    <div class="modal-footer">
-                        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
-                        <button type="submit" class="btn btn-primary">Update</button>
+                        <button type="submit" class="btn btn-success" id="sectionSubmitBtn">Save</button>
                     </div>
                 </form>
             </div>
@@ -707,25 +591,26 @@
             </div>
         </div>
     </div>
-    <!-- Add Request Type Modal -->
-    <div class="modal fade" id="addRequestTypeModal" tabindex="-1">
+    <!-- Request Type Modal -->
+    <div class="modal fade" id="requestTypeModal" tabindex="-1">
         <div class="modal-dialog">
             <div class="modal-content rounded-4">
-                <form action="{{ route('masters.request-types.store') }}" method="POST">
-                    @csrf
+                <form id="requestTypeForm" action="" method="POST">
+                    <input type="hidden" name="_token" value="{{ csrf_token() }}">
+                    <input type="hidden" name="_method" id="requestTypeFormMethod" value="POST">
                     <div class="modal-header text-white rounded-top-4" style="background-color: #6f42c1;">
-                        <h5 class="modal-title"><i class="fas fa-plus me-2"></i>Add Request Type</h5>
+                        <h5 class="modal-title" id="requestTypeModalTitle">Add Request Type</h5>
                         <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
                     </div>
                     <div class="modal-body">
                         <div class="mb-3">
-                            <label class="form-label">Name</label>
-                            <input type="text" name="name" class="form-control" required placeholder="e.g., Incident, Service Request">
+                            <label class="form-label text-dark fw-bold">Name <span class="text-danger">*</span></label>
+                            <input type="text" id="request_type_name" name="name" class="form-control" required placeholder="e.g., Incident, Service Request">
                         </div>
                     </div>
                     <div class="modal-footer">
                         <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
-                        <button type="submit" class="btn text-white" style="background-color: #6f42c1;">Save</button>
+                        <button type="submit" class="btn text-white" style="background-color: #6f42c1;" id="requestTypeSubmitBtn">Save</button>
                     </div>
                 </form>
             </div>
@@ -837,6 +722,81 @@
             methodInput.value = 'POST';
             form.action = '/masters/statuses';
             document.getElementById('status_visible_to_user').checked = true;
+        }
+
+        modal.show();
+    }
+
+    function openSectionModal(mode, id = null, name = '') {
+        const modal = new bootstrap.Modal(document.getElementById('sectionModal'));
+        const form = document.getElementById('sectionForm');
+        const title = document.getElementById('sectionModalTitle');
+        const submitBtn = document.getElementById('sectionSubmitBtn');
+        const methodInput = document.getElementById('sectionFormMethod');
+
+        form.reset();
+
+        if (mode === 'edit') {
+            title.textContent = 'Edit Section';
+            submitBtn.textContent = 'Update';
+            methodInput.value = 'PUT';
+            form.action = '/masters/sections/' + id;
+            document.getElementById('section_name').value = name;
+        } else {
+            title.textContent = 'Add Section';
+            submitBtn.textContent = 'Save';
+            methodInput.value = 'POST';
+            form.action = '/masters/sections';
+        }
+
+        modal.show();
+    }
+
+    function openNetworkTypeModal(mode, id = null, name = '') {
+        const modal = new bootstrap.Modal(document.getElementById('networkTypeModal'));
+        const form = document.getElementById('networkTypeForm');
+        const title = document.getElementById('networkTypeModalTitle');
+        const submitBtn = document.getElementById('networkTypeSubmitBtn');
+        const methodInput = document.getElementById('networkTypeFormMethod');
+
+        form.reset();
+
+        if (mode === 'edit') {
+            title.textContent = 'Edit Issue Type';
+            submitBtn.textContent = 'Update';
+            methodInput.value = 'PUT';
+            form.action = '/masters/network-types/' + id;
+            document.getElementById('network_type_name').value = name;
+        } else {
+            title.textContent = 'Add Issue Type';
+            submitBtn.textContent = 'Save';
+            methodInput.value = 'POST';
+            form.action = '/masters/network-types';
+        }
+
+        modal.show();
+    }
+
+    function openRequestTypeModal(mode, id = null, name = '') {
+        const modal = new bootstrap.Modal(document.getElementById('requestTypeModal'));
+        const form = document.getElementById('requestTypeForm');
+        const title = document.getElementById('requestTypeModalTitle');
+        const submitBtn = document.getElementById('requestTypeSubmitBtn');
+        const methodInput = document.getElementById('requestTypeFormMethod');
+
+        form.reset();
+
+        if (mode === 'edit') {
+            title.textContent = 'Edit Request Type';
+            submitBtn.textContent = 'Update';
+            methodInput.value = 'PUT';
+            form.action = '/masters/request-types/' + id;
+            document.getElementById('request_type_name').value = name;
+        } else {
+            title.textContent = 'Add Request Type';
+            submitBtn.textContent = 'Save';
+            methodInput.value = 'POST';
+            form.action = '/masters/request-types';
         }
 
         modal.show();
