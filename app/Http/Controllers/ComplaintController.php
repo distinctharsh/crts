@@ -35,19 +35,28 @@ class ComplaintController extends Controller
     {
         try {
             $user = Auth::user();
-            $query = Complaint::query()->with(['client', 'assignedTo', 'networkType', 'vertical', 'status', 'section', 'requestType']);
+            $query = Complaint::query()->with([
+                'client', 
+                'assignedTo', 
+                'networkType' => fn($q) => $q->withTrashed(), 
+                'vertical' => fn($q) => $q->withTrashed(), 
+                'status' => fn($q) => $q->withTrashed(), 
+                'section' => fn($q) => $q->withTrashed(), 
+                'requestType' => fn($q) => $q->withTrashed()
+            ]);
+
             if ($user) {
                 if ($user->isManager()) {
-                    $activeStatusIds = Status::whereIn('name', [
+                    $activeStatusIds = Status::withTrashed()->whereIn('name', [
                         'unassigned', 'assigned', 'pending_with_vendor', 'pending_with_user', 'assign_to_me', 'completed', 'closed', 'in_progress'
                     ])->pluck('id');
                     $query->whereIn('status_id', $activeStatusIds);
                 } elseif ($user->isVM()) {
                     $userVerticalIds = $user->verticals->pluck('id')->toArray();
-                    $allSubVerticalIds = Vertical::whereIn('parent_id', $userVerticalIds)->pluck('id')->toArray();
+                    $allSubVerticalIds = Vertical::withTrashed()->whereIn('parent_id', $userVerticalIds)->pluck('id')->toArray();
                     $allGrandChildIds = [];
                     if (!empty($allSubVerticalIds)) {
-                        $allGrandChildIds = Vertical::whereIn('parent_id', $allSubVerticalIds)->pluck('id')->toArray();
+                        $allGrandChildIds = Vertical::withTrashed()->whereIn('parent_id', $allSubVerticalIds)->pluck('id')->toArray();
                     }
                     $allAllowedVerticalIds = array_unique(array_merge($userVerticalIds, $allSubVerticalIds, $allGrandChildIds));
                     $query->whereIn('vertical_id', $allAllowedVerticalIds);
@@ -78,10 +87,10 @@ class ComplaintController extends Controller
                 foreach ($searchByVerticalId as $vId) {
                     if (empty($vId)) continue;
                     $allVerticalIdsToSearch[] = (int) $vId;
-                    $childIds = Vertical::where('parent_id', $vId)->pluck('id')->toArray();
+                    $childIds = Vertical::withTrashed()->where('parent_id', $vId)->pluck('id')->toArray();
                     if (!empty($childIds)) {
                         $allVerticalIdsToSearch = array_merge($allVerticalIdsToSearch, $childIds);
-                        $grandChildIds = Vertical::whereIn('parent_id', $childIds)->pluck('id')->toArray();
+                        $grandChildIds = Vertical::withTrashed()->whereIn('parent_id', $childIds)->pluck('id')->toArray();
                         if (!empty($grandChildIds)) {
                             $allVerticalIdsToSearch = array_merge($allVerticalIdsToSearch, $grandChildIds);
                         }
@@ -112,7 +121,7 @@ class ComplaintController extends Controller
             }
             if (request('assigned_to_me') == '1') {
                 $query->where('assigned_to', $user->id);
-                $excludedStatuses = Status::whereIn('name', ['closed', 'completed'])->pluck('id');
+                $excludedStatuses = Status::withTrashed()->whereIn('name', ['closed', 'completed'])->pluck('id');
                 if ($excludedStatuses->isNotEmpty()) {
                     $query->whereNotIn('status_id', $excludedStatuses);
                 }
@@ -120,19 +129,20 @@ class ComplaintController extends Controller
             if ($request->filled('unassigned') && $request->input('unassigned') == '1') {
                 $query->whereNull('assigned_to');
             }
-            $managers = User::whereHas('role', function ($q) {
+            $managers = User::withTrashed()->whereHas('role', function ($q) {
                 $q->where('slug', 'manager');
             })->get();
-            $statuses = Status::query()->ordered()->where('name', '!=', 'assign_to_me')->get();
+            $statuses = Status::withTrashed()->ordered()->where('name', '!=', 'assign_to_me')->get();
             $complaints = $query->latest()->get();
             foreach ($complaints as $complaint) {
                 $complaint->assignableUsers = $user->getAssignableUsers($complaint);
             }
-            $verticals = Vertical::with('parent')->get()->sortBy(function($vertical) {
+            $verticals = Vertical::withTrashed()->with(['parent' => fn($q) => $q->withTrashed()])->get()->sortBy(function($vertical) {
                 return $vertical->full_path ?? $vertical->name;
             });
-            $usersList = User::with('role')
-                ->select('users.id', 'users.full_name')
+            $usersList = User::withTrashed()
+                ->with(['role' => fn($q) => $q->withTrashed()])
+                ->select('users.id', 'users.full_name', 'users.deleted_at')
                 ->join('roles', 'roles.id', '=', 'users.role_id')
                 ->orderByRaw("
                     CASE 
@@ -144,10 +154,10 @@ class ComplaintController extends Controller
                 ")
                 ->orderBy('users.full_name')
                 ->get();
-            $networkTypes = NetworkType::get();
-            $sections = Section::get();
-            $closeStatus = Status::where('name', 'closed')->first();
-            $requestTypes = RequestType::all();
+            $networkTypes = NetworkType::withTrashed()->get();
+            $sections = Section::withTrashed()->get();
+            $closeStatus = Status::withTrashed()->where('name', 'closed')->first();
+            $requestTypes = RequestType::withTrashed()->get();
             return view('complaints.index', compact('complaints', 'usersList', 'managers', 'statuses', 'networkTypes', 'sections', 'verticals', 'closeStatus', 'requestTypes'));
         } catch (\Exception $e) {
             \Log::error('Complaint index error: ' . $e->getMessage());

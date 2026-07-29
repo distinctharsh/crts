@@ -14,7 +14,7 @@ class Vertical extends Model
 
     public static function getNameById($id)
     {
-        return static::find($id)->name ?? null;
+        return static::withTrashed()->find($id)->name ?? null;
     }
 
     public function complaints()
@@ -36,12 +36,12 @@ class Vertical extends Model
 
     public function parent()
     {
-        return $this->belongsTo(Vertical::class, 'parent_id');
+        return $this->belongsTo(Vertical::class, 'parent_id')->withTrashed();
     }
 
     public function children()
     {
-        return $this->hasMany(Vertical::class, 'parent_id')->with('children');
+        return $this->hasMany(Vertical::class, 'parent_id')->withTrashed()->with('children');
     }
 
     /**
@@ -93,9 +93,9 @@ class Vertical extends Model
     {
         $depth = 0;
         $current = $this;
-        while ($current->relationLoaded('parent') ? $current->parent : $current->parent()->first()) {
+        while ($current->parent) {
             $depth++;
-            $current = $current->relationLoaded('parent') ? $current->parent : $current->parent()->first();
+            $current = $current->parent;
         }
         return $depth;
     }
