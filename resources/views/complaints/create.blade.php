@@ -382,8 +382,8 @@ document.addEventListener('DOMContentLoaded', async () => {
 
                 const selectHtml = `
                     <div class="col-md-4 mb-3 hierarchy-wrapper">
-                        <label class="form-label">${labelText}</label>
-                        <select class="form-select hierarchy-select" data-level="${nextLevel}">
+                        <label class="form-label">${labelText} <span class="text-danger">*</span></label>
+                        <select class="form-select hierarchy-select" data-level="${nextLevel}" required>
                             <option value="">Select ${labelText}</option>
                             ${children.map(child => `<option value="${child.id}">${child.name}</option>`).join('')}
                         </select>
@@ -453,8 +453,8 @@ document.addEventListener('DOMContentLoaded', async () => {
 
                     const selectHtml = `
                         <div class="col-md-4 mb-3 hierarchy-wrapper">
-                            <label class="form-label">${labelText}</label>
-                            <select class="form-select hierarchy-select" data-level="${currentLevel}">
+                            <label class="form-label">${labelText} <span class="text-danger">*</span></label>
+                            <select class="form-select hierarchy-select" data-level="${currentLevel}" required>
                                 <option value="">Select ${labelText}</option>
                                 ${children.map(child => `<option value="${child.id}">${child.name}</option>`).join('')}
                             </select>
@@ -480,8 +480,8 @@ document.addEventListener('DOMContentLoaded', async () => {
 
                 const selectHtml = `
                     <div class="col-md-4 mb-3 hierarchy-wrapper">
-                        <label class="form-label">${labelText}</label>
-                        <select class="form-select hierarchy-select" data-level="${currentLevel}">
+                        <label class="form-label">${labelText} <span class="text-danger">*</span></label>
+                        <select class="form-select hierarchy-select" data-level="${currentLevel}" required>
                             <option value="">Select ${labelText}</option>
                             ${children.map(child => `<option value="${child.id}">${child.name}</option>`).join('')}
                         </select>

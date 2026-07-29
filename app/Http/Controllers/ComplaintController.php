@@ -465,23 +465,6 @@ class ComplaintController extends Controller
             ]);
 
             $assignee = User::findOrFail($validated['assigned_to']);
-
-            // Check if the assignee has the correct role based on the current user's role
-            if ($user->isManager()) {
-                if (!$assignee->isVM() && !$assignee->isNFO()) {
-                    abort(403, 'Managers can only assign to VMs or NFOs.');
-                }
-            } elseif ($user->isVM()) {
-                if (!$assignee->isNFO() && $assignee->id !== $user->id) {
-                    abort(403, 'VMs can only self-assign or assign to NFOs.');
-                }
-            } elseif ($user->isNFO()) {
-                if (!$assignee->isNFO() && !$assignee->isVM()) {
-                    abort(403, 'NFOs can only assign to other NFOs or VMs.');
-                }
-            }
-
-            // Get assigned status
             $assignedStatus = Status::where('name', 'assigned')->first();
 
             $complaint->update([
@@ -490,28 +473,25 @@ class ComplaintController extends Controller
                 'status_id' => $assignedStatus->id
             ]);
 
-            // Create action record
             ComplaintAction::create([
                 'complaint_id' => $complaint->id,
                 'user_id' => $user->id,
-                'assigned_to' => $validated['assigned_to'], // <-- add this line
+                'assigned_to' => $validated['assigned_to'],
                 'status_id' => $assignedStatus->id,
                 'description' => $validated['description']
             ]);
 
-            // Send email notification to assigned user with managers and VMs in CC
             try {
                 $notificationService = new ComplaintNotificationService();
                 $notificationService->sendAssignedComplaintNotifications($complaint);
             } catch (\Exception $e) {
                 \Log::error('Email notification failed: ' . $e->getMessage());
-                // Continue with redirect even if email fails
             }
 
             $previousUrl = url()->previous();
             $dashboardUrl = route('dashboard');
 
-            if ($request->ajax() || $request->wantsJson()) {
+            if ($request->ajax() || $request->wantsJson() || $request->expectsJson()) {
                 $complaint->load(['assignedTo', 'status']);
                 return response()->json([
                     'success' => true,
@@ -652,43 +632,19 @@ class ComplaintController extends Controller
 
             if (is_null($request) || (!$request->has('complaint_id') && !$request->has('vertical_id') && !$request->has('vertical_ids'))) {
                 $allVerticals = Vertical::all(['id', 'name', 'parent_id']);
-                $users = User::with(['role', 'verticals'])->get(['id', 'full_name', 'role_id']);
                 $assignableUsersByVertical = [];
 
-                $addUserToVertical = function($vId, $usr) use (&$assignableUsersByVertical) {
-                    if (!isset($assignableUsersByVertical[$vId])) {
-                        $assignableUsersByVertical[$vId] = [];
-                    }
-                    $exists = collect($assignableUsersByVertical[$vId])->contains('id', $usr->id);
-                    if (!$exists) {
-                        $assignableUsersByVertical[$vId][] = [
+                foreach ($allVerticals as $vertical) {
+                    $tempComplaint = new \App\Models\Complaint();
+                    $tempComplaint->vertical_id = $vertical->id;
+                    $assignableUsers = $user->getAssignableUsers($tempComplaint, $vertical->id);
+                    $assignableUsersByVertical[$vertical->id] = $assignableUsers->map(function($usr) {
+                        return [
                             'id' => $usr->id,
                             'full_name' => $usr->full_name,
                             'role' => ['name' => $usr->role ? $usr->role->name : '']
                         ];
-                    }
-                };
-
-                foreach ($users as $usr) {
-                    if ($usr->isManager()) {
-                        foreach ($allVerticals as $v) {
-                            $addUserToVertical($v->id, $usr);
-                        }
-                    } elseif ($usr->role && ($usr->isVM() || $usr->isNFO())) {
-                        foreach ($usr->verticals as $vertical) {
-                            $addUserToVertical($vertical->id, $usr);
-
-                            $ancestors = $vertical->ancestors ?? collect();
-                            foreach ($ancestors as $ancestor) {
-                                $addUserToVertical($ancestor->id, $usr);
-                            }
-
-                            $children = $allVerticals->where('parent_id', $vertical->id);
-                            foreach ($children as $child) {
-                                $addUserToVertical($child->id, $usr);
-                            }
-                        }
-                    }
+                    })->toArray();
                 }
 
                 return $assignableUsersByVertical;
