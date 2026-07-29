@@ -14,24 +14,24 @@
     <h2 class="fw-bold mb-4 text-center">Master Management</h2>
     <ul class="nav nav-tabs mb-3" id="masterTabs" role="tablist">
         <li class="nav-item" role="presentation">
-            <button class="nav-link active" id="network-types-tab" data-bs-toggle="tab" data-bs-target="#network-types" type="button" role="tab">Issue Types</button>
+            <button class="nav-link" id="network-types-tab" data-bs-toggle="tab" data-bs-target="#network-types" type="button" role="tab" onclick="saveActiveTab('network-types')">Issue Types</button>
         </li>
         <li class="nav-item" role="presentation">
-            <button class="nav-link" id="sections-tab" data-bs-toggle="tab" data-bs-target="#sections" type="button" role="tab">Sections</button>
+            <button class="nav-link" id="sections-tab" data-bs-toggle="tab" data-bs-target="#sections" type="button" role="tab" onclick="saveActiveTab('sections')">Sections</button>
         </li>
         <li class="nav-item" role="presentation">
-            <button class="nav-link" id="statuses-tab" data-bs-toggle="tab" data-bs-target="#statuses" type="button" role="tab">Status</button>
+            <button class="nav-link" id="statuses-tab" data-bs-toggle="tab" data-bs-target="#statuses" type="button" role="tab" onclick="saveActiveTab('statuses')">Status</button>
         </li>
         <li class="nav-item" role="presentation">
-            <button class="nav-link" id="verticals-tab" data-bs-toggle="tab" data-bs-target="#verticals" type="button" role="tab">Category</button>
+            <button class="nav-link" id="verticals-tab" data-bs-toggle="tab" data-bs-target="#verticals" type="button" role="tab" onclick="saveActiveTab('verticals')">Category</button>
         </li>
         <li class="nav-item" role="presentation">
-            <button class="nav-link" id="request-types-tab" data-bs-toggle="tab" data-bs-target="#request-types" type="button" role="tab">Request Types</button>
+            <button class="nav-link" id="request-types-tab" data-bs-toggle="tab" data-bs-target="#request-types" type="button" role="tab" onclick="saveActiveTab('request-types')">Request Types</button>
         </li>
     </ul>
     <div class="tab-content" id="masterTabsContent">
         <!-- Network Types Tab -->
-        <div class="tab-pane fade show active" id="network-types" role="tabpanel">
+        <div class="tab-pane fade" id="network-types" role="tabpanel">
             <div class="card mb-4 shadow rounded-4 border-0">
                 <div class="card-header d-flex justify-content-between align-items-center bg-primary text-white rounded-top-4">
                     <h5 class="mb-0 fw-bold"><i class="fas fa-network-wired me-2"></i>Issue Types</h5>
@@ -620,8 +620,30 @@
 
 @push('scripts')
 <script>
-    // Enable Bootstrap tooltips
+    function saveActiveTab(tabId) {
+        localStorage.setItem('activeMasterTab', tabId);
+    }
+
     document.addEventListener('DOMContentLoaded', function() {
+        const savedTab = localStorage.getItem('activeMasterTab');
+        if (savedTab) {
+            const tabButton = document.querySelector(`[data-bs-target="#${savedTab}"]`);
+            const tabPane = document.getElementById(savedTab);
+            
+            if (tabButton && tabPane) {
+                document.querySelectorAll('.nav-link').forEach(btn => btn.classList.remove('active'));
+                document.querySelectorAll('.tab-pane').forEach(pane => {
+                    pane.classList.remove('show', 'active');
+                });
+                
+                tabButton.classList.add('active');
+                tabPane.classList.add('show', 'active');
+            }
+        } else {
+            document.getElementById('network-types-tab').classList.add('active');
+            document.getElementById('network-types').classList.add('show', 'active');
+        }
+
         var tooltipTriggerList = [].slice.call(document.querySelectorAll('[data-bs-toggle="tooltip"]'));
         tooltipTriggerList.forEach(function (tooltipTriggerEl) {
             new bootstrap.Tooltip(tooltipTriggerEl);
