@@ -362,7 +362,7 @@
             <div class="card mb-4 shadow rounded-4 border-0">
                 <div class="card-header d-flex justify-content-between align-items-center bg-warning text-dark rounded-top-4">
                     <h5 class="mb-0 fw-bold"><i class="fas fa-building me-2"></i>Category</h5>
-                    <button class="btn btn-light btn-sm fw-semibold px-3 py-1" data-bs-toggle="modal" data-bs-target="#addVerticalModal"><i class="fas fa-plus"></i> </button>
+                    <button class="btn btn-light btn-sm fw-semibold px-3 py-1" onclick="openCategoryModal('add')"><i class="fas fa-plus"></i> </button>
                 </div>
                 <div class="card-body p-0">
                     <div class="table-responsive">
@@ -380,7 +380,8 @@
                         <tbody>
                             @include('masters.partials.category-row', [
                                 'categories' => $verticals,
-                                'level' => 0
+                                'level' => 0,
+                                'assignableUsers' => $assignableUsers
                             ])
                         </tbody>
                     </table>
@@ -651,41 +652,48 @@
         </div>
     </div>
     <!-- Vertical Modals -->
-    <div class="modal fade" id="addVerticalModal" tabindex="-1">
+    <div class="modal fade" id="categoryModal" tabindex="-1">
         <div class="modal-dialog">
-            <div class="modal-content">
-                <form action="{{ route('masters.verticals.store') }}" method="POST">
-                    @csrf
+            <div class="modal-content rounded-4">
+                <form id="categoryForm" action="" method="POST">
+                    <input type="hidden" name="_token" value="{{ csrf_token() }}">
+                    <input type="hidden" name="_method" id="categoryFormMethod" value="POST">
                     <div class="modal-header bg-warning text-dark rounded-top-4">
-                        <h5 class="modal-title">Add Category</h5>
+                        <h5 class="modal-title" id="categoryModalTitle">Add Category</h5>
                         <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
                     </div>
                     <div class="modal-body">
                         <div class="mb-3">
                             <label class="form-label text-dark fw-bold">Name <span class="text-danger">*</span></label>
-                            <input type="text" name="name" class="form-control tom-select" required>
+                            <input type="text" id="category_name" name="name" class="form-control" required>
                         </div>
                         <div class="mb-3">
                             <label class="form-label text-dark fw-bold">Short Form</label>
-                            <input type="text" name="short_form" class="form-control" placeholder="e.g., CS for Cyber Security" maxlength="10">
+                            <input type="text" id="category_short_form" name="short_form" class="form-control" placeholder="e.g., CS for Cyber Security" maxlength="10">
                             <small class="text-muted">Used for ticket reference number generation (e.g., CS-20260525001)</small>
                         </div>
                         @if(isset($allVerticals))
                         <div class="mb-3">
-                            <label id="parent_id_label" for="parent_id" class="form-label text-dark fw-bold">Select Parent (Optional)</label>
-                            <select class="form-select tom-select @error('parent_id') is-invalid @enderror"
-                                id="parent_id" name="parent_id">
+                            <label for="category_parent_id" class="form-label text-dark fw-bold">Select Parent (Optional)</label>
+                            <select class="form-select" id="category_parent_id" name="parent_id">
                                 <option value="">None (Make it a Main Category)</option>
+                            @php
+                                function getVerticalHierarchy($vertical) {
+                                    $path = [];
+                                    $current = $vertical;
+                                    while($current) {
+                                        array_unshift($path, $current->name);
+                                        $current = $current->parent;
+                                    }
+                                    return implode(' → ', $path);
+                                }
+                            @endphp
                             @foreach($allVerticals as $vertical)
                                     <option value="{{ $vertical->id }}">
-                                        {{ $vertical->parent ? $vertical->parent->name . ' → ' : '' }}
-                                        {{ $vertical->name }}
+                                        {{ getVerticalHierarchy($vertical) }}
                                     </option>
                                 @endforeach
                             </select>
-                            @error('parent_id')
-                            <div class="invalid-feedback">{{ $message }}</div>
-                            @enderror
                         </div>
                         @endif
 
@@ -693,37 +701,37 @@
                             <label class="form-label text-dark fw-bold">
                                 Assigned User(s) <span class="text-danger">*</span>
                             </label>
-                            <div class="border rounded p-2 bg-light" style="max-height: 160px; overflow-y: auto;" id="addCategoryUsersGroup">
+                            <div class="border rounded p-2 bg-light" style="max-height: 160px; overflow-y: auto;" id="categoryUsersGroup">
                                 @foreach($assignableUsers as $user)
                                     <div class="form-check">
-                                        <input class="form-check-input add-user-checkbox" 
+                                        <input class="form-check-input category-user-checkbox" 
                                             type="checkbox" 
                                             name="user_ids[]" 
                                             value="{{ $user->id }}" 
-                                            id="add_user_{{ $user->id }}"
-                                            required>
-                                        <label class="form-check-label text-dark" for="add_user_{{ $user->id }}">
+                                            id="category_user_{{ $user->id }}"
+                                            data-user-name="{{ $user->full_name ?? $user->name }}"
+                                            data-user-role="{{ strtoupper($user->role->slug ?? 'USER') }}">
+                                        <label class="form-check-label text-dark" for="category_user_{{ $user->id }}">
                                             {{ $user->full_name ?? $user->name }} ({{ strtoupper($user->role->slug ?? 'USER') }})
                                         </label>
                                     </div>
                                 @endforeach
                             </div>
-                            <div class="invalid-feedback d-none id="add_user_error" style="display: block; color: #dc3545;">
+                            <div id="category_user_error" class="text-danger" style="display: none;">
                                 Please select at least one assigned user.
                             </div>
                         </div>
 
-                    
                         <div class="form-check mb-3">
-                            <input class="form-check-input" type="checkbox" name="send_email" id="send_email_new" value="1" checked>
-                            <label class="form-check-label" for="send_email_new">
+                            <input class="form-check-input" type="checkbox" name="send_email" id="category_send_email" value="1" checked>
+                            <label class="form-check-label text-dark" for="category_send_email">
                                 Send email notifications for this category?
                             </label>
                         </div>
                     </div>
                     <div class="modal-footer">
                         <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
-                        <button type="submit" class="btn btn-warning text-dark fw-bold">Save</button>
+                        <button type="submit" class="btn btn-warning text-dark fw-bold" id="categorySubmitBtn">Save</button>
                     </div>
                 </form>
             </div>
@@ -814,20 +822,66 @@
             });
         });
 
-        const addUserCheckboxes = document.querySelectorAll('.add-user-checkbox');
-        function validateUserCheckboxes() {
-            const isChecked = Array.from(addUserCheckboxes).some(cb => cb.checked);
-            addUserCheckboxes.forEach(cb => {
+        const categoryUserCheckboxes = document.querySelectorAll('.category-user-checkbox');
+        function validateCategoryUserCheckboxes() {
+            const isChecked = Array.from(categoryUserCheckboxes).some(cb => cb.checked);
+            const errorDiv = document.getElementById('category_user_error');
+            if (!isChecked) {
+                errorDiv.style.display = 'block';
+            } else {
+                errorDiv.style.display = 'none';
+            }
+            categoryUserCheckboxes.forEach(cb => {
                 cb.required = !isChecked;
             });
         }
 
-        addUserCheckboxes.forEach(cb => {
-            cb.addEventListener('change', validateUserCheckboxes);
+        categoryUserCheckboxes.forEach(cb => {
+            cb.addEventListener('change', validateCategoryUserCheckboxes);
         });
 
-        validateUserCheckboxes();
+        validateCategoryUserCheckboxes();
     });
+
+    function openCategoryModal(mode, id = null, name = '', shortForm = '', parentId = '', sendEmail = false, userIds = []) {
+        const modal = new bootstrap.Modal(document.getElementById('categoryModal'));
+        const form = document.getElementById('categoryForm');
+        const title = document.getElementById('categoryModalTitle');
+        const submitBtn = document.getElementById('categorySubmitBtn');
+        const methodInput = document.getElementById('categoryFormMethod');
+
+        form.reset();
+        document.getElementById('category_user_error').style.display = 'none';
+        document.querySelectorAll('.category-user-checkbox').forEach(cb => {
+            cb.checked = false;
+            cb.required = false;
+        });
+
+        if (mode === 'edit') {
+            title.textContent = 'Edit Category';
+            submitBtn.textContent = 'Update';
+            methodInput.value = 'PUT';
+            form.action = '/masters/verticals/' + id;
+            document.getElementById('category_name').value = name;
+            document.getElementById('category_short_form').value = shortForm;
+            document.getElementById('category_parent_id').value = parentId;
+            document.getElementById('category_send_email').checked = sendEmail;
+            userIds.forEach(userId => {
+                const checkbox = document.getElementById('category_user_' + userId);
+                if (checkbox) {
+                    checkbox.checked = true;
+                }
+            });
+        } else {
+            title.textContent = 'Add Category';
+            submitBtn.textContent = 'Save';
+            methodInput.value = 'POST';
+            form.action = '/masters/verticals';
+            document.getElementById('category_send_email').checked = true;
+        }
+
+        modal.show();
+    }
 </script>
 @endpush
 @endsection 
