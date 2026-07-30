@@ -26,11 +26,11 @@
         @endif
         @auth
         <li class="nav-item mt-1">
-          <a class="nav-link {{ request()->routeIs('dashboard') ? 'active fw-bold text-primary' : '' }}" href="{{ route('dashboard') }}">Dashboard</a>
+          <a class="nav-link {{ request()->routeIs('dashboard') ? 'active fw-bold text-primary' : '' }}" href="{{ route('dashboard') }}">Daily Dashboard</a>
         </li>
 
         <li class="nav-item mt-1">
-          <a class="nav-link {{ request()->routeIs('complaints.index') ? 'active fw-bold text-primary' : '' }}" href="{{ route('complaints.index') }}">Tickets</a>
+          <a class="nav-link {{ request()->routeIs('complaints.index') ? 'active fw-bold text-primary' : '' }}" href="{{ route('complaints.index') }}">Ticket History</a>
         </li>
 
 

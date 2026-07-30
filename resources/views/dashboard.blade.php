@@ -6,7 +6,7 @@
         <div class="col-md-12">
             <div class="card">
                 <div class="card-header d-flex justify-content-between align-items-center">
-                    <h4 class="mb-0">Dashboard</h4>
+                    <h4 class="mb-0">Daily Dashboard</h4>
                     <!-- <div>
                         @if(auth()->user()->isManager() || auth()->user()->isVM())
                         <a href="{{ route('complaints.index') }}" class="btn btn-primary">View All Complaints</a>

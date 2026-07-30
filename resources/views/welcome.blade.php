@@ -266,7 +266,7 @@
             <p class="lead mb-4 text-home">Generate your ticket and track their progress easily</p>
             <div class="d-flex justify-content-center gap-3 flex-wrap">
                 @auth
-                <a href="{{ route('dashboard') }}" class="btn btn-outline-light btn-lg text-home-btn">Dashboard</a>
+                <a href="{{ route('dashboard') }}" class="btn btn-outline-light btn-lg text-home-btn">Daily Dashboard</a>
                 @endauth
                 
                 <a href="{{ route('complaints.create') }}" class="btn btn-light btn-lg text-home-btn">Create Ticket</a>

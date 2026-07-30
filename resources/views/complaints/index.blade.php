@@ -80,7 +80,7 @@ $breadcrumbs = [
         <div class="col-12">
             <div class="card shadow-lg border-0 rounded-4 mt-4">
                 <div class="card-header bg-gradient-primary text-white rounded-top-4 d-flex align-items-center justify-content-between" style="background: linear-gradient(90deg, #0d6efd 0%, #0a58ca 100%);">
-                    <h4 class="mb-0">All Tickets</h4>
+                    <h4 class="mb-0">Ticket History</h4>
                     <div class="">
                         @include('layouts.partials.breadcrumbs', ['breadcrumbs' => $breadcrumbs])
                     </div>
