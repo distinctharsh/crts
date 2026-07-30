@@ -16,9 +16,9 @@ class MastersController extends Controller
 {
     public function index()
     {
-        $networkTypes = \App\Models\NetworkType::withTrashed()->orderBy('name')->get();
-        $sections = \App\Models\Section::withTrashed()->orderBy('name')->get();
-        $statuses = \App\Models\Status::withTrashed()
+        $networkTypes = NetworkType::withTrashed()->orderBy('name')->get();
+        $sections = Section::withTrashed()->orderBy('name')->get();
+        $statuses = Status::withTrashed()
             ->where('name', '!=', 'assign_to_me')
             ->ordered()
             ->get();
@@ -196,7 +196,6 @@ class MastersController extends Controller
         try {
             $request->validate([
                 'name' => 'required|string|max:255|unique:verticals,name',
-                'short_form' => 'nullable|string|max:10|unique:verticals,short_form',
                 'parent_id' => 'nullable',
                 'send_email' => 'nullable|boolean',
                 'user_ids'   => 'required|array|min:1',
@@ -207,7 +206,6 @@ class MastersController extends Controller
 
             $vertical = Vertical::create([
                 'name' => $request->name,
-                'short_form' => $request->short_form ? strtoupper($request->short_form) : null,
                 'parent_id' => $request['parent_id'] ? $request['parent_id'] : null,
                 'send_email' => $request->has('send_email'),
             ]);
@@ -225,7 +223,6 @@ class MastersController extends Controller
         try {
             $request->validate([
                 'name' => 'required|string|max:255|unique:verticals,name,' . $vertical->id,
-                'short_form' => 'nullable|string|max:10|unique:verticals,short_form,' . $vertical->id,
                 'parent_id' => 'nullable|exists:verticals,id', 
                 'send_email' => 'nullable|boolean',
                 'user_ids'   => 'required|array|min:1',
@@ -234,7 +231,6 @@ class MastersController extends Controller
 
             $vertical->update([
                 'name' => $request->name,
-                'short_form' => $request->short_form ? strtoupper($request->short_form) : null,
                 'parent_id' => $request->has('parent_id') ? ($request->parent_id ?: null) : $vertical->parent_id,
                 'send_email' => $request->has('send_email'),
             ]);
@@ -302,13 +298,11 @@ class MastersController extends Controller
             $request->validate([
                 'vertical_id' => 'required|exists:verticals,id',
                 'name' => 'required|string|max:255',
-                'short_form' => 'nullable|string|max:10',
             ]);
 
             SubCategory::create([
                 'vertical_id' => $request->vertical_id,
                 'name' => $request->name,
-                'short_form' => $request->short_form ? strtoupper($request->short_form) : null,
             ]);
 
             return redirect()->route('masters.index')->with('success', 'Sub Category added successfully.');
@@ -323,13 +317,11 @@ class MastersController extends Controller
             $request->validate([
                 'vertical_id' => 'required|exists:verticals,id',
                 'name' => 'required|string|max:255',
-                'short_form' => 'nullable|string|max:10',
             ]);
 
             $subCategory->update([
                 'vertical_id' => $request->vertical_id,
                 'name' => $request->name,
-                'short_form' => $request->short_form ? strtoupper($request->short_form) : null,
             ]);
 
             return redirect()->route('masters.index')->with('success', 'Sub Category updated successfully.');
@@ -397,5 +389,5 @@ class MastersController extends Controller
             return redirect()->route('masters.index')->with('error', 'Request Type restore failed: ' . $e->getMessage());
         }
     }
-
-} 
+    
+}

@@ -14,7 +14,6 @@ class SubCategory extends Model
     protected $fillable = [
         'vertical_id',
         'name',
-        'short_form',
     ];
 
     public function vertical()

@@ -10,7 +10,7 @@ class Vertical extends Model
 {
     use LogsActivity, SoftDeletes;
 
-    protected $fillable = ['name', 'short_form', 'parent_id', 'send_email'];
+    protected $fillable = ['name', 'parent_id', 'send_email'];
 
     public static function getNameById($id)
     {
@@ -81,8 +81,9 @@ class Vertical extends Model
         $parts = [];
         $curr = $this;
         while ($curr) {
-            if ($curr->short_form) {
-                array_unshift($parts, strtoupper($curr->short_form));
+            $shortForm = data_get($curr, 'short_form');
+            if (!empty($shortForm)) {
+                array_unshift($parts, strtoupper($shortForm));
             }
             $curr = $curr->parent;
         }

@@ -276,7 +276,6 @@
                         <thead class="table-light">
                             <tr>
                                 <th class="ps-4">Name</th>
-                                <th class="ps-4">Short Form</th>
                                 <th class="ps-4">Parent Name</th>
                                 <th class="ps-4">Users</th>
                                 <th class="ps-4">Send Email</th>
@@ -348,7 +347,7 @@
                                                 <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
                                             </div>
                                             <div class="modal-body">
-                                                <p class="mb-0 text-dark">Are you sure you want to delete <strong>{{ $requestType->name }}</strong>? Purane tickets safe rahenge.</p>
+                                                <p class="mb-0 text-dark">Are you sure you want to delete <strong>{{ $requestType->name }}</strong>?</p>
                                             </div>
                                             <div class="modal-footer">
                                                 <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
@@ -466,7 +465,7 @@
             </div>
         </div>
     </div>
-    <!-- Vertical Modals -->
+    <!-- Category Modal -->
     <div class="modal fade" id="categoryModal" tabindex="-1">
         <div class="modal-dialog">
             <div class="modal-content rounded-4">
@@ -481,11 +480,6 @@
                         <div class="mb-3">
                             <label class="form-label text-dark fw-bold">Name <span class="text-danger">*</span></label>
                             <input type="text" id="category_name" name="name" class="form-control" required>
-                        </div>
-                        <div class="mb-3">
-                            <label class="form-label text-dark fw-bold">Short Form</label>
-                            <input type="text" id="category_short_form" name="short_form" class="form-control" placeholder="e.g., CS for Cyber Security" maxlength="10">
-                            <small class="text-muted">Used for ticket reference number generation (e.g., CS-20260525001)</small>
                         </div>
                         @if(isset($allVerticals))
                         <div class="mb-3">
@@ -552,7 +546,7 @@
             </div>
         </div>
     </div>
-    <!-- Sub Category -->
+    <!-- Sub Category Modal -->
     <div class="modal fade" id="addSubCategoryModal" tabindex="-1">
         <div class="modal-dialog">
             <div class="modal-content rounded-4">
@@ -577,10 +571,6 @@
                         <div class="mb-3">
                             <label class="form-label">Sub Category Name</label>
                             <input type="text" name="name" class="form-control" required placeholder="e.g., Phishing, Printer Issue">
-                        </div>
-                        <div class="mb-3">
-                            <label class="form-label">Short Form</label>
-                            <input type="text" name="short_form" class="form-control" placeholder="e.g., PH" maxlength="10">
                         </div>
                     </div>
                     <div class="modal-footer">
@@ -681,7 +671,7 @@
         validateCategoryUserCheckboxes();
     });
 
-    function openCategoryModal(mode, id = null, name = '', shortForm = '', parentId = '', sendEmail = false, userIds = []) {
+    function openCategoryModal(mode, id = null, name = '', parentId = '', sendEmail = false, userIds = []) {
         const modal = new bootstrap.Modal(document.getElementById('categoryModal'));
         const form = document.getElementById('categoryForm');
         const title = document.getElementById('categoryModalTitle');
@@ -701,7 +691,6 @@
             methodInput.value = 'PUT';
             form.action = '/masters/verticals/' + id;
             document.getElementById('category_name').value = name;
-            document.getElementById('category_short_form').value = shortForm;
             document.getElementById('category_parent_id').value = parentId;
             document.getElementById('category_send_email').checked = sendEmail;
             userIds.forEach(userId => {
@@ -854,4 +843,4 @@
     }
 </script>
 @endpush
-@endsection 
+@endsection

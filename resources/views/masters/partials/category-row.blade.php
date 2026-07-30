@@ -9,7 +9,6 @@
                 <span class="badge bg-secondary ms-1" style="font-size: 0.65rem;">Deleted</span>
             @endif
         </td>
-        <td class="ps-3 py-1" style="font-size: 0.85rem;">{{ $category->short_form ?? '-' }}</td>
         <td class="ps-3 py-1" style="font-size: 0.85rem;">
             {{ $category->parent ? $category->parent->name : 'Main Category' }}
         </td>
@@ -59,7 +58,7 @@
             @else
                 {{-- Normal Edit/Delete Buttons --}}
                 <div class="d-inline-flex gap-1">
-                    <button class="btn btn-outline-warning btn-sm text-dark" style="padding: 0.2rem 0.5rem; font-size: 0.75rem;" data-bs-toggle="tooltip" title="Edit" onclick="openCategoryModal('edit', {{ $category->id }}, '{{ $category->name }}', '{{ $category->short_form ?? '' }}', '{{ $category->parent_id ?? '' }}', {{ $category->send_email ? 'true' : 'false' }}, {{ json_encode($category->users->pluck('id')->toArray()) }})">
+                    <button class="btn btn-outline-warning btn-sm text-dark" style="padding: 0.2rem 0.5rem; font-size: 0.75rem;" data-bs-toggle="tooltip" title="Edit" onclick="openCategoryModal('edit', {{ $category->id }}, '{{ $category->name }}', '{{ $category->parent_id ?? '' }}', {{ $category->send_email ? 'true' : 'false' }}, {{ json_encode($category->users->pluck('id')->toArray()) }})">
                         <i class="fas fa-pen"></i>
                     </button>
                     <button class="btn btn-outline-danger btn-sm" style="padding: 0.2rem 0.5rem; font-size: 0.75rem;" data-bs-toggle="tooltip" title="Delete" onclick="$('#deleteVerticalModal{{ $category->id }}').modal('show')">
