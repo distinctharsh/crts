@@ -87,7 +87,7 @@ $breadcrumbs = [
                     @auth
                     @if(
                         (auth()->user()->isManager() && $complaint->status->name != 'closed') || 
-                        (auth()->user()->isVM() && $complaint->status->name != 'closed' && $complaint->status->name != 'completed')
+                        (auth()->user()->isVM() || auth()->user()->isNFO() && $complaint->status->name != 'closed' && $complaint->status->name != 'completed')
                     )
                         <a href="{{ route('complaints.edit', $complaint) }}" class="btn btn-sm btn-outline-primary">
                             <i class="fa-solid fa-pencil"></i>
