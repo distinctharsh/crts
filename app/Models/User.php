@@ -151,52 +151,19 @@ class User extends Authenticatable
      */
     public function getAssignableUsers($complaint = null, $verticalId = null)
     {
-        $query = User::query()->with(['role', 'verticals']);
-
-        if ($this->isAdmin() || $this->isManager()) {
-            $query->whereHas('role', function ($q) {
-                $q->whereIn('slug', ['manager', 'vm', 'nfo']);
-            });
-        } 
-        elseif ($this->isVM()) {
-            $query->where(function ($q) use ($complaint) {
-                if (!$complaint || $complaint->assigned_to != $this->id) {
-                    $q->where('id', $this->id);
-                }
-                $q->orWhereHas('role', function ($r) {
-                    $r->whereIn('slug', ['manager', 'nfo']);
-                });
-            });
-        } 
-        elseif ($this->isNFO()) {
-            $query->whereHas('role', function ($q) {
-                $q->whereIn('slug', ['manager', 'vm']);
-            });
-        } else {
-            return collect();
-        }
-
-        $targetVerticalId = $verticalId ?? $complaint?->vertical_id;
-        if ($targetVerticalId) {
-            $allowedVerticalIds = [];
-            $currentVertical = \App\Models\Vertical::find($targetVerticalId);
-            while ($currentVertical) {
-                $allowedVerticalIds[] = $currentVertical->id;
-                $currentVertical = $currentVertical->parent;
-            }
-            if (!empty($allowedVerticalIds)) {
-                $query->where(function($q) use ($allowedVerticalIds) {
-                    $q->whereHas('verticals', function ($vQ) use ($allowedVerticalIds) {
-                        $vQ->whereIn('verticals.id', $allowedVerticalIds);
-                    })
-                    ->orWhereHas('role', function ($rQ) {
-                        $rQ->where('slug', 'manager');
-                    });
-                });
-            }
-        }
-
-        return $query->get(['users.id', 'users.username', 'users.full_name', 'users.role_id']);
+        return User::query()
+            ->leftJoin('roles', 'roles.id', '=', 'users.role_id')
+            ->select('users.id', 'users.username', 'users.full_name', 'users.role_id')
+            ->orderByRaw("
+                CASE 
+                    WHEN LOWER(roles.slug) = 'manager' THEN 1
+                    WHEN LOWER(roles.slug) = 'vm' THEN 2
+                    WHEN LOWER(roles.slug) = 'nfo' THEN 3
+                    ELSE 4
+                END ASC
+            ")
+            ->orderBy('users.full_name', 'asc')
+            ->get();
     }
     
 
