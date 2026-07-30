@@ -217,14 +217,6 @@ class ComplaintController extends Controller
             $date = Carbon::now()->format('Ymd');
 
             $prefix = 'CMP';
-            $selectedVertical = null;
-
-            if (!empty($validated['vertical_id'])) {
-                $selectedVertical = Vertical::find($validated['vertical_id']);
-                if ($selectedVertical) {
-                    $prefix = !empty($selectedVertical->combined_prefix) ? $selectedVertical->combined_prefix : 'CMP';
-                }
-            }
 
             $complaintsToday = Complaint::whereDate('created_at', Carbon::today())->count();
             $referenceNumber = $prefix . '-' . $date . str_pad($complaintsToday + 1, 3, '0', STR_PAD_LEFT);
@@ -233,6 +225,10 @@ class ComplaintController extends Controller
             $statusId = $request->filled('assigned_to')
                 ? $assignedStatus->id
                 : $unassignedStatus->id;
+
+            $selectedVertical = !empty($validated['vertical_id']) 
+                ? Vertical::find($validated['vertical_id']) 
+                : null;
 
             $complaint = Complaint::create([
                 'reference_number' => $referenceNumber,
