@@ -105,7 +105,7 @@ $breadcrumbs = [
                                     <form method="GET" action="{{ route('complaints.index') }}" id="filterForm">
                                         <div class="row g-3 align-items-end">
                                             <div class="col-md-2">
-                                                <label class="form-label mb-1">Status</label>
+                                                <label class="form-label mb-1"><i class="bi bi-flag me-1"></i>Status</label>
                                                 <select name="status[]" class="form-select tom-select" multiple>
                                                     <option value="">All Status</option>
                                                     @foreach($statuses as $status)
@@ -116,7 +116,7 @@ $breadcrumbs = [
                                                 </select>
                                             </div>
                                             <div class="col-md-2">
-                                                <label class="form-label mb-1">Assigned To</label>
+                                                <label class="form-label mb-1"><i class="bi bi-person-badge me-1"></i>Assigned To</label>
                                                 <select name="by[]" class="form-select tom-select" multiple>
                                                     <option value="">Assigned To</option>
                                                     @foreach($usersList as $user)
@@ -127,7 +127,7 @@ $breadcrumbs = [
                                                 </select>
                                             </div>
                                             <div class="col-md-2">
-                                                <label class="form-label mb-1">Category</label>
+                                                <label class="form-label mb-1"><i class="bi bi-grid me-1"></i>Category</label>
                                                 <select name="vertical_id[]" class="form-select tom-select" multiple>
                                                     <option value="">All Categories</option>
                                                     @foreach($verticals as $vertical)
@@ -138,7 +138,7 @@ $breadcrumbs = [
                                                 </select>
                                             </div>
                                             <div class="col-md-2">
-                                                <label class="form-label mb-1">Network Type</label>
+                                                <label class="form-label mb-1"><i class="bi bi-diagram-3 me-1"></i>Network Type</label>
                                                 <select name="networktype[]" class="form-select tom-select" multiple>
                                                     <option value="">All Issue Type</option>
                                                     @foreach($networkTypes as $networktype)
@@ -149,7 +149,7 @@ $breadcrumbs = [
                                                 </select>
                                             </div>
                                             <div class="col-md-2">
-                                                <label class="form-label mb-1">Request Type</label>
+                                                <label class="form-label mb-1"><i class="bi bi-card-checklist me-1"></i>Request Type</label>
                                                 <select name="request_type_id[]" class="form-select tom-select" multiple>
                                                     <option value="">All Request Type</option>
                                                     @foreach($requestTypes as $requestType)
@@ -160,7 +160,7 @@ $breadcrumbs = [
                                                 </select>
                                             </div>
                                             <div class="col-md-2">
-                                                <label class="form-label mb-1">Section</label>
+                                                <label class="form-label mb-1"><i class="bi bi-building me-1"></i>Section</label>
                                                 <select name="section[]" class="form-select tom-select" multiple>
                                                     <option value="">All Section</option>
                                                     @foreach($sections as $section)
@@ -170,15 +170,36 @@ $breadcrumbs = [
                                                     @endforeach
                                                 </select>
                                             </div>
-                                            <div class="col-md-2">
-                                                <label class="form-label mb-1">From</label>
-                                                <input type="text" name="date_from" class="form-control date-picker" value="{{ request('date_from') }}" placeholder="dd/mm/yyyy">
+                                            <div class="col-lg-3 col-md-6">
+                                                <label class="form-label fw-semibold text-muted small mb-1">
+                                                    <i class="bi bi-calendar-event me-1"></i>From Date
+                                                </label>
+                                                <input type="text" name="date_from" id="date_from" class="form-control date-picker" value="{{ request('date_from') }}" placeholder="dd/mm/yyyy">
                                             </div>
-                                            <div class="col-md-2">
-                                                <label class="form-label mb-1">To</label>
-                                                <input type="text" name="date_to" class="form-control date-picker" value="{{ request('date_to') }}" placeholder="dd/mm/yyyy">
+                                            <div class="col-lg-3 col-md-6">
+                                                <label class="form-label fw-semibold text-muted small mb-1">
+                                                    <i class="bi bi-calendar-check me-1"></i>To Date
+                                                </label>
+                                                <input type="text" name="date_to" id="date_to" class="form-control date-picker" value="{{ request('date_to') }}" placeholder="dd/mm/yyyy">
                                             </div>
-                                            <div class="col-md-2 d-flex gap-2 ms-auto">
+                                                   <div class="col-lg-3 col-md-6">
+                                                <label class="form-label fw-semibold text-muted small mb-2">
+                                                    <i class="bi bi-clock-history me-1"></i>Quick Time Filter
+                                                </label>
+                                                <select id="quickTimeFilter" class="form-select form-select-sm">
+                                                    <option value="">Select time range...</option>
+                                                    <optgroup label="Presets">
+                                                        <option value="1h">Last 1 Hour</option>
+                                                        <option value="24h">Last 24 Hours</option>
+                                                        <option value="7d">Last 7 Days</option>
+                                                        <option value="30d">Last 30 Days</option>
+                                                    </optgroup>
+                                                    <!-- Dynamic Custom Option -->
+                                                    <option value="custom" style="font-weight: bold; color: #0d6efd;">+ Custom (Type N Hours/Days/etc.)</option>
+                                                    <option value="clear">Clear Dates</option>
+                                                </select>
+                                            </div>
+                                            <div class="col-lg-3 col-md-6 d-flex gap-2 ms-auto">
                                                 <a href="{{ route('complaints.index') }}" class="btn btn-outline-danger rounded-pill px-3 w-100 text-center text-nowrap">
                                                     <i class="bi bi-x-circle me-1"></i> Reset
                                                 </a>
@@ -193,6 +214,28 @@ $breadcrumbs = [
                         </div>
                     </div>
                     <!-- End Filter Form -->
+                    <div class="modal fade" id="customTimeFilterModal" tabindex="-1" aria-hidden="true">
+                        <div class="modal-dialog modal-dialog-centered">
+                            <div class="modal-content">
+                                <div class="modal-header bg-primary text-white">
+                                    <h5 class="modal-title">Custom Time Range</h5>
+                                    <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+                                </div>
+                                <div class="modal-body">
+                                    <div class="mb-3">
+                                        <label for="customTimeInput" class="form-label">Enter duration</label>
+                                        <input type="text" id="customTimeInput" class="form-control" placeholder="e.g., 5h (Hours), 10d (Days), 3w (Weeks), 2m (Months), 1y (Years)">
+                                        <small class="text-muted">Use numbers followed by h, d, w, m, or y</small>
+                                    </div>
+                                </div>
+                                <div class="modal-footer">
+                                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                                    <button type="button" id="applyCustomTime" class="btn btn-primary">Apply</button>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    
                     <div id="complaintsTableContainer">
                         @include('complaints.partials.table', ['complaints' => $complaints, 'tableId' => 'complaintsTable'])
                     </div>
@@ -363,6 +406,91 @@ $breadcrumbs = [
 
             new TomSelect(el, config);
         });
+
+        $('#quickTimeFilter').on('change', function() {
+            let value = $(this).val();
+            const dateFromInput = $('#date_from');
+            const dateToInput = $('#date_to');
+            
+            if (value === '' || value === 'clear') {
+                dateFromInput.val('');
+                dateToInput.val('');
+                $(this).val('');
+                return;
+            }
+
+            if (value === 'custom') {
+                $('#customTimeInput').val('');
+                $('#customTimeFilterModal').modal('show');
+                $(this).val('');
+                return;
+            }
+            
+            applyTimeFilter(value);
+        });
+        
+        $('#applyCustomTime').on('click', function() {
+            const customValue = $('#customTimeInput').val().trim().toLowerCase();
+            if (!customValue) {
+                $('#customTimeInput').addClass('is-invalid');
+                return;
+            }
+            const amount = parseInt(customValue);
+            const unit = customValue.replace(/[0-9]/g, '');
+            
+            if (isNaN(amount) || !['h', 'd', 'w', 'm', 'y'].includes(unit)) {
+                $('#customTimeInput').addClass('is-invalid');
+                return;
+            }
+            
+            $('#customTimeInput').removeClass('is-invalid');
+            $('#customTimeFilterModal').modal('hide');
+            applyTimeFilter(customValue);
+        });
+        
+        $('#customTimeInput').on('input', function() {
+            $(this).removeClass('is-invalid');
+        });
+        
+        function applyTimeFilter(value) {
+            const dateFromInput = $('#date_from');
+            const dateToInput = $('#date_to');
+            const today = new Date();
+            const fromDate = new Date();
+            const amount = parseInt(value);
+            const unit = value.replace(/[0-9]/g, ''); // 'h', 'd', 'w', 'm', 'y'
+            
+            switch(unit) {
+                case 'h': // Hours
+                    fromDate.setHours(today.getHours() - amount);
+                    break;
+                case 'd': // Days
+                    fromDate.setDate(today.getDate() - amount);
+                    break;
+                case 'w': // Weeks
+                    fromDate.setDate(today.getDate() - (amount * 7));
+                    break;
+                case 'm': // Months
+                    fromDate.setMonth(today.getMonth() - amount);
+                    break;
+                case 'y': // Years
+                    fromDate.setFullYear(today.getFullYear() - amount);
+                    break;
+            }
+
+            const formatDate = (date) => {
+                const day = String(date.getDate()).padStart(2, '0');
+                const month = String(date.getMonth() + 1).padStart(2, '0');
+                const year = date.getFullYear();
+                return `${day}/${month}/${year}`;
+            };
+            
+            dateFromInput.val(formatDate(fromDate));
+            dateToInput.val(formatDate(today));
+            
+            // Auto Submit form
+            $('#filterForm').submit();
+        }
 
         // AJAX form submission for filtering
         $('#filterForm').on('submit', function(e) {
