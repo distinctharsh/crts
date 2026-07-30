@@ -12,6 +12,67 @@ $breadcrumbs = [
     div.dataTables_wrapper div.dataTables_filter input {
         width: 400px;
     }
+
+    .ts-wrapper.multi .ts-control {
+        max-height: 38px !important;
+        min-height: 38px !important;
+        height: 38px !important;
+        overflow: hidden !important;
+        display: flex !important;
+        align-items: center !important;
+        padding: 4px 12px !important;
+        white-space: nowrap !important;
+        background-color: #fff !important;
+        border-radius: 0.375rem !important;
+    }
+
+    .ts-wrapper.multi .ts-control .item {
+        display: none !important;
+    }
+
+    .ts-count-badge {
+        background-color: #0d6efd;
+        color: white;
+        font-size: 0.75rem;
+        font-weight: 600;
+        padding: 3px 10px;
+        border-radius: 50rem;
+        margin-right: 6px;
+        display: inline-flex;
+        align-items: center;
+        flex-shrink: 0;
+    }
+
+    .ts-dropdown .option {
+        display: flex !important;
+        align-items: center !important;
+        padding: 8px 12px !important;
+    }
+
+    .ts-dropdown .option input[type="checkbox"] {
+        margin-right: 10px !important;
+        width: 16px;
+        height: 16px;
+        cursor: pointer;
+    }
+
+    .ts-wrapper.multi.has-items:not(.focus) .ts-control input::placeholder {
+        color: transparent !important;
+    }
+
+    .ts-wrapper.multi .ts-control input {
+        display: inline-block !important;
+        opacity: 1 !important;
+        position: relative !important;
+        visibility: visible !important;
+        width: auto !important;
+        min-width: 60px !important;
+        flex-grow: 1 !important;
+        background: transparent !important;
+        border: none !important;
+        outline: none !important;
+        box-shadow: none !important;
+    }
 </style>
 
 <div class="container">
@@ -21,7 +82,6 @@ $breadcrumbs = [
                 <div class="card-header bg-gradient-primary text-white rounded-top-4 d-flex align-items-center justify-content-between" style="background: linear-gradient(90deg, #0d6efd 0%, #0a58ca 100%);">
                     <h4 class="mb-0">All Tickets</h4>
                     <div class="">
-
                         @include('layouts.partials.breadcrumbs', ['breadcrumbs' => $breadcrumbs])
                     </div>
                 </div>
@@ -261,10 +321,44 @@ $breadcrumbs = [
             if(el.name === 'status[]' || el.name === 'by[]' || el.name === 'vertical_id[]' || el.name === 'networktype[]' || el.name === 'section[]' || el.name === 'request_type_id[]'){
                 config.maxItems = null;
                 config.plugins = {
-                    remove_button:{
-                        title:'Remove',
-                    }
+                    checkbox_options: {}
                 };
+                config.hideSelected = false;
+
+                config.onItemAdd = function() {
+                    this.setTextboxValue('');
+                    this.refreshOptions(false);
+                    updateCountBadge(this);
+                };
+                config.onItemRemove = function() {
+                    updateCountBadge(this);
+                };
+                config.onInitialize = function() {
+                    updateCountBadge(this);
+                };
+            }
+
+            function updateCountBadge(ts) {
+                let control = ts.control;
+                let count = ts.items.length;
+                
+                let existingBadge = control.querySelector('.ts-count-badge');
+                if (existingBadge) {
+                    existingBadge.remove();
+                }
+
+                if (count > 0) {
+                    let badge = document.createElement('span');
+                    badge.className = 'ts-count-badge';
+                    badge.textContent = count + ' selected';
+                    
+                    let inputField = control.querySelector('input');
+                    if (inputField) {
+                        control.insertBefore(badge, inputField);
+                    } else {
+                        control.appendChild(badge);
+                    }
+                }
             }
 
             new TomSelect(el, config);
