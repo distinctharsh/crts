@@ -33,6 +33,7 @@
                     <div class="row justify-content-center mb-4">
                         <div class="col-12 mb-4">
                             <div class="row g-4">
+                                @if(!auth()->user()->isVM() && !auth()->user()->isNFO())
                                 <div class="col-md-3">
                                     <a href="{{ route('complaints.index') }}" class="card-link-stretched text-decoration-none">
                                         <div class="card shadow-lg border-0 rounded-4 bg-primary text-white h-100 clickable-card">
@@ -43,6 +44,7 @@
                                         </div>
                                     </a>
                                 </div>
+                                @endif
                                 @if(!auth()->user()->isNFO())
                                 <div class="col-md-3">
                                     <a href="{{ route('complaints.index', ['status' => $unassignedStatusId ?? '']) }}" class="card-link-stretched text-decoration-none">
