@@ -67,11 +67,17 @@
                                         </div>
                                     </a>
                                 </div>
+                                @php
+                                    $pendingStatusIds = \App\Models\Status::whereNotIn('id', array_filter([$completedStatusId ?? null, $closedStatusId ?? null]))
+                                        ->pluck('id')
+                                        ->toArray();
+                                @endphp
+
                                 <div class="col-md-3">
-                                    <a href="{{ route('complaints.index', ['by' => auth()->user()->id]) }}" class="card-link-stretched text-decoration-none">
+                                    <a href="{{ route('complaints.index', ['by' => auth()->user()->id, 'status' => $pendingStatusIds]) }}" class="card-link-stretched text-decoration-none">
                                         <div class="card shadow-lg border-0 rounded-4 bg-info text-white h-100 clickable-card">
                                             <div class="card-body text-center py-4">
-                                                <h5 class="card-title mb-2">Assign to Me</h5>
+                                                <h5 class="card-title mb-2">Pending with Me</h5>
                                                 <h2 class="fw-bold mb-0 display-5">{{ $assignToMeComplaints }}</h2>
                                             </div>
                                         </div>
