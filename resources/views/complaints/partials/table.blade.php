@@ -151,9 +151,6 @@
     .crt-btn-assign { background-color: #ebf8ff; color: #2b6cb0; border-color: #bee3f8; }
     .crt-btn-assign:hover { background-color: #2b6cb0; color: #ffffff; }
     
-    .crt-btn-revert { background-color: #fffaf0; color: #dd6b20; border-color: #feebc8; }
-    .crt-btn-revert:hover { background-color: #dd6b20; color: #ffffff; }
-    
     /* Limited multi-line description wrap safely */
     .crt-desc-box {
         color: #475569;
@@ -247,11 +244,6 @@
                         Assign
                         @endif
                     </button>
-                    @if($complaint->assigned_to === auth()->user()->id)
-                    <button type="button" class="btn btn-sm btn-warning btn-revert" data-bs-toggle="modal" data-bs-target="#revertModal{{ $complaint->id }}">
-                        Revert
-                    </button>
-                    @endif
                     @endif
                     @elseif(auth()->user()->isNFO())
                     @if($complaint->assigned_to === auth()->user()->id && !$complaint->isCompleted() && !$complaint->isClosed())
@@ -262,7 +254,7 @@
                     @endif
                     @endauth
                 </div>
-                {{-- Modals for assign/resolve/revert can be included here if needed --}}
+                {{-- Modals for assign/resolve can be included here if needed --}}
             </td>
         </tr>
         @endforeach
