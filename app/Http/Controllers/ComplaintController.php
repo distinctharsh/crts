@@ -194,12 +194,14 @@ class ComplaintController extends Controller
     public function store(Request $request)
     {
         try {
+            $isLoggedIn = Auth::check();
+
             $validated = $request->validate([
                 'network_type_id' => 'required|exists:network_types,id',
-                'request_type_id' => 'required|exists:request_types,id',
+                'request_type_id' => $isLoggedIn ? 'required|exists:request_types,id' : 'nullable|exists:request_types,id',
                 'priority' => 'nullable|in:high',
                 'description' => 'required|string',
-                'vertical_id' => 'required|exists:verticals,id',
+                'vertical_id' => $isLoggedIn ? 'required|exists:verticals,id' : 'nullable|exists:verticals,id',
                 'user_name' => 'required|string|max:255',
                 'file' => 'nullable|file|max:2048',
                 'section_id' => 'required|exists:sections,id',
@@ -214,13 +216,20 @@ class ComplaintController extends Controller
 
             $date = Carbon::now()->format('Ymd');
 
-            $selectedVertical = Vertical::findOrFail($validated['vertical_id']);
-            $prefix = $selectedVertical->combined_prefix;
-            
+            $prefix = 'CMP';
+            $selectedVertical = null;
+
+            if (!empty($validated['vertical_id'])) {
+                $selectedVertical = Vertical::find($validated['vertical_id']);
+                if ($selectedVertical) {
+                    $prefix = !empty($selectedVertical->combined_prefix) ? $selectedVertical->combined_prefix : 'CMP';
+                }
+            }
+
             $complaintsToday = Complaint::whereDate('created_at', Carbon::today())->count();
             $referenceNumber = $prefix . '-' . $date . str_pad($complaintsToday + 1, 3, '0', STR_PAD_LEFT);
 
-            $assignedStatus = Status::where('name','assigned')->first();
+            $assignedStatus = Status::where('name', 'assigned')->first();
             $statusId = $request->filled('assigned_to')
                 ? $assignedStatus->id
                 : $unassignedStatus->id;
@@ -232,9 +241,9 @@ class ComplaintController extends Controller
                 'priority' => $priority,
                 'status_id' => $statusId,
                 'network_type_id' => $validated['network_type_id'],
-                'request_type_id' => $validated['request_type_id'],
+                'request_type_id' => $validated['request_type_id'] ?? null,
                 'section_id' => $validated['section_id'],
-                'vertical_id' => $validated['vertical_id'],
+                'vertical_id' => $validated['vertical_id'] ?? null,
                 'user_name' => $validated['user_name'],
                 'room_number' => $validated['room_number'],
                 'file_path' => $request->hasFile('file') ? $request->file('file')->store('complaint_files', 'public') : null,
@@ -252,7 +261,7 @@ class ComplaintController extends Controller
                 'assigned_to' => $complaint->assigned_to ?: null,
                 'changes' => json_encode([
                     ...$complaint->getChanges(),
-                    'verticals' => $selectedVertical->full_path
+                    'verticals' => $selectedVertical ? $selectedVertical->full_path : null
                 ])
             ]);
 

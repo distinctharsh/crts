@@ -101,47 +101,47 @@
                             @enderror
                         </div>
 
-                        <div class="col-md-4 mb-3">
-                            <label for="request_type_id" class="form-label">Request Type <span class="text-danger">*</span></label>
-                            <select class="form-select tom-select @error('request_type_id') is-invalid @enderror"
-                                id="request_type_id" name="request_type_id" required>
-                                <option value="">Select Request Type</option>
-                                @foreach($requestTypes as $type)
-                                <option value="{{ $type->id }}" {{ old('request_type_id', isset($complaint) ? $complaint->request_type_id : ($loop->first ? $type->id : '')) == $type->id ? 'selected' : '' }}>
-                                    {{ $type->name }}
-                                </option>
-                                @endforeach
-                            </select>
-                            @error('request_type_id')
-                            <div class="invalid-feedback">{{ $message }}</div>
-                            @enderror
-                        </div>
-
-                        <div class="col-md-4 mb-3 hierarchy-wrapper">
-                            <label class="form-label">Category <span class="text-danger">*</span></label>
-                            <select class="form-select hierarchy-select" data-level="1" required>
-                                <option value="">Select Category</option>
-                                @foreach($verticals as $category)
-                                    <option value="{{ $category->id }}" {{ old('vertical_ids.0', isset($savedVerticals[0]) ? $savedVerticals[0] : '') == $category->id ? 'selected' : '' }}>
-                                        {{ $category->name }}
+                        @auth
+                            <div class="col-md-4 mb-3">
+                                <label for="request_type_id" class="form-label">Request Type <span class="text-danger">*</span></label>
+                                <select class="form-select tom-select @error('request_type_id') is-invalid @enderror"
+                                    id="request_type_id" name="request_type_id" required>
+                                    <option value="">Select Request Type</option>
+                                    @foreach($requestTypes as $type)
+                                    <option value="{{ $type->id }}" {{ old('request_type_id', isset($complaint) ? $complaint->request_type_id : ($loop->first ? $type->id : '')) == $type->id ? 'selected' : '' }}>
+                                        {{ $type->name }}
                                     </option>
-                                @endforeach
-                            </select>
-                        </div>
-                        <input type="hidden" name="vertical_id" id="final_vertical_id" value="{{ old('vertical_id', isset($complaint) ? $complaint->vertical_id : '') }}">
-
-                        @auth 
-                        @if(!auth()->user()->isNFO())
-                        <div class="col-md-4 mb-3" id="assignToWrapper" style="display:none;">
-                            <label for="assigned_to" class="form-label">Assign To <span class="text-danger">*</span></label>
-                            <select id="assigned_to" name="assigned_to" class="form-select" @if(isset($assignedUser)) required @endif>
-                                <option value="">-- Leave Unassigned --</option>
-                            </select>
-                            <div id="assign-error-msg" class="text-danger mt-1" style="font-size: 0.85em; display: none;">
-                                This ticket was previously assigned. Re-assignment is required.
+                                    @endforeach
+                                </select>
+                                @error('request_type_id')
+                                <div class="invalid-feedback">{{ $message }}</div>
+                                @enderror
                             </div>
-                        </div>
-                        @endif
+
+                            <div class="col-md-4 mb-3 hierarchy-wrapper">
+                                <label class="form-label">Category <span class="text-danger">*</span></label>
+                                <select class="form-select hierarchy-select" data-level="1" required>
+                                    <option value="">Select Category</option>
+                                    @foreach($verticals as $category)
+                                        <option value="{{ $category->id }}" {{ old('vertical_ids.0', isset($savedVerticals[0]) ? $savedVerticals[0] : '') == $category->id ? 'selected' : '' }}>
+                                            {{ $category->name }}
+                                        </option>
+                                    @endforeach
+                                </select>
+                            </div>
+                            <input type="hidden" name="vertical_id" id="final_vertical_id" value="{{ old('vertical_id', isset($complaint) ? $complaint->vertical_id : '') }}">
+
+                            @if(!auth()->user()->isNFO())
+                            <div class="col-md-4 mb-3" id="assignToWrapper" style="display:none;">
+                                <label for="assigned_to" class="form-label">Assign To <span class="text-danger">*</span></label>
+                                <select id="assigned_to" name="assigned_to" class="form-select" @if(isset($assignedUser)) required @endif>
+                                    <option value="">-- Leave Unassigned --</option>
+                                </select>
+                                <div id="assign-error-msg" class="text-danger mt-1" style="font-size: 0.85em; display: none;">
+                                    This ticket was previously assigned. Re-assignment is required.
+                                </div>
+                            </div>
+                            @endif
                         @endauth
                     </div>
 
