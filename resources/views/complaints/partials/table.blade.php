@@ -184,9 +184,9 @@
     <tbody>
         @foreach($complaints as $complaint)
         <tr data-complaint-id="{{ $complaint->id }}" data-status="{{ $complaint->status->name }}" data-assigned-to="{{ $complaint->assigned_to }}" data-user-role="{{ auth()->check() ? auth()->user()->role->name : 'guest' }}" data-is-unassigned="{{ $complaint->isUnassigned() ? 'true' : 'false' }}" data-is-completed="{{ $complaint->isCompleted() ? 'true' : 'false' }}" data-is-closed="{{ $complaint->isClosed() ? 'true' : 'false' }}">
-            <td>{{ $loop->iteration }}</td>
+            <td class="text-center">{{ $loop->iteration }}</td>
             <td style="word-break: break-all;">
-                {{ $complaint->reference_number }}
+                <div class="crt-ref-id">{{ $complaint->reference_number }}</div>
                 <div class="mt-1">
                     <span class="badge bg-{{ $complaint->status_color }} status-badge" style="font-size: 0.75rem;">
                         {{ $complaint->status->display_name ?? 'Unknown' }}
@@ -196,6 +196,9 @@
                         <i class="bi bi-exclamation-triangle-fill"></i> High
                     </span>
                     @endif
+                </div>
+                <div class="mt-1 small text-muted" style="font-size: 0.72rem;">
+                    <i class="bi bi-clock"></i> {{ $complaint->created_at->format('d M Y, H:i') }}
                 </div>
             </td>
             <td>{{ $complaint->user_name }}</td>
@@ -209,47 +212,46 @@
             </td>
             <td>
                 <div class="btn-group action-buttons">
-                    <a href="{{ route('complaints.show', $complaint) }}" class="btn btn-sm btn-info me-1">View</a>
+                    <!-- View -->
+                    <a href="{{ route('complaints.show', $complaint) }}" class="btn btn-sm btn-info text-white me-1" data-bs-toggle="tooltip" data-bs-placement="top" title="View Ticket"><i class="bi bi-eye"></i></a>
                     @auth
                     @if(
                         (auth()->user()->isManager() && $complaint->status->name != 'closed') || 
                         (auth()->user()->isVM() || auth()->user()->isNFO() && $complaint->status->name != 'closed' && $complaint->status->name != 'completed')
                     )
-                        <a href="{{ route('complaints.edit', $complaint) }}" class="btn btn-sm btn-primary me-1">Edit</a>
+                        <a href="{{ route('complaints.edit', $complaint) }}" class="btn btn-sm btn-primary me-1" data-bs-toggle="tooltip" data-bs-placement="top" title="Edit Ticket"><i class="bi bi-pencil-square"></i></a>
                     @endif
                     @endauth
                     
                     @auth
                     @if(auth()->user()->isManager())
                         @if($complaint->status->name == 'completed')
-                            <button type="button" class="btn btn-sm btn-success ms-1 btn-close-ticket" data-bs-toggle="modal" data-bs-target="#closeModal{{ $complaint->id }}">
-                                Close
-                            </button>
+                            <button type="button" class="btn btn-sm btn-success ms-1 btn-close-ticket" data-bs-toggle="modal" data-bs-target="#closeModal{{ $complaint->id }}" title="Close Ticket"><i class="bi bi-check-circle"></i></button>
                         @endif
                     @if($complaint->status->name != 'completed' && $complaint->status->name != 'closed')
-                    <button type="button" class="btn btn-sm btn-primary btn-assign-reassign" data-bs-toggle="modal" data-bs-target="#assignModal{{ $complaint->id }}">
+                    <button type="button" class="btn btn-sm btn-primary btn-assign-reassign" data-bs-toggle="modal" data-bs-target="#assignModal{{ $complaint->id }}" title="{{ $complaint->assigned_to ? 'Reassign Ticket' : 'Assign Ticket' }}">
                         @if($complaint->assigned_to)
-                        Reassign
+                            <i class="bi bi-arrow-repeat"></i>
                         @else
-                        Assign
+                            <i class="bi bi-person-check"></i>
                         @endif
                     </button>
                     @endif
                     @elseif(auth()->user()->isVM())
                     @if($complaint->status->name != 'completed' && $complaint->status->name != 'closed')
-                    <button type="button" class="btn btn-sm btn-primary btn-assign-reassign" data-bs-toggle="modal" data-bs-target="#assignModal{{ $complaint->id }}">
-                        @if($complaint->assigned_to)
-                        Reassign
-                        @else
-                        Assign
-                        @endif
-                    </button>
+                        <button type="button" class="btn btn-sm btn-primary btn-assign-reassign" data-bs-toggle="modal" data-bs-target="#assignModal{{ $complaint->id }}" title="{{ $complaint->assigned_to ? 'Reassign Ticket' : 'Assign Ticket' }}">
+                            @if($complaint->assigned_to)
+                                <i class="bi bi-arrow-repeat"></i>
+                            @else
+                                <i class="bi bi-person-check"></i>
+                            @endif
+                        </button>
                     @endif
                     @elseif(auth()->user()->isNFO())
                     @if($complaint->assigned_to === auth()->user()->id && !$complaint->isCompleted() && !$complaint->isClosed())
-                    <button type="button" class="btn btn-sm btn-primary btn-assign-reassign" data-bs-toggle="modal" data-bs-target="#assignModal{{ $complaint->id }}">
-                        Reassign
-                    </button>
+                        <button type="button" class="btn btn-sm btn-primary btn-assign-reassign" data-bs-toggle="modal" data-bs-target="#assignModal{{ $complaint->id }}" title="Reassign Ticket">
+                            <i class="bi bi-arrow-repeat"></i>
+                        </button>
                     @endif
                     @endif
                     @endauth
