@@ -214,13 +214,6 @@ class ComplaintController extends Controller
 
             $unassignedStatus = Status::where('name', 'unassigned')->first();
 
-            $date = Carbon::now()->format('Ymd');
-
-            $prefix = 'CMP';
-
-            $complaintsToday = Complaint::whereDate('created_at', Carbon::today())->count();
-            $referenceNumber = $prefix . '-' . $date . str_pad($complaintsToday + 1, 3, '0', STR_PAD_LEFT);
-
             $assignedStatus = Status::where('name', 'assigned')->first();
             $statusId = $request->filled('assigned_to')
                 ? $assignedStatus->id
@@ -230,6 +223,7 @@ class ComplaintController extends Controller
                 ? Vertical::find($validated['vertical_id']) 
                 : null;
 
+            $referenceNumber = Complaint::generateReferenceNumber();
             $complaint = Complaint::create([
                 'reference_number' => $referenceNumber,
                 'client_id' => Auth::user()->id ?? 0,
@@ -1357,7 +1351,7 @@ class ComplaintController extends Controller
             }
 
             $filePath = $file->getPathname();
-
+            
             $spreadsheet = \PhpOffice\PhpSpreadsheet\IOFactory::load($filePath);
             $sheet = $spreadsheet->getActiveSheet();
             $errors = [];
@@ -1366,7 +1360,7 @@ class ComplaintController extends Controller
             $highestRow = $sheet->getHighestRow();
             $highestColumn = $sheet->getHighestColumn();
 
-            $allVerticals = Vertical::all(['id', 'name', 'parent_id', 'short_form']);
+            $allVerticals = Vertical::all(['id', 'name', 'parent_id']);
 
             for ($row = 2; $row <= $highestRow; $row++) {
                 $data = [];
@@ -1475,20 +1469,7 @@ class ComplaintController extends Controller
                     }
                 }
 
-                $prefixParts = [];
-                $curr = $targetVertical;
-                while ($curr) {
-                    if (!empty($curr->short_form)) {
-                        array_unshift($prefixParts, strtoupper($curr->short_form));
-                    }
-                    $curr = $curr->parent_id ? $allVerticals->firstWhere('id', $curr->parent_id) : null;
-                }
-                $prefix = !empty($prefixParts) ? implode('-', $prefixParts) : 'CMP';
-
-                $date = Carbon::now()->format('Ymd');
-
-                $complaintsToday = Complaint::whereDate('created_at', Carbon::today())->count();
-                $referenceNumber = $prefix . '-' . $date . str_pad($complaintsToday + 1, 3, '0', STR_PAD_LEFT);
+                $referenceNumber = Complaint::generateReferenceNumber();
 
                 $complaint = Complaint::create([
                     'reference_number' => $referenceNumber,
@@ -1510,7 +1491,7 @@ class ComplaintController extends Controller
                 ]);
 
                 $actionChanges = [
-                    'vertical' => $targetVertical->name
+                    'vertical' => $targetVertical->full_path ?? $targetVertical->name
                 ];
 
                 if (!empty($assignedToId)) {

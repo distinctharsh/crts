@@ -7,6 +7,7 @@ use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\SoftDeletes;
 use Spatie\Activitylog\Traits\LogsActivity;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
+use Carbon\Carbon;
 
 class Complaint extends Model
 {
@@ -188,6 +189,15 @@ class Complaint extends Model
     public function requestType()
     {
         return $this->belongsTo(RequestType::class, 'request_type_id')->withTrashed();
+    }
+
+    public static function generateReferenceNumber(): string
+    {
+        $prefix = 'CMP';
+        $date = Carbon::now()->format('Ymd');
+        $complaintsToday = static::whereDate('created_at', Carbon::today())->count();
+
+        return $prefix . '-' . $date . str_pad($complaintsToday + 1, 3, '0', STR_PAD_LEFT);
     }
 
 }
