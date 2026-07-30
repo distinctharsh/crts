@@ -58,7 +58,7 @@ $breadcrumbs = [
                             </td>
                             <td>
                                 @if($user->verticals && $user->verticals->count())
-                                {{ $user->verticals->pluck('name')->implode(', ') }}
+                                {{ $user->verticals->pluck('full_path')->implode(', ') }}
                                 @else
                                 -
                                 @endif
