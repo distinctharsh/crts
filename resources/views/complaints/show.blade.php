@@ -222,24 +222,24 @@ $breadcrumbs = [
 
                     @elseif($complaint->canUserComment(auth()->user()) || $isManager)
 
-                    <form action="{{ route('complaints.comment', $complaint) }}" method="POST" class="mb-4">
-                        @csrf
-                @if(auth()->check() && $complaint->assigned_to && auth()->user()->id == $complaint->assigned_to && !$isManager && !$complaint->isCompleted())
+            <form action="{{ route('complaints.comment', $complaint) }}" method="POST" class="mb-4">
+                @csrf    
+                @if(auth()->check() && $complaint->assigned_to && auth()->user()->id == $complaint->assigned_to && !$complaint->isCompleted() && !$complaint->isClosed())
                 <div class="mb-3">
-                    <label for="status_id" class="form-label">Status <span class="text-danger">*</span></label>
+                    <label for="status_id" class="form-label">Update Status <span class="text-danger">*</span></label>
                     <select name="status_id" id="status_id" class="form-select" required>
                         <option value="">Select status</option>
                         @foreach($statusOptions as $status)
-                        <option value="{{ $status->id }}">{{ $status->display_name }}</option>
+                            <option value="{{ $status->id }}" {{ $complaint->status_id == $status->id ? 'selected' : '' }}>{{ $status->display_name }}</option>
                         @endforeach
                     </select>
                 </div>
                 @endif
                 <div class="mb-3">
-                    <textarea name="comment" class="form-control" rows="3" placeholder="Add a comment..." @if($isManager) required @endif></textarea>
+                    <textarea name="comment" class="form-control" rows="3" placeholder="Add a comment..." @if($isManager && $complaint->assigned_to != auth()->user()->id) required @endif></textarea>
                 </div>
                 <button type="submit" class="btn btn-primary">Add Comment</button>
-                </form>
+            </form>
                 @else
                 <textarea class="form-control" rows="3" placeholder="You are not allowed to comment on this ticket." disabled></textarea>
                 <button class="btn btn-primary mt-2 mb-2" disabled>Add Comment</button>

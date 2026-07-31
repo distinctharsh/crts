@@ -775,38 +775,41 @@ class ComplaintController extends Controller
     public function comment(Request $request, Complaint $complaint)
     {
         try {
-            $isManager = Auth::user() && Auth::user()->isManager();
+            $user = Auth::user();
+            $isManager = $user && $user->isManager();
+            $isAssignedUser = $user && $complaint->assigned_to == $user->id;
+
             $request->validate([
-                'comment' => ($isManager ? 'required' : 'nullable') . '|string|max:2000',
-                'status_id' => 'nullable|exists:statuses,id',
+                'comment' => ($isManager && !$isAssignedUser ? 'required' : 'nullable') . '|string|max:2000',
+                'status_id' => ($isAssignedUser ? 'nullable' : 'nullable') . '|exists:statuses,id',
             ]);
 
             // Add comment only if not blank
             if (trim($request->comment ?? '') !== '') {
                 $complaint->comments()->create([
-                    'user_id' => Auth::user()->id ?? 0,
+                    'user_id' => $user->id ?? 0,
                     'comment' => $request->comment,
                 ]);
             }
 
             // If status_id is present and different, update status and add to history
             if ($request->filled('status_id') && $complaint->status_id != $request->status_id) {
-                $oldStatus = $complaint->status_id;
                 $complaint->update(['status_id' => $request->status_id]);
 
                 // Create action/history
                 \App\Models\ComplaintAction::create([
                     'complaint_id' => $complaint->id,
-                    'user_id' => Auth::user()->id ?? 0,
+                    'user_id' => $user->id ?? 0,
                     'status_id' => $request->status_id,
-                    'description' => $request->comment,
+                    'assigned_to' => $complaint->assigned_to,
+                    'description' => $request->comment ?? 'Status updated',
                 ]);
             }
 
-            return redirect()->back()->with('success', 'Comment added successfully.');
+            return redirect()->back()->with('success', 'Ticket updated successfully.');
         } catch (\Exception $e) {
             \Log::error('Complaint comment error: ' . $e->getMessage());
-            return redirect()->back()->with('error', 'Something went wrong while adding comment. Please try again. (कुछ गलत हो गया, कृपया फिर से कोशिश करें.)');
+            return redirect()->back()->with('error', 'Something went wrong while updating ticket.');
         }
     }
 
