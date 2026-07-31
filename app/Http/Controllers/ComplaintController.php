@@ -239,6 +239,7 @@ class ComplaintController extends Controller
                 'file_path' => $request->hasFile('file') ? $request->file('file')->store('complaint_files', 'public') : null,
                 'intercom' => $validated['intercom'],
                 'assigned_to' => $request->assigned_to ?: null,
+                'assigned_by' => $request->filled('assigned_to') ? (Auth::user()->id ?? 0) : null,
                 'created_at' => Carbon::now()->setTimezone(config('app.timezone')),
                 'updated_at' => Carbon::now()->setTimezone(config('app.timezone')),
             ]);
