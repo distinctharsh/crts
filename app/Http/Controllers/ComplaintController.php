@@ -246,8 +246,8 @@ class ComplaintController extends Controller
             ComplaintAction::create([
                 'complaint_id' => $complaint->id,
                 'user_id' => Auth::user()->id ?? 0,
-                'status_id' => $unassignedStatus->id,
-                'description' => 'Complaint created',
+                'status_id' => $statusId,
+                'description' => $request->filled('assigned_to') ? 'Complaint created and assigned' : 'Complaint created',
                 'assigned_to' => $complaint->assigned_to ?: null,
                 'changes' => json_encode([
                     ...$complaint->getChanges(),
