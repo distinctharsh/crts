@@ -119,6 +119,31 @@ class ComplaintController extends Controller
                 $dateTo = Carbon::createFromFormat('d/m/Y', $request->input('date_to'))->endOfDay();
                 $query->where('created_at', '<=', $dateTo);
             }
+
+            if ($request->filled('quick_filter')) {
+                $val = strtolower($request->input('quick_filter'));
+                $amount = (int) filter_var($val, FILTER_SANITIZE_NUMBER_INT);
+                $unit = preg_replace('/[0-9]/', '', $val);
+
+                if ($amount > 0 && in_array($unit, ['h', 'd', 'w', 'm', 'y'])) {
+                    $threshold = Carbon::now();
+                    switch ($unit) {
+                        case 'h': $threshold->subHours($amount); break;
+                        case 'd': $threshold->subDays($amount); break;
+                        case 'w': $threshold->subWeeks($amount); break;
+                        case 'm': $threshold->subMonths($amount); break;
+                        case 'y': $threshold->subYears($amount); break;
+                    }
+
+                    $query->where('created_at', '<=', $threshold);
+
+                    $doneStatusIds = Status::withTrashed()->whereIn('name', ['completed', 'closed'])->pluck('id');
+                    if ($doneStatusIds->isNotEmpty()) {
+                        $query->whereNotIn('status_id', $doneStatusIds);
+                    }
+                }
+            }
+
             if (request('assigned_to_me') == '1') {
                 $query->where('assigned_to', $user->id);
                 $excludedStatuses = Status::withTrashed()->whereIn('name', ['closed', 'completed'])->pluck('id');

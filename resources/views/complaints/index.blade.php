@@ -182,21 +182,23 @@ $breadcrumbs = [
                                                 </label>
                                                 <input type="text" name="date_to" id="date_to" class="form-control date-picker" value="{{ request('date_to') }}" placeholder="dd/mm/yyyy">
                                             </div>
-                                                   <div class="col-lg-3 col-md-6">
+                                            
+                                            <input type="hidden" name="quick_filter" id="quick_filter" value="{{ request('quick_filter') }}">
+
+                                            <div class="col-lg-3 col-md-6">
                                                 <label class="form-label fw-semibold text-muted small mb-2">
                                                     <i class="bi bi-clock-history me-1"></i>Quick Time Filter
                                                 </label>
                                                 <select id="quickTimeFilter" class="form-select form-select-sm">
                                                     <option value="">Select time range...</option>
                                                     <optgroup label="Presets">
-                                                        <option value="1h">Last 1 Hour</option>
-                                                        <option value="24h">Last 24 Hours</option>
-                                                        <option value="7d">Last 7 Days</option>
-                                                        <option value="30d">Last 30 Days</option>
+                                                        <option value="1h" {{ request('quick_filter') == '1h' ? 'selected' : '' }}>Pending > 1 Hour</option>
+                                                        <option value="2h" {{ request('quick_filter') == '2h' ? 'selected' : '' }}>Pending > 2 Hours</option>
+                                                        <option value="3h" {{ request('quick_filter') == '3h' ? 'selected' : '' }}>Pending > 3 Hours</option>
+                                                        <option value="4h" {{ request('quick_filter') == '4h' ? 'selected' : '' }}>Pending > 4 Hours</option>
                                                     </optgroup>
-                                                    <!-- Dynamic Custom Option -->
-                                                    <option value="custom" style="font-weight: bold; color: #0d6efd;">+ Custom (Type N Hours/Days/etc.)</option>
-                                                    <option value="clear">Clear Dates</option>
+                                                    <option value="custom" style="font-weight: bold; color: #0d6efd;" {{ str_contains(request('quick_filter', ''), 'custom') ? 'selected' : '' }}>+ Custom (Type N Hours/Days/etc.)</option>
+                                                    <option value="clear">Clear Quick Filter</option>
                                                 </select>
                                             </div>
                                             <div class="col-lg-3 col-md-6 d-flex gap-2 ms-auto">
@@ -410,24 +412,22 @@ $breadcrumbs = [
 
         $('#quickTimeFilter').on('change', function() {
             let value = $(this).val();
-            const dateFromInput = $('#date_from');
-            const dateToInput = $('#date_to');
             
             if (value === '' || value === 'clear') {
-                dateFromInput.val('');
-                dateToInput.val('');
+                $('#quick_filter').val('');
                 $(this).val('');
+                $('#filterForm').submit();
                 return;
             }
 
             if (value === 'custom') {
                 $('#customTimeInput').val('');
                 $('#customTimeFilterModal').modal('show');
-                $(this).val('');
                 return;
             }
             
-            applyTimeFilter(value);
+            $('#quick_filter').val(value);
+            $('#filterForm').submit();
         });
         
         $('#applyCustomTime').on('click', function() {
@@ -446,7 +446,8 @@ $breadcrumbs = [
             
             $('#customTimeInput').removeClass('is-invalid');
             $('#customTimeFilterModal').modal('hide');
-            applyTimeFilter(customValue);
+            $('#quick_filter').val(customValue);
+            $('#filterForm').submit();
         });
         
         $('#customTimeInput').on('input', function() {
