@@ -4,7 +4,6 @@
 @endphp
 
 <style>
-    /* Premium Dashboard Wrapper Container */
     .table-responsive {
         border-radius: 12px;
         box-shadow: 0 4px 20px rgba(0, 0, 0, 0.04);
@@ -13,14 +12,12 @@
         border: 1px solid #e2e8f0;
     }
     
-    /* Clean Minimal Table Setup */
     .crt-modern-table {
         border-collapse: separate;
         border-spacing: 0;
         margin: 0;
     }
     
-    /* Elegant Government Tech Header Lineage */
     .crt-modern-table thead {
         background: linear-gradient(135deg, #1e40af 0%, #0284c7 100%);
     }
@@ -35,11 +32,9 @@
         border: none;
     }
     
-    /* Table Header Borders Smooth Curve */
     .crt-modern-table thead th:first-child { border-radius: 8px 0 0 0; }
     .crt-modern-table thead th:last-child { border-radius: 0 8px 0 0; }
     
-    /* Row Transitions & Bordering */
     .crt-modern-table tbody tr {
         transition: all 0.2s ease;
         background-color: #ffffff;
@@ -47,7 +42,7 @@
     
     .crt-modern-table tbody tr:hover {
         background-color: #f8fafc !important;
-        box-shadow: inset 4px 0 0 0 #3b82f6; /* Left side indicators on hover */
+        box-shadow: inset 4px 0 0 0 #3b82f6;
     }
     
     .crt-modern-table tbody td {
@@ -58,7 +53,6 @@
         font-size: 0.85rem;
     }
     
-    /* Action Buttons Design Architecture */
     .crt-ref-id {
         font-family: 'SF Mono', 'JetBrains Mono', monospace;
         font-weight: 700;
@@ -66,7 +60,6 @@
         font-size: 0.88rem;
     }
 </style>
-
 
 <div class="table-responsive">
 <table id="{{ $tableId ?? 'complaintsTable' }}" class="table table-hover table-bordered table-striped align-middle w-100">
@@ -118,12 +111,18 @@
                     <!-- View -->
                     <a href="{{ route('complaints.show', $complaint) }}" class="btn btn-sm btn-info text-white" data-bs-toggle="tooltip" data-bs-placement="top" title="View Ticket"><i class="bi bi-eye"></i></a>
                     @auth
+                    {{-- Status Update Comment Modal Button --}}
                     @if($complaint->assigned_to == auth()->user()->id && !$complaint->isCompleted() && !$complaint->isClosed())
-                        <button type="button" class="btn btn-sm btn-warning text-dark ms-1" data-bs-toggle="modal" data-bs-target="#updateStatusModal{{ $complaint->id }}" title="Update Status">
+                        <button type="button" class="btn btn-sm btn-warning text-dark ms-1 btn-open-status-modal" 
+                                data-id="{{ $complaint->id }}" 
+                                data-ref="{{ $complaint->reference_number }}"
+                                data-status-id="{{ $complaint->status_id }}"
+                                title="Update Status">
                             <i class="bi bi-chat-left-dots"></i>
                         </button>
                     @endif
 
+                    {{-- Edit Ticket --}}
                     @if(
                         (auth()->user()->isManager() && $complaint->status->name != 'closed') || 
                         ((auth()->user()->isVM() || auth()->user()->isNFO()) && $complaint->status->name != 'closed' && $complaint->status->name != 'completed')
@@ -131,12 +130,23 @@
                         <a href="{{ route('complaints.edit', $complaint) }}" class="btn btn-sm btn-primary ms-1" data-bs-toggle="tooltip" data-bs-placement="top" title="Edit Ticket"><i class="bi bi-pencil-square"></i></a>
                     @endif
                     
+                    {{-- Role Based Action Buttons --}}
                     @if(auth()->user()->isManager())
                         @if($complaint->status->name == 'completed')
-                            <button type="button" class="btn btn-sm btn-success ms-1 btn-close-ticket" data-bs-toggle="modal" data-bs-target="#closeModal{{ $complaint->id }}" title="Close Ticket"><i class="bi bi-check-circle"></i></button>
+                            <button type="button" class="btn btn-sm btn-success ms-1 btn-open-close-modal" 
+                                    data-id="{{ $complaint->id }}" 
+                                    data-ref="{{ $complaint->reference_number }}" 
+                                    title="Close Ticket">
+                                <i class="bi bi-check-circle"></i>
+                            </button>
                         @endif
+                        
                         @if($complaint->status->name != 'closed')
-                            <button type="button" class="btn btn-sm btn-primary btn-assign-reassign ms-1" data-bs-toggle="modal" data-bs-target="#assignModal{{ $complaint->id }}" title="{{ $complaint->assigned_to ? 'Reassign Ticket' : 'Assign Ticket' }}">
+                            <button type="button" class="btn btn-sm btn-primary ms-1 btn-open-assign-modal" 
+                                    data-id="{{ $complaint->id }}" 
+                                    data-ref="{{ $complaint->reference_number }}"
+                                    data-users='@json($complaint->assignableUsers ?? [])'
+                                    title="{{ $complaint->assigned_to ? 'Reassign Ticket' : 'Assign Ticket' }}">
                                 @if($complaint->assigned_to)
                                     <i class="bi bi-arrow-repeat"></i>
                                 @else
@@ -146,7 +156,11 @@
                         @endif
                     @elseif(auth()->user()->isVM())
                         @if($complaint->status->name != 'completed' && $complaint->status->name != 'closed')
-                            <button type="button" class="btn btn-sm btn-primary btn-assign-reassign" data-bs-toggle="modal" data-bs-target="#assignModal{{ $complaint->id }}" title="{{ $complaint->assigned_to ? 'Reassign Ticket' : 'Assign Ticket' }}">
+                            <button type="button" class="btn btn-sm btn-primary ms-1 btn-open-assign-modal" 
+                                    data-id="{{ $complaint->id }}" 
+                                    data-ref="{{ $complaint->reference_number }}"
+                                    data-users='@json($complaint->assignableUsers ?? [])'
+                                    title="{{ $complaint->assigned_to ? 'Reassign Ticket' : 'Assign Ticket' }}">
                                 @if($complaint->assigned_to)
                                     <i class="bi bi-arrow-repeat"></i>
                                 @else
@@ -156,7 +170,11 @@
                         @endif
                     @elseif(auth()->user()->isNFO())
                         @if($complaint->assigned_to === auth()->user()->id && !$complaint->isCompleted() && !$complaint->isClosed())
-                            <button type="button" class="btn btn-sm btn-primary btn-assign-reassign" data-bs-toggle="modal" data-bs-target="#assignModal{{ $complaint->id }}" title="Reassign Ticket">
+                            <button type="button" class="btn btn-sm btn-primary ms-1 btn-open-assign-modal" 
+                                    data-id="{{ $complaint->id }}" 
+                                    data-ref="{{ $complaint->reference_number }}"
+                                    data-users='@json($complaint->assignableUsers ?? [])'
+                                    title="Reassign Ticket">
                                 <i class="bi bi-arrow-repeat"></i>
                             </button>
                         @endif

@@ -7,11 +7,6 @@
             <div class="card">
                 <div class="card-header d-flex justify-content-between align-items-center">
                     <h4 class="mb-0">Daily Dashboard</h4>
-                    <!-- <div>
-                        @if(auth()->user()->isManager() || auth()->user()->isVM())
-                        <a href="{{ route('complaints.index') }}" class="btn btn-primary">View All Complaints</a>
-                        @endif
-                    </div> -->
                 </div>
 
                 <div class="card-body">
@@ -29,7 +24,7 @@
                         @endif
                     </div>
 
-                    <!-- Statistics (from controller variables) -->
+                    <!-- Statistics -->
                     <div class="row justify-content-center mb-4">
                         <div class="col-12 mb-4">
                             <div class="row g-4">
@@ -113,18 +108,12 @@
                                 </div>
                                 <div class="card-body">
                                     @include('complaints.partials.table', ['complaints' => $todayTickets, 'tableId' => 'todayComplaintsTable'])
-                                    @foreach($todayTickets as $complaint)
-                                        @include('complaints.partials.assign-modal', ['complaint' => $complaint])
-                                        @include('complaints.partials.revert-modal', ['complaint' => $complaint, 'managers' => $managers])
-                                        @include('complaints.partials.close-modal', ['complaint' => $complaint, 'closeStatus' => $closeStatus ?? null])
-                                        @include('complaints.partials.update-status-modal', ['complaint' => $complaint])
-                                    @endforeach
                                 </div>
                             </div>
                         </div>
                     </div>
 
-                    <!-- 2. Previous Pending Tickets Section -->
+                    <!-- Previous Pending Tickets Section -->
                     <div class="row">
                         <div class="col-12">
                             <div class="card shadow-lg border-0 rounded-4">
@@ -134,12 +123,6 @@
                                 </div>
                                 <div class="card-body">
                                     @include('complaints.partials.table', ['complaints' => $previousTickets, 'tableId' => 'previousComplaintsTable'])
-                                    @foreach($previousTickets as $complaint)
-                                        @include('complaints.partials.assign-modal', ['complaint' => $complaint])
-                                        @include('complaints.partials.revert-modal', ['complaint' => $complaint, 'managers' => $managers])
-                                        @include('complaints.partials.close-modal', ['complaint' => $complaint, 'closeStatus' => $closeStatus ?? null])
-                                        @include('complaints.partials.update-status-modal', ['complaint' => $complaint])
-                                    @endforeach
                                 </div>
                             </div>
                         </div>
@@ -150,6 +133,9 @@
         </div>
     </div>
 </div>
+
+@include('complaints.partials.global-modals')
+
 @endsection
 
 @section('styles')
@@ -165,11 +151,6 @@
 <script src="{{ asset('js/responsive.bootstrap5.min.js') }}"></script>
 <script src="{{ asset('js/dataTables.buttons.min.js') }}"></script>
 <script src="{{ asset('js/buttons.bootstrap5.min.js') }}"></script>
-<script src="{{ asset('js/jszip.min.js') }}"></script>
-<script src="{{ asset('js/pdfmake.min.js') }}"></script>
-<script src="{{ asset('js/vfs_fonts.js') }}"></script>
-<script src="{{ asset('js/buttons.html5.min.js') }}"></script>
-<script src="{{ asset('js/buttons.print.min.js') }}"></script>
 
 <script>
     $(document).ready(function() {
@@ -184,26 +165,15 @@
             columnDefs: [{ orderable: false, targets: 0 }]
         });
 
-        // Previous Table
         $('#previousComplaintsTable').DataTable({
             responsive: false,
             scrollX: true,
             order: [[1, 'desc']],
             pageLength: 10,
-            lengthMenu: [
-                [10, 15, 20, 50, 100, -1],
-                [10, 15, 20, 50, 100, 'All']
-            ],
-            language: {
-                search: "",
-                searchPlaceholder: "Search complaints..."
-            },
+            lengthMenu: [[10, 15, 20, 50, 100, -1], [10, 15, 20, 50, 100, 'All']],
+            language: { search: "", searchPlaceholder: "Search complaints..." },
             dom: 'lfrtip',
-            columnDefs: [{
-                    orderable: false,
-                    targets: 0
-                } // Disable sorting on S.No.
-            ]
+            columnDefs: [{ orderable: false, targets: 0 }]
         });
     });
 </script>
