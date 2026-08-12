@@ -35,6 +35,7 @@ class ComplaintController extends Controller
     {
         try {
             $user = Auth::user();
+            
             $query = Complaint::query()->with([
                 'client', 
                 'assignedTo', 
@@ -66,6 +67,8 @@ class ComplaintController extends Controller
                     $query->where('client_id', $user->id);
                 }
             }
+
+            // Search
             if ($request->filled('search')) {
                 $search = $request->input('search');
                 $query->where(function ($q) use ($search) {
@@ -111,6 +114,8 @@ class ComplaintController extends Controller
                 $searchBySection = is_array($request->input('section')) ? $request->input('section') : explode(',', $request->input('section'));
                 $query->whereIn('section_id', $searchBySection);
             }
+
+            // Dates
             if ($request->filled('date_from')) {
                 $dateFrom = Carbon::createFromFormat('d/m/Y', $request->input('date_from'))->startOfDay();
                 $query->where('created_at', '>=', $dateFrom);
@@ -120,6 +125,7 @@ class ComplaintController extends Controller
                 $query->where('created_at', '<=', $dateTo);
             }
 
+            // Quick Filter
             if ($request->filled('quick_filter')) {
                 $val = strtolower($request->input('quick_filter'));
                 $amount = (int) filter_var($val, FILTER_SANITIZE_NUMBER_INT);
@@ -154,42 +160,47 @@ class ComplaintController extends Controller
             if ($request->filled('unassigned') && $request->input('unassigned') == '1') {
                 $query->whereNull('assigned_to');
             }
+
+            // Handle Pagination & "All"
+            $perPage = $request->input('per_page', 10);
+
+            if ($perPage === 'all') {
+                $allResults = $query->latest()->get();
+                $total = $allResults->count();
+                
+                $complaints = new \Illuminate\Pagination\LengthAwarePaginator(
+                    $allResults,
+                    $total > 0 ? $total : 1,
+                    $total > 0 ? $total : 1,
+                    1,
+                    ['path' => $request->url(), 'query' => $request->query()]
+                );
+            } else {
+                $complaints = $query->latest()->paginate((int)$perPage)->withQueryString();
+            }
+
             $managers = User::withTrashed()->whereHas('role', function ($q) {
                 $q->where('slug', 'manager');
             })->get();
+
             $statuses = Status::withTrashed()->ordered()->where('name', '!=', 'assign_to_me')->get();
-            $complaints = $query->latest()->get();
-            foreach ($complaints as $complaint) {
-                $complaint->assignableUsers = $user->getAssignableUsers($complaint);
-            }
+
             $verticals = Vertical::withTrashed()->with(['parent' => fn($q) => $q->withTrashed()])->get()->sortBy(function($vertical) {
                 return $vertical->full_path ?? $vertical->name;
             });
-            $usersList = User::withTrashed()
-                ->with(['role' => fn($q) => $q->withTrashed()])
-                ->select('users.id', 'users.full_name', 'users.deleted_at')
-                ->join('roles', 'roles.id', '=', 'users.role_id')
-                ->orderByRaw("
-                    CASE 
-                        WHEN roles.slug = 'manager' THEN 0
-                        WHEN roles.slug = 'vm' THEN 1
-                        WHEN roles.slug = 'nfo' THEN 2
-                        ELSE 3
-                    END
-                ")
-                ->orderBy('users.full_name')
-                ->get();
+
+            $usersList = User::withTrashed()->select('id', 'full_name')->orderBy('full_name')->get();
             $networkTypes = NetworkType::withTrashed()->get();
             $sections = Section::withTrashed()->get();
             $closeStatus = Status::withTrashed()->where('name', 'closed')->first();
             $requestTypes = RequestType::withTrashed()->get();
+
             return view('complaints.index', compact('complaints', 'usersList', 'managers', 'statuses', 'networkTypes', 'sections', 'verticals', 'closeStatus', 'requestTypes'));
         } catch (\Exception $e) {
             \Log::error('Complaint index error: ' . $e->getMessage());
             return redirect('/home')->with('error', 'Something went wrong while loading complaints. Please try again.');
         }
     }
-
 
     public function create()
     {

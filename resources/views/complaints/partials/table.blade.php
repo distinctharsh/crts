@@ -61,6 +61,21 @@
     }
 </style>
 
+<!-- Top Right Controls (Title & Per-Page Selector Alignment) -->
+<div class="d-flex justify-content-between align-items-center mb-2 px-1">
+    <div></div>
+    <div class="d-flex align-items-center gap-2">
+        <label for="perPageSelect" class="form-label mb-0 text-muted small fw-bold">Show</label>
+        <select id="perPageSelect" class="form-select form-select-sm" style="width: auto;">
+            <option value="10" {{ request('per_page', 10) == 10 ? 'selected' : '' }}>10 entries</option>
+            <option value="25" {{ request('per_page') == 25 ? 'selected' : '' }}>25 entries</option>
+            <option value="50" {{ request('per_page') == 50 ? 'selected' : '' }}>50 entries</option>
+            <option value="100" {{ request('per_page') == 100 ? 'selected' : '' }}>100 entries</option>
+            <option value="all" {{ request('per_page') == 'all' ? 'selected' : '' }}>All</option>
+        </select>
+    </div>
+</div>
+
 <div class="table-responsive">
 <table id="{{ $tableId ?? 'complaintsTable' }}" class="table table-hover table-bordered table-striped align-middle w-100">
     <thead class="table-primary">
@@ -186,4 +201,20 @@
         @endforeach
     </tbody>
 </table> 
+
+<!-- Table Footer / Single Clean Pagination -->
+<div class="d-flex justify-content-between align-items-center mt-3 px-2 flex-wrap gap-2">
+    <div class="text-muted small">
+        @if(method_exists($complaints, 'firstItem'))
+            Showing {{ $complaints->firstItem() ?? 0 }} to {{ $complaints->lastItem() ?? 0 }} of {{ $complaints->total() }} entries
+        @else
+            Showing {{ $complaints->count() }} entries
+        @endif
+    </div>
+    <div>
+        @if(method_exists($complaints, 'links'))
+            {{ $complaints->links('pagination::bootstrap-5') }}
+        @endif
+    </div>
+</div>
 </div>

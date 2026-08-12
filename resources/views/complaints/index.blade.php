@@ -61,6 +61,7 @@ $breadcrumbs = [
                             <div class="collapse{{ (request('status') || request('by') || request('vertical') || request('networktype') || request('section') || request('date_from') || request('date_to')) ? ' show' : '' }}" id="filterCollapse">
                                 <div class="card-body py-3">
                                     <form method="GET" action="{{ route('complaints.index') }}" id="filterForm">
+                                        <input type="hidden" name="per_page" id="filterFormPerPage" value="{{ request('per_page', 10) }}">
                                         <div class="row g-3 align-items-end">
                                             <div class="col-md-2">
                                                 <label class="form-label mb-1"><i class="bi bi-flag me-1"></i>Status</label>
@@ -190,15 +191,18 @@ $breadcrumbs = [
 
 @push('scripts')
 <script>
-    $(document).ready(function() {
+    function initDataTable() {
+        if ($.fn.DataTable.isDataTable('#complaintsTable')) {
+            $('#complaintsTable').DataTable().destroy();
+        }
         $('#complaintsTable').DataTable({
             responsive: false,
             scrollX: true,
             order: [],
-            pageLength: 10,
-            lengthMenu: [[10, 15, 20, 50, 100, -1], [10, 15, 20, 50, 100, 'All']],
+            paging: false,
+            info: false,
             language: { search: "", searchPlaceholder: "Search complaints..." },
-            dom: '<"d-flex justify-content-between align-items-center mb-2"Bfl>rtip',
+            dom: '<"d-flex justify-content-between align-items-center mb-3"Bf>rt',
             buttons: [
                 { extend: 'copy', text: '<i class="bi bi-clipboard"></i>', className: 'btn btn-light btn-sm me-1', titleAttr: 'Copy' },
                 { extend: 'csv', text: '<i class="bi bi-filetype-csv"></i>', className: 'btn btn-light btn-sm me-1', titleAttr: 'Export as CSV' },
@@ -208,6 +212,45 @@ $breadcrumbs = [
             ],
             columnDefs: [{ orderable: false, targets: 0 }]
         });
+    }
+
+    // Dynamic Data Fetcher (Without Page Reloading)
+    function fetchTableData(targetUrl) {
+        $('#complaintsTableContainer').css('opacity', '0.5');
+        $.ajax({
+            url: targetUrl,
+            type: 'GET',
+            success: function(response) {
+                $('#complaintsTableContainer').html($(response).find('#complaintsTableContainer').html());
+                $('#complaintsTableContainer').css('opacity', '1');
+                initDataTable();
+            },
+            error: function() {
+                $('#complaintsTableContainer').css('opacity', '1');
+            }
+        });
+    }
+
+    $(document).ready(function() {
+        initDataTable();
+    });
+
+    // Handle AJAX Pagination Link Clicks (Bottom Links)
+    $(document).on('click', '#complaintsTableContainer .pagination a', function(e) {
+        e.preventDefault();
+        let targetUrl = $(this).attr('href');
+        if (targetUrl) {
+            fetchTableData(targetUrl);
+        }
+    });
+
+    // Top-Right Per Page Change Handler via AJAX
+    $(document).on('change', '#perPageSelect', function() {
+        let val = $(this).val();
+        $('#filterFormPerPage').val(val);
+        let formData = $('#filterForm').serialize();
+        let actionUrl = $('#filterForm').attr('action') + '?' + formData;
+        fetchTableData(actionUrl);
     });
 
     document.addEventListener('DOMContentLoaded', function() {
@@ -309,32 +352,8 @@ $breadcrumbs = [
 
         $('#filterForm').on('submit', function(e) {
             e.preventDefault();
-            $('#complaintsTableContainer').html('<div class="text-center py-5"><div class="spinner-border text-primary" role="status"><span class="visually-hidden">Loading...</span></div></div>');
-            $.ajax({
-                url: $(this).attr('action'),
-                type: 'GET',
-                data: $(this).serialize(),
-                success: function(response) {
-                    $('#complaintsTableContainer').html($(response).find('#complaintsTableContainer').html());
-                    if ($.fn.DataTable.isDataTable('#complaintsTable')) {
-                        $('#complaintsTable').DataTable().destroy();
-                    }
-                    $('#complaintsTable').DataTable({
-                        responsive: false, scrollX: true, order: [], pageLength: 10,
-                        lengthMenu: [[10, 15, 20, 50, 100, -1], [10, 15, 20, 50, 100, 'All']],
-                        language: { search: "", searchPlaceholder: "Search complaints..." },
-                        dom: '<"d-flex justify-content-between align-items-center mb-2"Bfl>rtip',
-                        buttons: [
-                            { extend: 'copy', text: '<i class="bi bi-clipboard"></i>', className: 'btn btn-light btn-sm me-1' },
-                            { extend: 'csv', text: '<i class="bi bi-filetype-csv"></i>', className: 'btn btn-light btn-sm me-1' },
-                            { extend: 'excel', text: '<i class="bi bi-file-earmark-excel"></i>', className: 'btn btn-light btn-sm me-1' },
-                            { extend: 'pdf', text: '<i class="bi bi-file-earmark-pdf"></i>', className: 'btn btn-light btn-sm me-1' },
-                            { extend: 'print', text: '<i class="bi bi-printer"></i>', className: 'btn btn-light btn-sm' }
-                        ],
-                        columnDefs: [{ orderable: false, targets: 0 }]
-                    });
-                }
-            });
+            let actionUrl = $(this).attr('action') + '?' + $(this).serialize();
+            fetchTableData(actionUrl);
         });
     });
 </script>
