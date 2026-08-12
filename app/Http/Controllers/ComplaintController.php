@@ -751,7 +751,7 @@ class ComplaintController extends Controller
 
             $request->validate([
                 'comment' => ($isManager && !$isAssignedUser ? 'required' : 'nullable') . '|string|max:2000',
-                'status_id' => ($isAssignedUser ? 'nullable' : 'nullable') . '|exists:statuses,id',
+                'status_id' => 'nullable|exists:statuses,id',
             ]);
 
             // Add comment only if not blank
