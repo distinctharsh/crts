@@ -1,6 +1,16 @@
 @extends('layouts.app')
 
 @section('content')
+<style>
+    .form-control[readonly], 
+    .form-control:disabled,
+    .form-select:disabled {
+        background-color: #e9ecef !important;
+        opacity: 0.8;
+        cursor: not-allowed;
+    }
+</style>
+
 <div class="row">
     <div class="col-md-12 mb-4">
         <div class="d-flex justify-content-between align-items-center">
@@ -37,14 +47,14 @@
                         <div class="col-md-4">
                             <label for="user_name" class="form-label">Name <span class="text-danger">*</span></label>
                             <input type="text" class="form-control @error('user_name') is-invalid @enderror"
-                                id="user_name" name="user_name" value="{{ old('user_name', isset($complaint) ? $complaint->user_name : '') }}" placeholder="Name of the User" required maxlength="30">
+                                id="user_name" name="user_name" value="{{ old('user_name', isset($complaint) ? $complaint->user_name : '') }}" placeholder="Name of the User" required maxlength="30" {{ isset($complaint) ? 'disabled readonly' : '' }}>
                             @error('user_name')
                             <div class="invalid-feedback">{{ $message }}</div>
                             @enderror
                         </div>
                         <div class="col-md-4">
                             <label for="intercom" class="form-label">Intercom / Telephone No. <span class="text-danger">*</span></label>
-                            <select id="intercom" name="intercom" class="form-select tom-select @error('intercom') is-invalid @enderror" required >
+                            <select id="intercom" name="intercom" class="form-select {{ !isset($complaint) ? 'tom-select' : '' }} @error('intercom') is-invalid @enderror" required {{ isset($complaint) ? 'disabled' : '' }}>
                                 <option value="">Enter or select Intercom</option>
                                 @foreach($intercoms as $intercom)
                                     <option value="{{ $intercom }}"
@@ -61,7 +71,7 @@
                         <div class="col-md-4">
                             <label for="room_number" class="form-label">Room Number <span class="text-danger">*</span></label>
                             <input type="number" class="form-control @error('room_number') is-invalid @enderror"
-                                id="room_number" name="room_number" value="{{ old('room_number', isset($complaint) ? $complaint->room_number : '') }}" placeholder="Enter Room Number" required min="0" max="999999">
+                                id="room_number" name="room_number" value="{{ old('room_number', isset($complaint) ? $complaint->room_number : '') }}" placeholder="Enter Room Number" required min="0" max="999999" {{ isset($complaint) ? 'disabled readonly' : '' }}>
                             @error('room_number')
                             <div class="invalid-feedback">{{ $message }}</div>
                             @enderror
@@ -71,8 +81,8 @@
                     <div class="row mb-3 align-items-end" id="vertical-chain-container">
                         <div class="col-md-4 mb-3">
                             <label for="section_id" class="form-label">Section <span class="text-danger">*</span></label>
-                            <select class="form-select tom-select @error('section_id') is-invalid @enderror"
-                                id="section_id" name="section_id" required>
+                            <select class="form-select {{ !isset($complaint) ? 'tom-select' : '' }} @error('section_id') is-invalid @enderror"
+                                id="section_id" name="section_id" required {{ isset($complaint) ? 'disabled' : '' }}>
                                 <option value="">Select --</option>
                                 @foreach($sections as $section)
                                 <option value="{{ $section->id }}" {{ old('section_id', isset($complaint) ? $complaint->section_id : '') == $section->id ? 'selected' : '' }}>
@@ -87,8 +97,8 @@
 
                         <div class="col-md-4 mb-3">
                             <label for="network_type_id" class="form-label">Issue Type <span class="text-danger">*</span></label>
-                            <select class="form-select tom-select @error('network_type_id') is-invalid @enderror"
-                                id="network_type_id" name="network_type_id" required>
+                            <select class="form-select {{ !isset($complaint) ? 'tom-select' : '' }} @error('network_type_id') is-invalid @enderror"
+                                id="network_type_id" name="network_type_id" required {{ isset($complaint) ? 'disabled' : '' }}>
                                 <option value="">Select --</option>
                                 @foreach($networkTypes as $type)
                                 <option value="{{ $type->id }}" {{ old('network_type_id', isset($complaint) ? $complaint->network_type_id : 2) == $type->id ? 'selected' : '' }}>
@@ -104,8 +114,8 @@
                         @auth
                             <div class="col-md-4 mb-3">
                                 <label for="request_type_id" class="form-label">Request Type <span class="text-danger">*</span></label>
-                                <select class="form-select tom-select @error('request_type_id') is-invalid @enderror"
-                                    id="request_type_id" name="request_type_id" required>
+                                <select class="form-select {{ !isset($complaint) ? 'tom-select' : '' }} @error('request_type_id') is-invalid @enderror"
+                                    id="request_type_id" name="request_type_id" required {{ isset($complaint) ? 'disabled' : '' }}>
                                     <option value="">Select Request Type</option>
                                     @foreach($requestTypes as $type)
                                     <option value="{{ $type->id }}" {{ old('request_type_id', isset($complaint) ? $complaint->request_type_id : ($loop->first ? $type->id : '')) == $type->id ? 'selected' : '' }}>
@@ -118,6 +128,7 @@
                                 @enderror
                             </div>
 
+                            <!-- Category / Sub-Category (Editable in Edit mode) -->
                             <div class="col-md-4 mb-3 hierarchy-wrapper">
                                 <label class="form-label">Category <span class="text-danger">*</span></label>
                                 <select class="form-select hierarchy-select" data-level="1" required>
@@ -131,6 +142,7 @@
                             </div>
                             <input type="hidden" name="vertical_id" id="final_vertical_id" value="{{ old('vertical_id', isset($complaint) ? $complaint->vertical_id : '') }}">
 
+                            <!-- Assign To (Editable in Edit mode) -->
                             @if(!auth()->user()->isNFO())
                             <div class="col-md-4 mb-3" id="assignToWrapper" style="display:none;">
                                 <label for="assigned_to" class="form-label">Assign To <span class="text-danger">*</span></label>
@@ -151,7 +163,8 @@
                             <div class="d-flex gap-3">
                                 <div class="form-check">
                                     <input class="form-check-input" type="checkbox" name="priority" id="high" value="high" 
-                                        {{ old('priority', isset($complaint) ? $complaint->priority : '') == 'high' ? 'checked' : '' }}>
+                                        {{ old('priority', isset($complaint) ? $complaint->priority : '') == 'high' ? 'checked' : '' }}
+                                        {{ isset($complaint) ? 'disabled' : '' }}>
                                     <label class="form-check-label" for="high">High</label>
                                 </div>
                             </div>
@@ -164,7 +177,7 @@
                         <div class="col-md-4 mb-3">
                             <label for="file" class="form-label">File Upload</label>
                             <input type="file" class="form-control @error('file') is-invalid @enderror"
-                                id="file" name="file" accept=".pdf,image/*">
+                                id="file" name="file" accept=".pdf,image/*" {{ isset($complaint) ? 'disabled' : '' }}>
                             @error('file')
                             <div class="invalid-feedback">{{ $message }}</div>
                             @enderror
@@ -183,7 +196,7 @@
                         <div class="col-md-12">
                             <label for="description" class="form-label">Ticket Description <span class="text-danger">*</span></label>
                             <textarea class="form-control @error('description') is-invalid @enderror" placeholder="Enter the Issue.. "
-                                id="description" name="description" rows="3" required>{{ old('description', isset($complaint) ? $complaint->description : '') }}</textarea>
+                                id="description" name="description" rows="3" required {{ isset($complaint) ? 'disabled readonly' : '' }}>{{ old('description', isset($complaint) ? $complaint->description : '') }}</textarea>
                             @error('description')
                             <div class="invalid-feedback">{{ $message }}</div>
                             @enderror
@@ -193,7 +206,7 @@
                     @if(isset($complaint))
                     <div class="mb-3">
                         <label for="status_id" class="form-label">Status *</label>
-                        <select class="form-select tom-select @error('status_id') is-invalid @enderror" id="status_id" name="status_id" required>
+                        <select class="form-select tom-select @error('status_id') is-invalid @enderror" id="status_id" name="status_id" required {{ !auth()->user()->isManager() ? 'disabled' : '' }}>
                             @foreach($statuses as $status)
                                 @if(isset($assignedUser) && $status->name === 'unassigned')
                                     @continue
@@ -215,12 +228,12 @@
                     </div>
                     @endif
 
-                        <div class="d-grid mt-4">
-                            <button type="submit" class="btn btn-primary shadow-sm" id="submitTicketBtn" style="border-radius: 12px;">
-                                <span id="submitBtnText">{{ isset($complaint) ? 'Update Ticket' : 'Submit Ticket' }}</span>
-                                <span id="submitBtnSpinner" class="spinner-border spinner-border-sm d-none" role="status" aria-hidden="true"></span>
-                            </button>
-                        </div>
+                    <div class="d-grid mt-4">
+                        <button type="submit" class="btn btn-primary shadow-sm" id="submitTicketBtn" style="border-radius: 12px;">
+                            <span id="submitBtnText">{{ isset($complaint) ? 'Update Ticket' : 'Submit Ticket' }}</span>
+                            <span id="submitBtnSpinner" class="spinner-border spinner-border-sm d-none" role="status" aria-hidden="true"></span>
+                        </button>
+                    </div>
                 </form>
             </div>
         </div>

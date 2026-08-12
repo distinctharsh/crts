@@ -334,66 +334,39 @@ class ComplaintController extends Controller
                 return redirect()->route('complaints.index')->with('success', 'Complaint closed successfully.');
             }
 
-            $validated = $request->validate([
-                'network_type_id' => 'required|exists:network_types,id',
-                'request_type_id' => 'required|exists:request_types,id',
-                'description' => 'required|string',
+            $isManager = auth()->user()->isManager();
+            $rules = [
                 'vertical_id' => 'required|exists:verticals,id',
-                'user_name' => 'required|string|max:255',
-                'section_id' => 'required|exists:sections,id',
-                'intercom' => 'required|string|max:255',
-                'room_number' => 'required|numeric|min:0|max:999999',
-                'priority' => 'nullable|in:high',
-                'status_id' => 'required|exists:statuses,id',
-                'file' => 'nullable|file|max:2048',
-                'delete_file' => 'nullable|boolean',
                 'assigned_to' => 'nullable|exists:users,id',
-            ]);
+            ];
 
+            if ($isManager) {
+                $rules['status_id'] = 'required|exists:statuses,id';
+            }
+
+            $validated = $request->validate($rules);
+            $statusId = $isManager ? $validated['status_id'] : $complaint->status_id;
             $assignedStatus = Status::where('name', 'assigned')->first();
-            if ($assignedStatus && $validated['status_id'] == $assignedStatus->id && empty($validated['assigned_to'])) {
+            if ($assignedStatus && $statusId == $assignedStatus->id && empty($validated['assigned_to'])) {
                 return redirect()->back()->with('error', 'Cannot set status to assigned without assigning a user.');
             }
 
-            $validated['priority'] = $validated['priority'] ?? 'medium';
-
-            if ($request->boolean('delete_file') && $complaint->file_path) {
-                Storage::disk('public')->delete($complaint->file_path);
-                $complaint->file_path = null;
-            }
-
-            if ($request->hasFile('file')) {
-                if ($complaint->file_path) {
-                    Storage::disk('public')->delete($complaint->file_path);
-                }
-                $complaint->file_path = $request->file('file')->store('complaint_files', 'public');
-            }
-
-            $oldAssignedTo = $complaint->assigned_to;
+            $oldAssignedTo    = $complaint->assigned_to;
             $oldStatusId = $complaint->status_id;
             $oldRequestTypeId = $complaint->request_type_id;
             $oldVerticalId = $complaint->vertical_id;
 
-            if (array_key_exists('assigned_to', $validated) && $validated['assigned_to'] != $oldAssignedTo) {
-                $complaint->assigned_by = Auth::user()->id ?? 0;
-            }
-
-            $complaint->user_name = $validated['user_name'];
-            $complaint->network_type_id = $validated['network_type_id'];
-            $complaint->request_type_id = $validated['request_type_id'];
-            $complaint->description = $validated['description'];
-            $complaint->section_id = $validated['section_id'];
-            $complaint->intercom = $validated['intercom'];
-            $complaint->room_number = $validated['room_number'];
-            $complaint->priority = $validated['priority'];
-            $complaint->status_id = $validated['status_id'];
             $complaint->vertical_id = $validated['vertical_id'];
-            if ($request->has('assigned_to')) {
-                $complaint->assigned_to = $request->input('assigned_to') ?: null;
+            $complaint->status_id   = $statusId;
+            if (array_key_exists('assigned_to', $validated)) {
+                $newAssignedTo = $validated['assigned_to'] ?: null;
+                if ($newAssignedTo != $oldAssignedTo) {
+                    $complaint->assigned_to = $newAssignedTo;
+                    $complaint->assigned_by = Auth::user()->id ?? 0;
+                }
             }
 
             $unassignedStatus = Status::where('name', 'unassigned')->first();
-            $assignedStatus = Status::where('name', 'assigned')->first();
             if ($complaint->assigned_to && $unassignedStatus && $assignedStatus && $complaint->status_id == $unassignedStatus->id) {
                 $complaint->status_id = $assignedStatus->id;
             }
@@ -409,9 +382,6 @@ class ComplaintController extends Controller
             }
             if ($oldVerticalId != $complaint->vertical_id) {
                 $changes['vertical_id'] = ['old' => $oldVerticalId, 'new' => $complaint->vertical_id];
-            }
-            if ($oldRequestTypeId != $complaint->request_type_id) {
-                $changes['request_type'] = ['old' => $oldRequestTypeId, 'new' => $complaint->request_type_id];
             }
 
             ComplaintAction::create([
