@@ -116,33 +116,33 @@
             <td>
                 <div class="btn-group action-buttons">
                     <!-- View -->
-                    <a href="{{ route('complaints.show', $complaint) }}" class="btn btn-sm btn-info text-white me-1" data-bs-toggle="tooltip" data-bs-placement="top" title="View Ticket"><i class="bi bi-eye"></i></a>
+                    <a href="{{ route('complaints.show', $complaint) }}" class="btn btn-sm btn-info text-white" data-bs-toggle="tooltip" data-bs-placement="top" title="View Ticket"><i class="bi bi-eye"></i></a>
                     @auth
                     @if($complaint->assigned_to == auth()->user()->id && !$complaint->isCompleted() && !$complaint->isClosed())
-                        <button type="button" class="btn btn-sm btn-warning text-dark me-1" data-bs-toggle="modal" data-bs-target="#updateStatusModal{{ $complaint->id }}" title="Update Status">
+                        <button type="button" class="btn btn-sm btn-warning text-dark ms-1" data-bs-toggle="modal" data-bs-target="#updateStatusModal{{ $complaint->id }}" title="Update Status">
                             <i class="bi bi-chat-left-dots"></i>
                         </button>
                     @endif
 
                     @if(
                         (auth()->user()->isManager() && $complaint->status->name != 'closed') || 
-                        (auth()->user()->isVM() || auth()->user()->isNFO() && $complaint->status->name != 'closed' && $complaint->status->name != 'completed')
+                        ((auth()->user()->isVM() || auth()->user()->isNFO()) && $complaint->status->name != 'closed' && $complaint->status->name != 'completed')
                     )
-                        <a href="{{ route('complaints.edit', $complaint) }}" class="btn btn-sm btn-primary me-1" data-bs-toggle="tooltip" data-bs-placement="top" title="Edit Ticket"><i class="bi bi-pencil-square"></i></a>
+                        <a href="{{ route('complaints.edit', $complaint) }}" class="btn btn-sm btn-primary ms-1" data-bs-toggle="tooltip" data-bs-placement="top" title="Edit Ticket"><i class="bi bi-pencil-square"></i></a>
                     @endif
                     
                     @if(auth()->user()->isManager())
                         @if($complaint->status->name == 'completed')
                             <button type="button" class="btn btn-sm btn-success ms-1 btn-close-ticket" data-bs-toggle="modal" data-bs-target="#closeModal{{ $complaint->id }}" title="Close Ticket"><i class="bi bi-check-circle"></i></button>
                         @endif
-                        @if($complaint->status->name != 'completed' && $complaint->status->name != 'closed')
-                        <button type="button" class="btn btn-sm btn-primary btn-assign-reassign" data-bs-toggle="modal" data-bs-target="#assignModal{{ $complaint->id }}" title="{{ $complaint->assigned_to ? 'Reassign Ticket' : 'Assign Ticket' }}">
-                            @if($complaint->assigned_to)
-                                <i class="bi bi-arrow-repeat"></i>
-                            @else
-                                <i class="bi bi-person-check"></i>
-                            @endif
-                        </button>
+                        @if($complaint->status->name != 'closed')
+                            <button type="button" class="btn btn-sm btn-primary btn-assign-reassign ms-1" data-bs-toggle="modal" data-bs-target="#assignModal{{ $complaint->id }}" title="{{ $complaint->assigned_to ? 'Reassign Ticket' : 'Assign Ticket' }}">
+                                @if($complaint->assigned_to)
+                                    <i class="bi bi-arrow-repeat"></i>
+                                @else
+                                    <i class="bi bi-person-check"></i>
+                                @endif
+                            </button>
                         @endif
                     @elseif(auth()->user()->isVM())
                         @if($complaint->status->name != 'completed' && $complaint->status->name != 'closed')

@@ -1503,7 +1503,7 @@ class ComplaintController extends Controller
                     'user_id' => $currentUserId,
                     'status_id' => $statusId, 
                     'assigned_to' => $complaint->assigned_to ?: null,
-                    'description' => 'Complaint created via bulk import',
+                    'description' => 'Complaint created',
                     'changes' => json_encode($actionChanges) 
                 ]);
 
