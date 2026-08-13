@@ -35,30 +35,34 @@ class ComplaintController extends Controller
     {
         try {
             $user = Auth::user();
-            
-            $query = Complaint::query()->with([
-                'client', 
-                'assignedTo', 
-                'networkType' => fn($q) => $q->withTrashed(), 
-                'vertical' => fn($q) => $q->withTrashed(), 
-                'status' => fn($q) => $q->withTrashed(), 
-                'section' => fn($q) => $q->withTrashed(), 
-                'requestType' => fn($q) => $q->withTrashed()
+
+            $query = Complaint::query()->select([
+                'id', 'reference_number', 'user_name', 'section_id', 
+                'network_type_id', 'request_type_id', 'vertical_id', 
+                'assigned_to', 'client_id', 'description', 'status_id', 
+                'priority', 'created_at'
+            ])->with([
+                'client:id,full_name', 
+                'assignedTo:id,full_name', 
+                'networkType:id,name', 
+                'vertical:id,name,parent_id', 
+                'status:id,name,color', 
+                'section:id,name', 
+                'requestType:id,name'
             ]);
 
             if ($user) {
                 if ($user->isManager()) {
-                    $activeStatusIds = Status::withTrashed()->whereIn('name', [
-                        'unassigned', 'assigned', 'pending_with_vendor', 'pending_with_user', 'assign_to_me', 'completed', 'closed', 'in_progress'
-                    ])->pluck('id');
+                    $activeStatusIds = Status::withTrashed()
+                        ->whereIn('name', ['unassigned', 'assigned', 'pending_with_vendor', 'pending_with_user', 'assign_to_me', 'completed', 'closed', 'in_progress'])
+                        ->pluck('id');
                     $query->whereIn('status_id', $activeStatusIds);
                 } elseif ($user->isVM()) {
                     $userVerticalIds = $user->verticals->pluck('id')->toArray();
                     $allSubVerticalIds = Vertical::withTrashed()->whereIn('parent_id', $userVerticalIds)->pluck('id')->toArray();
-                    $allGrandChildIds = [];
-                    if (!empty($allSubVerticalIds)) {
-                        $allGrandChildIds = Vertical::withTrashed()->whereIn('parent_id', $allSubVerticalIds)->pluck('id')->toArray();
-                    }
+                    $allGrandChildIds = !empty($allSubVerticalIds) 
+                        ? Vertical::withTrashed()->whereIn('parent_id', $allSubVerticalIds)->pluck('id')->toArray() 
+                        : [];
                     $allAllowedVerticalIds = array_unique(array_merge($userVerticalIds, $allSubVerticalIds, $allGrandChildIds));
                     $query->whereIn('vertical_id', $allAllowedVerticalIds);
                 } elseif ($user->isNFO()) {
@@ -68,12 +72,11 @@ class ComplaintController extends Controller
                 }
             }
 
-            // Search
             if ($request->filled('search')) {
                 $search = $request->input('search');
                 $query->where(function ($q) use ($search) {
                     $q->where('reference_number', 'like', "%{$search}%")
-                        ->orWhere('description', 'like', "%{$search}%");
+                      ->orWhere('description', 'like', "%{$search}%");
                 });
             }
             if ($request->filled('by')) {
@@ -99,8 +102,7 @@ class ComplaintController extends Controller
                         }
                     }
                 }
-                $allVerticalIdsToSearch = array_unique($allVerticalIdsToSearch);
-                $query->whereIn('vertical_id', $allVerticalIdsToSearch);
+                $query->whereIn('vertical_id', array_unique($allVerticalIdsToSearch));
             }
             if ($request->filled('networktype')) {
                 $searchBynetworkType = is_array($request->input('networktype')) ? $request->input('networktype') : explode(',', $request->input('networktype'));
@@ -163,11 +165,12 @@ class ComplaintController extends Controller
 
             // Handle Pagination & "All"
             $perPage = $request->input('per_page', 10);
+            $isExportAll = $request->boolean('export_all') || $request->input('export_all') == '1';
 
-            if ($perPage === 'all') {
+            if ($perPage === 'all' || $isExportAll) {
                 $allResults = $query->latest()->get();
                 $total = $allResults->count();
-                
+
                 $complaints = new \Illuminate\Pagination\LengthAwarePaginator(
                     $allResults,
                     $total > 0 ? $total : 1,
@@ -179,7 +182,7 @@ class ComplaintController extends Controller
                 $complaints = $query->latest()->paginate((int)$perPage)->withQueryString();
             }
 
-            $managers = User::withTrashed()->whereHas('role', function ($q) {
+            $managers = User::withTrashed()->select('id', 'full_name')->whereHas('role', function ($q) {
                 $q->where('slug', 'manager');
             })->get();
 
@@ -190,10 +193,10 @@ class ComplaintController extends Controller
             });
 
             $usersList = User::withTrashed()->select('id', 'full_name')->orderBy('full_name')->get();
-            $networkTypes = NetworkType::withTrashed()->get();
-            $sections = Section::withTrashed()->get();
+            $networkTypes = NetworkType::withTrashed()->select('id', 'name')->get();
+            $sections = Section::withTrashed()->select('id', 'name')->get();
             $closeStatus = Status::withTrashed()->where('name', 'closed')->first();
-            $requestTypes = RequestType::withTrashed()->get();
+            $requestTypes = RequestType::withTrashed()->select('id', 'name')->get();
             $assignableUsers = $user ? $user->getAssignableUsers() : collect();
 
             return view('complaints.index', compact('complaints', 'usersList', 'managers', 'statuses', 'networkTypes', 'sections', 'verticals', 'closeStatus', 'requestTypes', 'assignableUsers'));
