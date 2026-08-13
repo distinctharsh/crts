@@ -197,20 +197,53 @@ $breadcrumbs = [
         if ($.fn.DataTable.isDataTable('#complaintsTable')) {
             $('#complaintsTable').DataTable().destroy();
         }
+        let commonExportOptions = {
+            columns: ':not(:last-child)'
+        };
+
         let table = $('#complaintsTable').DataTable({
             responsive: false,
             scrollX: true,
             order: [],
             paging: false,
             info: false,
-            language: { search: "", searchPlaceholder: "Search complaints", zeroRecords: "No complaints found"},
+            language: { 
+                search: "", 
+                searchPlaceholder: "Search complaints across all pages...",
+                zeroRecords: "No complaints found"
+            },
             dom: '<"d-flex justify-content-between align-items-center mb-3"Bf>rt',
             buttons: [
-                { extend: 'copy', text: '<i class="bi bi-clipboard"></i>', className: 'btn btn-light btn-sm me-1' },
-                { extend: 'csv', text: '<i class="bi bi-filetype-csv"></i>', className: 'btn btn-light btn-sm me-1' },
-                { extend: 'excel', text: '<i class="bi bi-file-earmark-excel"></i>', className: 'btn btn-light btn-sm me-1' },
-                { extend: 'pdf', text: '<i class="bi bi-file-earmark-pdf"></i>', className: 'btn btn-light btn-sm me-1' },
-                { extend: 'print', text: '<i class="bi bi-printer"></i>', className: 'btn btn-light btn-sm' }
+                { 
+                    extend: 'copy', 
+                    text: '<i class="bi bi-clipboard"></i>', 
+                    className: 'btn btn-light btn-sm me-1',
+                    exportOptions: commonExportOptions
+                },
+                { 
+                    extend: 'csv', 
+                    text: '<i class="bi bi-filetype-csv"></i>', 
+                    className: 'btn btn-light btn-sm me-1',
+                    exportOptions: commonExportOptions
+                },
+                { 
+                    extend: 'excel', 
+                    text: '<i class="bi bi-file-earmark-excel"></i>', 
+                    className: 'btn btn-light btn-sm me-1',
+                    exportOptions: commonExportOptions
+                },
+                { 
+                    extend: 'pdf', 
+                    text: '<i class="bi bi-file-earmark-pdf"></i>', 
+                    className: 'btn btn-light btn-sm me-1',
+                    exportOptions: commonExportOptions
+                },
+                { 
+                    extend: 'print', 
+                    text: '<i class="bi bi-printer"></i>', 
+                    className: 'btn btn-light btn-sm',
+                    exportOptions: commonExportOptions
+                }
             ],
             columnDefs: [{ orderable: false, targets: 0 }]
         });
