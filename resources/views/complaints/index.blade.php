@@ -186,20 +186,52 @@ $breadcrumbs = [
     </div>
 </div>
 
-{{-- Global Modals Included Once --}}
 @include('complaints.partials.global-modals')
 
 @endsection
 
 @push('scripts')
 <script>
+    let tomSelectInitialized = false;
+
+    function updateCountBadge(ts) {
+        let control = ts.control;
+        let count = ts.items.length;
+        let existingBadge = control.querySelector('.ts-count-badge');
+        if (existingBadge) existingBadge.remove();
+        if (count > 0) {
+            let badge = document.createElement('span');
+            badge.className = 'ts-count-badge';
+            badge.textContent = count + ' selected';
+            let inputField = control.querySelector('input');
+            if (inputField) control.insertBefore(badge, inputField);
+            else control.appendChild(badge);
+        }
+    }
+
+    function initTomSelects() {
+        if (tomSelectInitialized) return;
+        
+        document.querySelectorAll('select.tom-select').forEach(function(el) {
+            let config = { create: false, sortField: { field: 'text', direction: 'asc' } };
+            if(['status[]', 'by[]', 'vertical_id[]', 'networktype[]', 'section[]', 'request_type_id[]'].includes(el.name)){
+                config.maxItems = null;
+                config.plugins = { checkbox_options: {} };
+                config.hideSelected = false;
+                config.onItemAdd = function() { this.setTextboxValue(''); this.refreshOptions(false); updateCountBadge(this); };
+                config.onItemRemove = function() { updateCountBadge(this); };
+                config.onInitialize = function() { updateCountBadge(this); };
+            }
+            new TomSelect(el, config);
+        });
+        tomSelectInitialized = true;
+    }
+
     function initDataTable() {
         if ($.fn.DataTable.isDataTable('#complaintsTable')) {
             $('#complaintsTable').DataTable().destroy();
         }
-        let commonExportOptions = {
-            columns: ':not(:last-child)'
-        };
+        let commonExportOptions = { columns: ':not(:last-child)' };
 
         let table = $('#complaintsTable').DataTable({
             responsive: false,
@@ -214,36 +246,11 @@ $breadcrumbs = [
             },
             dom: '<"d-flex justify-content-between align-items-center mb-3"Bf>rt',
             buttons: [
-                { 
-                    extend: 'copy', 
-                    text: '<i class="bi bi-clipboard"></i>', 
-                    className: 'btn btn-light btn-sm me-1',
-                    exportOptions: commonExportOptions
-                },
-                { 
-                    extend: 'csv', 
-                    text: '<i class="bi bi-filetype-csv"></i>', 
-                    className: 'btn btn-light btn-sm me-1',
-                    exportOptions: commonExportOptions
-                },
-                { 
-                    extend: 'excel', 
-                    text: '<i class="bi bi-file-earmark-excel"></i>', 
-                    className: 'btn btn-light btn-sm me-1',
-                    exportOptions: commonExportOptions
-                },
-                { 
-                    extend: 'pdf', 
-                    text: '<i class="bi bi-file-earmark-pdf"></i>', 
-                    className: 'btn btn-light btn-sm me-1',
-                    exportOptions: commonExportOptions
-                },
-                { 
-                    extend: 'print', 
-                    text: '<i class="bi bi-printer"></i>', 
-                    className: 'btn btn-light btn-sm',
-                    exportOptions: commonExportOptions
-                }
+                { extend: 'copy', text: '<i class="bi bi-clipboard"></i>', className: 'btn btn-light btn-sm me-1', exportOptions: commonExportOptions },
+                { extend: 'csv', text: '<i class="bi bi-filetype-csv"></i>', className: 'btn btn-light btn-sm me-1', exportOptions: commonExportOptions },
+                { extend: 'excel', text: '<i class="bi bi-file-earmark-excel"></i>', className: 'btn btn-light btn-sm me-1', exportOptions: commonExportOptions },
+                { extend: 'pdf', text: '<i class="bi bi-file-earmark-pdf"></i>', className: 'btn btn-light btn-sm me-1', exportOptions: commonExportOptions },
+                { extend: 'print', text: '<i class="bi bi-printer"></i>', className: 'btn btn-light btn-sm', exportOptions: commonExportOptions }
             ],
             columnDefs: [{ orderable: false, targets: 0 }]
         });
@@ -276,7 +283,6 @@ $breadcrumbs = [
         });
     }
 
-    // Dynamic Data Fetcher (Without Page Reloading)
     function fetchTableData(targetUrl) {
         $('#complaintsTableContainer').css('opacity', '0.5');
         $.ajax({
@@ -294,114 +300,74 @@ $breadcrumbs = [
     }
 
     $(document).ready(function() {
+        // Fast Initial Table Load
         initDataTable();
-    });
 
-    // Handle AJAX Pagination Link Clicks (Bottom Links)
-    $(document).on('click', '#complaintsTableContainer .pagination a', function(e) {
-        e.preventDefault();
-        let targetUrl = $(this).attr('href');
-        if (targetUrl) {
-            fetchTableData(targetUrl);
+        // Lazy Load TomSelect
+        var isAnyFilterSet = {{ (request('status') || request('by') || request('vertical_id') || request('networktype') || request('section') || request('request_type_id') || request('date_from') || request('date_to') || request('search')) ? 'true' : 'false' }};
+        if (isAnyFilterSet) {
+            initTomSelects();
         }
-    });
 
-    // Top-Right Per Page Change Handler via AJAX
-    $(document).on('change', '#perPageSelect', function() {
-        let val = $(this).val();
-        $('#filterFormPerPage').val(val);
-        let formData = $('#filterForm').serialize();
-        let actionUrl = $('#filterForm').attr('action') + '?' + formData;
-        fetchTableData(actionUrl);
-    });
-
-    document.addEventListener('DOMContentLoaded', function() {
+        // Collapse Event Listeners
         var filterCollapse = document.getElementById('filterCollapse');
         var chevron = document.getElementById('filterChevron');
-        var collapseInstance = bootstrap.Collapse.getOrCreateInstance(filterCollapse, { toggle: false });
 
-        var isAnyFilterSet = {{ (request('status') || request('by') || request('vertical') || request('networktype') || request('section') || request('date_from') || request('date_to') || request('search')) ? 'true' : 'false' }};
-        var filterState = localStorage.getItem('complaintsFilterOpen');
-
-        if (filterState === 'open' || (filterState !== 'closed' && isAnyFilterSet)) {
-            collapseInstance.show();
-            chevron.classList.remove('bi-chevron-down');
-            chevron.classList.add('bi-chevron-up');
+        if (filterCollapse) {
+            filterCollapse.addEventListener('show.bs.collapse', function() {
+                initTomSelects();
+                localStorage.setItem('complaintsFilterOpen', 'open');
+                if(chevron) { chevron.classList.remove('bi-chevron-down'); chevron.classList.add('bi-chevron-up'); }
+            });
+            filterCollapse.addEventListener('hide.bs.collapse', function() {
+                localStorage.setItem('complaintsFilterOpen', 'closed');
+                if(chevron) { chevron.classList.remove('bi-chevron-up'); chevron.classList.add('bi-chevron-down'); }
+            });
         }
 
-        filterCollapse.addEventListener('show.bs.collapse', function() {
-            localStorage.setItem('complaintsFilterOpen', 'open');
-            chevron.classList.remove('bi-chevron-down'); chevron.classList.add('bi-chevron-up');
-        });
-        filterCollapse.addEventListener('hide.bs.collapse', function() {
-            localStorage.setItem('complaintsFilterOpen', 'closed');
-            chevron.classList.remove('bi-chevron-up'); chevron.classList.add('bi-chevron-down');
+        // Handle AJAX Pagination
+        $(document).on('click', '#complaintsTableContainer .pagination a', function(e) {
+            e.preventDefault();
+            let targetUrl = $(this).attr('href');
+            if (targetUrl) fetchTableData(targetUrl);
         });
 
-        document.querySelectorAll('select.tom-select').forEach(function(el) {
-            let config = { create: false, sortField: { field: 'text', direction: 'asc' } };
-            if(el.name === 'status[]' || el.name === 'by[]' || el.name === 'vertical_id[]' || el.name === 'networktype[]' || el.name === 'section[]' || el.name === 'request_type_id[]'){
-                config.maxItems = null;
-                config.plugins = { checkbox_options: {} };
-                config.hideSelected = false;
-                config.onItemAdd = function() { this.setTextboxValue(''); this.refreshOptions(false); updateCountBadge(this); };
-                config.onItemRemove = function() { updateCountBadge(this); };
-                config.onInitialize = function() { updateCountBadge(this); };
-            }
-
-            function updateCountBadge(ts) {
-                let control = ts.control;
-                let count = ts.items.length;
-                let existingBadge = control.querySelector('.ts-count-badge');
-                if (existingBadge) existingBadge.remove();
-                if (count > 0) {
-                    let badge = document.createElement('span');
-                    badge.className = 'ts-count-badge';
-                    badge.textContent = count + ' selected';
-                    let inputField = control.querySelector('input');
-                    if (inputField) control.insertBefore(badge, inputField);
-                    else control.appendChild(badge);
-                }
-            }
-            new TomSelect(el, config);
+        // Top-Right Per Page
+        $(document).on('change', '#perPageSelect', function() {
+            let val = $(this).val();
+            $('#filterFormPerPage').val(val);
+            let formData = $('#filterForm').serialize();
+            let actionUrl = $('#filterForm').attr('action') + '?' + formData;
+            fetchTableData(actionUrl);
         });
 
-        // Quick Time Filter Dropdown Change
+        // Quick Time Filter
         $(document).on('change', '#quickTimeFilter', function() {
             let value = $(this).val();
-            
             if (value === '' || value === 'clear') {
                 $('#quick_filter').val('');
                 $(this).val('');
                 $('#filterForm').submit();
                 return;
             }
-
             if (value === 'custom') {
                 $('#customTimeInput').val('');
                 $('#customTimeFilterModal').modal('show');
                 return;
             }
-            
             $('#quick_filter').val(value);
             $('#filterForm').submit();
         });
 
-        // Custom Modal Apply Button Click
         $(document).on('click', '#applyCustomTime', function() {
             const customValue = $('#customTimeInput').val().trim().toLowerCase();
-            if (!customValue) {
-                $('#customTimeInput').addClass('is-invalid');
-                return;
-            }
+            if (!customValue) { $('#customTimeInput').addClass('is-invalid'); return; }
             const amount = parseInt(customValue);
             const unit = customValue.replace(/[0-9]/g, '');
-            
             if (isNaN(amount) || !['h', 'd', 'w', 'm', 'y'].includes(unit)) {
                 $('#customTimeInput').addClass('is-invalid');
                 return;
             }
-            
             $('#customTimeInput').removeClass('is-invalid');
             $('#customTimeFilterModal').modal('hide');
             $('#quick_filter').val(customValue);

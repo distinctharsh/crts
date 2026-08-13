@@ -33,6 +33,7 @@ class ComplaintController extends Controller
 
     public function index(Request $request)
     {
+        // $startTime = microtime(true);
         try {
             $user = Auth::user();
 
@@ -198,6 +199,30 @@ class ComplaintController extends Controller
             $closeStatus = Status::withTrashed()->where('name', 'closed')->first();
             $requestTypes = RequestType::withTrashed()->select('id', 'name')->get();
             $assignableUsers = $user ? $user->getAssignableUsers() : collect();
+
+            // \Log::info('COMPLAINT INDEX TIME', [
+            //     'time' => round(microtime(true) - $startTime, 3),
+            //     'complaints' => $complaints->count(),
+            // ]);
+            // $sql = $query->latest()->toSql();
+            // $bindings = $query->getBindings();
+
+            // $finalSql = vsprintf(
+            //     str_replace('?', '%s', $sql),
+            //     collect($bindings)->map(function ($binding) {
+            //         if (is_null($binding)) {
+            //             return 'NULL';
+            //         }
+
+            //         if (is_numeric($binding)) {
+            //             return $binding;
+            //         }
+
+            //         return "'" . addslashes($binding) . "'";
+            //     })->toArray()
+            // );
+
+            // dd($finalSql);
 
             return view('complaints.index', compact('complaints', 'usersList', 'managers', 'statuses', 'networkTypes', 'sections', 'verticals', 'closeStatus', 'requestTypes', 'assignableUsers'));
         } catch (\Exception $e) {
