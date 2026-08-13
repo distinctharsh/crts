@@ -1,6 +1,5 @@
 @php
-// $complaints: the list of complaints to show
-// $tableId: optional, for DataTable initialization
+    $showPerPage = $showPerPage ?? true;
 @endphp
 
 <style>
@@ -61,7 +60,8 @@
     }
 </style>
 
-<!-- Top Right Controls (Title & Per-Page Selector Alignment) -->
+<!-- Top Right Controls (Conditionally Hidden if showPerPage is false) -->
+@if($showPerPage)
 <div class="d-flex justify-content-between align-items-center mb-2 px-1">
     <div></div>
     <div class="d-flex align-items-center gap-2">
@@ -75,6 +75,7 @@
         </select>
     </div>
 </div>
+@endif
 
 <div class="table-responsive">
 <table id="{{ $tableId ?? 'complaintsTable' }}" class="table table-hover table-bordered table-striped align-middle w-100">
@@ -89,7 +90,7 @@
             <th>Category</th>
             <th>Assigned To</th>
             <th>Description</th>
-            <th>Actions</th>
+            <th class="text-center">Actions</th>
         </tr>
     </thead>
     <tbody>
@@ -202,7 +203,8 @@
     </tbody>
 </table> 
 
-<!-- Table Footer / Single Clean Pagination -->
+<!-- Table Footer / Single Clean Pagination (Conditionally Hidden if showPerPage is false) -->
+@if($showPerPage)
 <div class="d-flex justify-content-between align-items-center mt-3 px-2 flex-wrap gap-2">
     <div class="text-muted small">
         @if(method_exists($complaints, 'firstItem'))
@@ -217,4 +219,5 @@
         @endif
     </div>
 </div>
+@endif
 </div>

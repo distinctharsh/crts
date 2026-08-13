@@ -51,17 +51,19 @@ $breadcrumbs = [
                                 style="cursor:pointer;"
                                 data-bs-toggle="collapse"
                                 data-bs-target="#filterCollapse"
-                                aria-expanded="{{ (request('status') || request('by') || request('vertical') || request('networktype') || request('section') || request('date_from') || request('date_to')) ? 'true' : 'false' }}"
+                                aria-expanded="{{ (request('status') || request('by') || request('vertical') || request('networktype') || request('section') || request('date_from') || request('date_to') || request('search')) ? 'true' : 'false' }}"
                                 aria-controls="filterCollapse">
                                 <strong class="text-dark">Filter Tickets</strong>
                                 <span class="float-end bg-secondary" style="padding: 5px 10px; border-radius: 8px;">
-                                    <i class="bi {{ (request('status') || request('by') || request('vertical') || request('networktype') || request('section') || request('date_from') || request('date_to')) ? 'bi-chevron-up' : 'bi-chevron-down' }}" id="filterChevron"></i>
+                                    <i class="bi {{ (request('status') || request('by') || request('vertical') || request('networktype') || request('section') || request('date_from') || request('date_to') || request('search')) ? 'bi-chevron-up' : 'bi-chevron-down' }}" id="filterChevron"></i>
                                 </span>
                             </div>
-                            <div class="collapse{{ (request('status') || request('by') || request('vertical') || request('networktype') || request('section') || request('date_from') || request('date_to')) ? ' show' : '' }}" id="filterCollapse">
+                            <div class="collapse{{ (request('status') || request('by') || request('vertical') || request('networktype') || request('section') || request('date_from') || request('date_to') || request('search')) ? ' show' : '' }}" id="filterCollapse">
                                 <div class="card-body py-3">
                                     <form method="GET" action="{{ route('complaints.index') }}" id="filterForm">
                                         <input type="hidden" name="per_page" id="filterFormPerPage" value="{{ request('per_page', 10) }}">
+                                        <input type="hidden" name="search" id="filterFormSearch" value="{{ request('search') }}">
+                                        
                                         <div class="row g-3 align-items-end">
                                             <div class="col-md-2">
                                                 <label class="form-label mb-1"><i class="bi bi-flag me-1"></i>Status</label>
@@ -195,22 +197,49 @@ $breadcrumbs = [
         if ($.fn.DataTable.isDataTable('#complaintsTable')) {
             $('#complaintsTable').DataTable().destroy();
         }
-        $('#complaintsTable').DataTable({
+        let table = $('#complaintsTable').DataTable({
             responsive: false,
             scrollX: true,
             order: [],
             paging: false,
             info: false,
-            language: { search: "", searchPlaceholder: "Search complaints..." },
+            language: { search: "", searchPlaceholder: "Search complaints", zeroRecords: "No complaints found"},
             dom: '<"d-flex justify-content-between align-items-center mb-3"Bf>rt',
             buttons: [
-                { extend: 'copy', text: '<i class="bi bi-clipboard"></i>', className: 'btn btn-light btn-sm me-1', titleAttr: 'Copy' },
-                { extend: 'csv', text: '<i class="bi bi-filetype-csv"></i>', className: 'btn btn-light btn-sm me-1', titleAttr: 'Export as CSV' },
-                { extend: 'excel', text: '<i class="bi bi-file-earmark-excel"></i>', className: 'btn btn-light btn-sm me-1', titleAttr: 'Export as Excel' },
-                { extend: 'pdf', text: '<i class="bi bi-file-earmark-pdf"></i>', className: 'btn btn-light btn-sm me-1', titleAttr: 'Export as PDF' },
-                { extend: 'print', text: '<i class="bi bi-printer"></i>', className: 'btn btn-light btn-sm', titleAttr: 'Print' }
+                { extend: 'copy', text: '<i class="bi bi-clipboard"></i>', className: 'btn btn-light btn-sm me-1' },
+                { extend: 'csv', text: '<i class="bi bi-filetype-csv"></i>', className: 'btn btn-light btn-sm me-1' },
+                { extend: 'excel', text: '<i class="bi bi-file-earmark-excel"></i>', className: 'btn btn-light btn-sm me-1' },
+                { extend: 'pdf', text: '<i class="bi bi-file-earmark-pdf"></i>', className: 'btn btn-light btn-sm me-1' },
+                { extend: 'print', text: '<i class="bi bi-printer"></i>', className: 'btn btn-light btn-sm' }
             ],
             columnDefs: [{ orderable: false, targets: 0 }]
+        });
+
+        let $searchInput = $('div.dataTables_filter input');
+        $searchInput.off('keyup.DT search.DT input.DT paste.DT cut.DT');
+
+        let currentSearchVal = $('#filterFormSearch').val();
+        if (currentSearchVal) {
+            $searchInput.val(currentSearchVal);
+            $searchInput.focus();
+            let valLen = currentSearchVal.length;
+            if ($searchInput[0] && $searchInput[0].setSelectionRange) {
+                $searchInput[0].setSelectionRange(valLen, valLen);
+            }
+        }
+
+        let searchTimeout = null;
+        $searchInput.on('keyup input', function(e) {
+            let keyword = $(this).val();
+            $('#filterFormSearch').val(keyword);
+            $('#complaintsTableContainer').css('opacity', '0.6');
+
+            clearTimeout(searchTimeout);
+            searchTimeout = setTimeout(function() {
+                let formData = $('#filterForm').serialize();
+                let actionUrl = $('#filterForm').attr('action') + '?' + formData;
+                fetchTableData(actionUrl);
+            }, 500);
         });
     }
 
@@ -258,7 +287,7 @@ $breadcrumbs = [
         var chevron = document.getElementById('filterChevron');
         var collapseInstance = bootstrap.Collapse.getOrCreateInstance(filterCollapse, { toggle: false });
 
-        var isAnyFilterSet = {{ (request('status') || request('by') || request('vertical') || request('networktype') || request('section') || request('date_from') || request('date_to')) ? 'true' : 'false' }};
+        var isAnyFilterSet = {{ (request('status') || request('by') || request('vertical') || request('networktype') || request('section') || request('date_from') || request('date_to') || request('search')) ? 'true' : 'false' }};
         var filterState = localStorage.getItem('complaintsFilterOpen');
 
         if (filterState === 'open' || (filterState !== 'closed' && isAnyFilterSet)) {

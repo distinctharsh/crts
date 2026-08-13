@@ -107,7 +107,7 @@
                                     <span class="badge bg-light text-primary fs-6">{{ $todayTickets->count() }} Today</span>
                                 </div>
                                 <div class="card-body">
-                                    @include('complaints.partials.table', ['complaints' => $todayTickets, 'tableId' => 'todayComplaintsTable'])
+                                    @include('complaints.partials.table', ['complaints' => $todayTickets, 'tableId' => 'todayComplaintsTable', 'showPerPage' => false])
                                 </div>
                             </div>
                         </div>
@@ -122,7 +122,7 @@
                                     <span class="badge bg-light text-secondary fs-6">{{ $previousTickets->count() }} Pending</span>
                                 </div>
                                 <div class="card-body">
-                                    @include('complaints.partials.table', ['complaints' => $previousTickets, 'tableId' => 'previousComplaintsTable'])
+                                    @include('complaints.partials.table', ['complaints' => $previousTickets, 'tableId' => 'previousComplaintsTable', 'showPerPage' => false])
                                 </div>
                             </div>
                         </div>
@@ -154,26 +154,12 @@
 
 <script>
     $(document).ready(function() {
-        $('#todayComplaintsTable').DataTable({
+        $('#todayComplaintsTable, #previousComplaintsTable').DataTable({
+            paging: false,
+            info: false,
+            searching: true,
             responsive: false,
-            scrollX: true,
-            order: [[1, 'desc']],
-            pageLength: 10,
-            lengthMenu: [[10, 15, 20, 50, 100, -1], [10, 15, 20, 50, 100, 'All']],
-            language: { search: "", searchPlaceholder: "Search today's complaints..." },
-            dom: 'lfrtip',
-            columnDefs: [{ orderable: false, targets: 0 }]
-        });
-
-        $('#previousComplaintsTable').DataTable({
-            responsive: false,
-            scrollX: true,
-            order: [[1, 'desc']],
-            pageLength: 10,
-            lengthMenu: [[10, 15, 20, 50, 100, -1], [10, 15, 20, 50, 100, 'All']],
-            language: { search: "", searchPlaceholder: "Search complaints..." },
-            dom: 'lfrtip',
-            columnDefs: [{ orderable: false, targets: 0 }]
+            scrollX: true
         });
     });
 </script>
