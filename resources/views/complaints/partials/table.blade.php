@@ -160,7 +160,7 @@
                             <button type="button" class="btn btn-sm btn-primary ms-1 btn-open-assign-modal" 
                                     data-id="{{ $complaint->id }}" 
                                     data-ref="{{ $complaint->reference_number }}"
-                                    data-users='@json($complaint->assignableUsers ?? [])'
+                                    data-assigned-to="{{ $complaint->assigned_to }}"
                                     title="{{ $complaint->assigned_to ? 'Reassign Ticket' : 'Assign Ticket' }}">
                                 @if($complaint->assigned_to)
                                     <i class="bi bi-arrow-repeat"></i>
@@ -174,7 +174,7 @@
                             <button type="button" class="btn btn-sm btn-primary ms-1 btn-open-assign-modal" 
                                     data-id="{{ $complaint->id }}" 
                                     data-ref="{{ $complaint->reference_number }}"
-                                    data-users='@json($complaint->assignableUsers ?? [])'
+                                    data-assigned-to="{{ $complaint->assigned_to }}"
                                     title="{{ $complaint->assigned_to ? 'Reassign Ticket' : 'Assign Ticket' }}">
                                 @if($complaint->assigned_to)
                                     <i class="bi bi-arrow-repeat"></i>
@@ -188,7 +188,7 @@
                             <button type="button" class="btn btn-sm btn-primary ms-1 btn-open-assign-modal" 
                                     data-id="{{ $complaint->id }}" 
                                     data-ref="{{ $complaint->reference_number }}"
-                                    data-users='@json($complaint->assignableUsers ?? [])'
+                                    data-assigned-to="{{ $complaint->assigned_to }}"
                                     title="Reassign Ticket">
                                 <i class="bi bi-arrow-repeat"></i>
                             </button>

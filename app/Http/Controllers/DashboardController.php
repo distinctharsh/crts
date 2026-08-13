@@ -7,13 +7,11 @@ use App\Models\Complaint;
 use App\Models\Status;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Log;
-use App\Services\ComplaintAutoCloser;
 
 class DashboardController extends Controller
 {
     public function index(Request $request)
     {
-        // ComplaintAutoCloser::autoClose();
         try {
             $user = auth()->user();
             $baseQuery = Complaint::query();
@@ -26,24 +24,20 @@ class DashboardController extends Controller
                     $baseQuery->whereIn('status_id', $activeStatusIds);
                 } 
                 
-            // VM: Filter by verticals
-            elseif ($user->isVM()) {
-                $userVerticalIds = $user->verticals->pluck('id')->toArray();
-                $allSubVerticalIds = \App\Models\Vertical::whereIn('parent_id', $userVerticalIds)->pluck('id')->toArray();
-                $allGrandChildIds = [];
-                if (!empty($allSubVerticalIds)) {
-                    $allGrandChildIds = \App\Models\Vertical::whereIn('parent_id', $allSubVerticalIds)->pluck('id')->toArray();
+                elseif ($user->isVM()) {
+                    $userVerticalIds = $user->verticals->pluck('id')->toArray();
+                    $allSubVerticalIds = \App\Models\Vertical::whereIn('parent_id', $userVerticalIds)->pluck('id')->toArray();
+                    $allGrandChildIds = [];
+                    if (!empty($allSubVerticalIds)) {
+                        $allGrandChildIds = \App\Models\Vertical::whereIn('parent_id', $allSubVerticalIds)->pluck('id')->toArray();
+                    }
+                    $allAllowedVerticalIds = array_unique(array_merge($userVerticalIds, $allSubVerticalIds, $allGrandChildIds));
+                    $baseQuery->whereIn('vertical_id', $allAllowedVerticalIds);
                 }
-                $allAllowedVerticalIds = array_unique(array_merge($userVerticalIds, $allSubVerticalIds, $allGrandChildIds));
-                $baseQuery->whereIn('vertical_id', $allAllowedVerticalIds);
-            }
-                
-            // NFO: Filter by verticals + assigned_to = user id
                 elseif ($user->isNFO()) {
                     $baseQuery->where('assigned_to', $user->id);
                 } 
                 
-            // Client or Others: Filter by client_id
                 else {
                     $baseQuery->where('client_id', $user->id);
                 }
@@ -66,14 +60,12 @@ class DashboardController extends Controller
                 ->latest()
                 ->get();
         
-            foreach ($todayComplaints as $complaint) {
-                $complaint->assignableUsers = $user->getAssignableUsers($complaint);
-            }
             $managers = \App\Models\User::whereHas('role', function($q) {
                 $q->where('slug', 'manager');
             })->get();
 
             $closeStatus = Status::where('name', 'closed')->first();
+            $assignableUsers = $user ? $user->getAssignableUsers() : collect();
 
             $data = [
                 'totalComplaints' => (clone $baseQuery)->count(),
@@ -98,9 +90,9 @@ class DashboardController extends Controller
                 'assignToMeStatusId' => null,
                 'managers' => $managers,
                 'closeStatus' => $closeStatus,
+                'assignableUsers' => $assignableUsers,
             ];
             
-            // Remove the old recentComplaints section from the view
             return view('dashboard', $data)->with('error', null);
 
         } catch (\Exception $e) {
@@ -118,6 +110,7 @@ class DashboardController extends Controller
                 'unassignedStatusId' => null,
                 'completedStatusId' => null,
                 'assignToMeStatusId' => null,
+                'assignableUsers' => collect(),
             ])->with('error', 'There was an error loading the dashboard. Please try again.');
         }
     }

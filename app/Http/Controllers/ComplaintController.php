@@ -194,8 +194,9 @@ class ComplaintController extends Controller
             $sections = Section::withTrashed()->get();
             $closeStatus = Status::withTrashed()->where('name', 'closed')->first();
             $requestTypes = RequestType::withTrashed()->get();
+            $assignableUsers = $user ? $user->getAssignableUsers() : collect();
 
-            return view('complaints.index', compact('complaints', 'usersList', 'managers', 'statuses', 'networkTypes', 'sections', 'verticals', 'closeStatus', 'requestTypes'));
+            return view('complaints.index', compact('complaints', 'usersList', 'managers', 'statuses', 'networkTypes', 'sections', 'verticals', 'closeStatus', 'requestTypes', 'assignableUsers'));
         } catch (\Exception $e) {
             \Log::error('Complaint index error: ' . $e->getMessage());
             return redirect('/home')->with('error', 'Something went wrong while loading complaints. Please try again.');

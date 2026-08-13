@@ -13,11 +13,16 @@
                         <label for="global_assigned_to" class="form-label">Assign To <span class="text-danger">*</span></label>
                         <select class="form-select" name="assigned_to" id="global_assigned_to" required>
                             <option value="">Select User</option>
+                            @if(isset($assignableUsers) && count($assignableUsers) > 0)
+                                @foreach($assignableUsers as $u)
+                                    <option value="{{ $u->id }}">{{ $u->full_name }}</option>
+                                @endforeach
+                            @endif
                         </select>
                     </div>
                     <div class="mb-3">
                         <label for="global_assign_description" class="form-label">Remarks</label>
-                        <textarea class="form-control" name="description" id="global_assign_description" rows="3"></textarea>
+                        <textarea class="form-control" name="description" id="global_assign_description" rows="3" placeholder="Enter remarks..."></textarea>
                     </div>
                 </div>
                 <div class="modal-footer d-flex justify-content-between">
@@ -104,7 +109,6 @@
     </div>
 </div>
 
-
 <!-- GLOBAL CUSTOM TIME FILTER MODAL -->
 <div class="modal fade" id="customTimeFilterModal" tabindex="-1" aria-hidden="true">
     <div class="modal-dialog modal-dialog-centered">
@@ -128,7 +132,6 @@
     </div>
 </div>
 
-
 <style>
 .ts-dropdown .ts-dropdown-content {
     max-height: 160px !important;
@@ -142,47 +145,40 @@ document.addEventListener('DOMContentLoaded', function() {
     let globalAssignTomSelect = null;
     const assignSelectEl = document.getElementById('global_assigned_to');
 
+    if (assignSelectEl && !assignSelectEl.tomselect) {
+        globalAssignTomSelect = new TomSelect(assignSelectEl, {
+            create: false,
+            placeholder: 'Type to search user...',
+            dropdownParent: 'body'
+        });
+    }
+
     // 1. Assign Modal Click Handler
     $(document).on('click', '.btn-open-assign-modal', function() {
         let complaintId = $(this).data('id');
         let refNumber = $(this).data('ref');
-        let users = $(this).data('users') || [];
+        let currentAssignedTo = $(this).data('assigned-to') || '';
 
         $('#globalAssignForm').attr('action', '/complaints/' + complaintId + '/assign');
         $('#globalAssignModalLabel').text('Assign Ticket #' + refNumber);
         $('#global_assign_description').val('');
 
         if (globalAssignTomSelect) {
-            globalAssignTomSelect.destroy();
+            globalAssignTomSelect.setValue(currentAssignedTo);
+        } else {
+            $(assignSelectEl).val(currentAssignedTo);
         }
-
-        $(assignSelectEl).empty().append('<option value="">Select User</option>');
-        users.forEach(function(u) {
-            $(assignSelectEl).append(new Option(u.full_name, u.id));
-        });
 
         $('#globalAssignModal').modal('show');
-    });
-
-    $('#globalAssignModal').on('shown.bs.modal', function() {
-        if (!assignSelectEl.tomselect) {
-            globalAssignTomSelect = new TomSelect(assignSelectEl, {
-                create: false,
-                placeholder: 'Type to search user...',
-                dropdownParent: 'body'
-            });
-        }
     });
 
     // 2. Close Modal Click Handler
     let activeCloseComplaintId = null;
     let activeCloseRefNumber = null;
-    let activeCloseUsers = [];
 
     $(document).on('click', '.btn-open-close-modal', function() {
         activeCloseComplaintId = $(this).data('id');
         activeCloseRefNumber = $(this).data('ref');
-        activeCloseUsers = $(this).data('users') || [];
 
         $('#globalCloseForm').attr('action', '/complaints/' + activeCloseComplaintId);
         $('#globalCloseModalLabel').text('Close Ticket #' + activeCloseRefNumber);
