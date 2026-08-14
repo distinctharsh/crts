@@ -74,10 +74,41 @@ class ComplaintController extends Controller
             }
 
             if ($request->filled('search')) {
-                $search = $request->input('search');
+                $search = trim($request->input('search'));
                 $query->where(function ($q) use ($search) {
                     $q->where('reference_number', 'like', "%{$search}%")
-                      ->orWhere('description', 'like', "%{$search}%");
+                    ->orWhere('user_name', 'like', "%{$search}%")
+                    ->orWhere('intercom', 'like', "%{$search}%")
+                    ->orWhere('room_number', 'like', "%{$search}%")
+                    ->orWhere('description', 'like', "%{$search}%");
+
+                    $q->orWhereHas('networkType', function ($q) use ($search) {
+                        $q->where('name', 'like', "%{$search}%");
+                    });
+
+                    $q->orWhereHas('section', function ($q) use ($search) {
+                        $q->where('name', 'like', "%{$search}%");
+                    });
+
+                    $q->orWhereHas('requestType', function ($q) use ($search) {
+                        $q->where('name', 'like', "%{$search}%");
+                    });
+
+                    $q->orWhereHas('vertical', function ($q) use ($search) {
+                        $q->where('name', 'like', "%{$search}%");
+                    });
+
+                    $q->orWhereHas('assignedTo', function ($q) use ($search) {
+                        $q->where('full_name', 'like', "%{$search}%");
+                    });
+
+                    $q->orWhereHas('client', function ($q) use ($search) {
+                        $q->where('full_name', 'like', "%{$search}%");
+                    });
+
+                    $q->orWhereHas('status', function ($q) use ($search) {
+                        $q->where('name', 'like', "%{$search}%");
+                    });
                 });
             }
             if ($request->filled('by')) {

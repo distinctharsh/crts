@@ -5,13 +5,18 @@ namespace App\Http\Controllers;
 use App\Http\Controllers\Controller;
 use App\Models\Complaint;
 use App\Models\Status;
+use App\Models\Vertical;
+use App\Models\User;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Log;
+use Carbon\Carbon;
 
 class DashboardController extends Controller
 {
     public function index(Request $request)
     {
+        // $startTime = microtime(true);
+
         try {
             $user = auth()->user();
             $baseQuery = Complaint::query();
@@ -21,6 +26,7 @@ class DashboardController extends Controller
                     $activeStatusIds = Status::whereIn('name', [
                         'unassigned', 'assigned', 'pending_with_vendor', 'pending_with_user', 'assign_to_me', 'completed', 'closed', 'in_progress'
                     ])->pluck('id');
+
                     $baseQuery->whereIn('status_id', $activeStatusIds);
                 } 
                 
@@ -33,7 +39,7 @@ class DashboardController extends Controller
                     }
                     $allAllowedVerticalIds = array_unique(array_merge($userVerticalIds, $allSubVerticalIds, $allGrandChildIds));
                     $baseQuery->whereIn('vertical_id', $allAllowedVerticalIds);
-                }
+                }   
                 elseif ($user->isNFO()) {
                     $baseQuery->where('assigned_to', $user->id);
                 } 
@@ -43,7 +49,6 @@ class DashboardController extends Controller
                 }
             }
 
-            // Get status IDs from the Status table
             $statusIds = Status::whereIn('name', [
                 'unassigned',
                 'assigned',
@@ -51,15 +56,37 @@ class DashboardController extends Controller
                 'pending_with_user',
                 'assign_to_me',
                 'completed',
-                'closed'
+                'closed',
+                'in_progress'
             ])->pluck('id', 'name');
 
-            // Final data
-            $todayComplaints = (clone $baseQuery)
+            $completedStatusId = $statusIds->get('completed');
+            $closedStatusId = $statusIds->get('closed');
+
+            $baseQuery->where(function ($query) use ($completedStatusId, $closedStatusId) {
+                $query->whereDate('created_at', today())
+                    ->orWhere(function ($query) use ($completedStatusId, $closedStatusId) {
+                        $query->whereDate('created_at', '<', today())
+                            ->whereNotIn('status_id', [
+                                $completedStatusId,
+                                $closedStatusId
+                            ]);
+                    });
+            });
+
+            $complaints = (clone $baseQuery)
                 ->with(['client', 'networkType', 'vertical', 'status', 'assignedTo'])
                 ->latest()
                 ->get();
-        
+
+            $todayComplaints = $complaints->filter(function ($complaint) {
+                return $complaint->created_at->isToday();
+            });
+
+            $previousComplaints = $complaints->filter(function ($complaint) {
+                return !$complaint->created_at->isToday();
+            });
+
             $managers = \App\Models\User::whereHas('role', function($q) {
                 $q->where('slug', 'manager');
             })->get();
@@ -84,15 +111,40 @@ class DashboardController extends Controller
                 'completedComplaints' => (clone $baseQuery)->where('status_id', $statusIds->get('completed'))->count(),
                 'closedComplaints' => (clone $baseQuery)->where('status_id', $statusIds->get('closed'))->count(),
                 'todayComplaints' => $todayComplaints,
+                'previousComplaints' => $previousComplaints,
                 'unassignedStatusId' => $statusIds->get('unassigned'),
-                'completedStatusId' => $statusIds->get('completed'),
-                'closedStatusId' => $statusIds->get('closed'),
+                'completedStatusId' => $completedStatusId,
+                'closedStatusId' => $closedStatusId,
                 'assignToMeStatusId' => null,
                 'managers' => $managers,
                 'closeStatus' => $closeStatus,
                 'assignableUsers' => $assignableUsers,
             ];
-            
+
+            // \Log::info('COMPLAINT INDEX TIME', [
+            //     'time' => round(microtime(true) - $startTime, 3),
+            // ]);
+
+            // $sql = $baseQuery->latest()->toSql();
+            // $bindings = $baseQuery->getBindings();
+
+            // $finalSql = vsprintf(
+            //     str_replace('?', '%s', $sql),
+            //     collect($bindings)->map(function ($binding) {
+            //         if (is_null($binding)) {
+            //             return 'NULL';
+            //         }
+
+            //         if (is_numeric($binding)) {
+            //             return $binding;
+            //         }
+
+            //         return "'" . addslashes($binding) . "'";
+            //     })->toArray()
+            // );
+
+            // dd($finalSql);
+
             return view('dashboard', $data)->with('error', null);
 
         } catch (\Exception $e) {
@@ -107,9 +159,13 @@ class DashboardController extends Controller
                 'completedComplaints' => 0,
                 'closedComplaints' => 0,
                 'todayComplaints' => collect(),
+                'previousComplaints' => collect(),
                 'unassignedStatusId' => null,
                 'completedStatusId' => null,
+                'closedStatusId' => null,
                 'assignToMeStatusId' => null,
+                'managers' => collect(),
+                'closeStatus' => null,
                 'assignableUsers' => collect(),
             ])->with('error', 'There was an error loading the dashboard. Please try again.');
         }

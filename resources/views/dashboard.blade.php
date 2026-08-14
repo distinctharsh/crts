@@ -85,17 +85,8 @@
                     </div>
 
                     @php
-                        $allComplaintsCollection = isset($complaints) ? $complaints : $todayComplaints;
-                        $todayTickets = $allComplaintsCollection->filter(function($complaint) {
-                            return \Carbon\Carbon::parse($complaint->created_at)->isToday();
-                        });
-
-                        $previousTickets = $allComplaintsCollection->filter(function($complaint) {
-                            $isToday = \Carbon\Carbon::parse($complaint->created_at)->isToday();
-                            $isDone = in_array(strtolower($complaint->status->name ?? ''), ['completed', 'closed']) 
-                                    || ($complaint->status_id == ($completedStatusId ?? null));
-                            return !$isToday && !$isDone;
-                        });
+                        $todayTickets = $todayComplaints ?? collect();
+                        $previousTickets = $previousComplaints ?? collect();
                     @endphp
 
                     <!-- Today's Complaints -->
