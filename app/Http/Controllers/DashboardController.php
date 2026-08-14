@@ -15,7 +15,6 @@ class DashboardController extends Controller
 {
     public function index(Request $request)
     {
-        // $startTime = microtime(true);
 
         try {
             $user = auth()->user();
@@ -120,30 +119,6 @@ class DashboardController extends Controller
                 'closeStatus' => $closeStatus,
                 'assignableUsers' => $assignableUsers,
             ];
-
-            // \Log::info('COMPLAINT INDEX TIME', [
-            //     'time' => round(microtime(true) - $startTime, 3),
-            // ]);
-
-            // $sql = $baseQuery->latest()->toSql();
-            // $bindings = $baseQuery->getBindings();
-
-            // $finalSql = vsprintf(
-            //     str_replace('?', '%s', $sql),
-            //     collect($bindings)->map(function ($binding) {
-            //         if (is_null($binding)) {
-            //             return 'NULL';
-            //         }
-
-            //         if (is_numeric($binding)) {
-            //             return $binding;
-            //         }
-
-            //         return "'" . addslashes($binding) . "'";
-            //     })->toArray()
-            // );
-
-            // dd($finalSql);
 
             return view('dashboard', $data)->with('error', null);
 
