@@ -85,9 +85,7 @@ class UsageReportService
     public function getParentCategoryWiseStatistics($dateFrom = null, $dateTo = null)
     {
         $completedStatusIds = Status::whereIn('name', ['completed', 'closed'])->pluck('id')->toArray();
-        $complaintsQuery = Complaint::whereHas('vertical', function ($q) {
-            $q->where('is_excluded', 0);
-        });
+        $complaintsQuery = Complaint::whereHas('vertical');
 
         if ($dateFrom) {
             $complaintsQuery->where('created_at', '>=', $dateFrom);
@@ -115,51 +113,69 @@ class UsageReportService
             return [];
         }
 
-        $allVerticals = Vertical::where('is_excluded', 0)->get()->keyBy('id');
-        $getTopParentId = function ($vId) use ($allVerticals, &$getTopParentId) {
+        $allVerticals = Vertical::get()->keyBy('id');
+        $getTopParent = function ($vId) use ($allVerticals, &$getTopParent) {
             if (!isset($allVerticals[$vId])) {
                 return null;
             }
             $vertical = $allVerticals[$vId];
             if (empty($vertical->parent_id)) {
-                return $vertical->id;
+                return $vertical;
             }
-            return $getTopParentId($vertical->parent_id);
+            return $getTopParent($vertical->parent_id);
         };
 
         $groupedData = [];
         foreach ($vCounts as $vId => $counts) {
             if (!isset($allVerticals[$vId])) continue;
 
-            $topParentId = $getTopParentId($vId);
-            if (!$topParentId || !isset($allVerticals[$topParentId])) continue;
+            $currentVertical = $allVerticals[$vId];
+            $topParent = $getTopParent($vId);
 
-            if (!isset($groupedData[$topParentId])) {
-                $groupedData[$topParentId] = [
-                    'id' => $topParentId,
-                    'name' => $allVerticals[$topParentId]->name,
-                    'pending' => 0,
-                    'completed' => 0,
-                    'total' => 0,
-                    'is_parent' => true,
-                    'children' => []
-                ];
-            }
+            if (!$topParent) continue;
+            $isExcluded = ($currentVertical->is_excluded == 1) || ($topParent->is_excluded == 1);
 
-            $groupedData[$topParentId]['pending'] += $counts['pending'];
-            $groupedData[$topParentId]['completed'] += $counts['completed'];
-            $groupedData[$topParentId]['total'] += $counts['total'];
-
-            if ($vId != $topParentId) {
-                $childVertical = $allVerticals[$vId];
-                $groupedData[$topParentId]['children'][] = [
-                    'id' => $childVertical->id,
-                    'name' => $childVertical->full_path ?? $childVertical->name,
+            if ($isExcluded) {
+                $disabledKey = 'disabled_v_' . $vId;
+                $groupedData[$disabledKey] = [
+                    'id' => $currentVertical->id,
+                    'name' => $currentVertical->name,
                     'pending' => $counts['pending'],
                     'completed' => $counts['completed'],
                     'total' => $counts['total'],
-                    'is_parent' => false
+                    'is_parent' => false,
+                    'is_disabled' => true
                 ];
+            } else {
+                $topParentId = $topParent->id;
+
+                if (!isset($groupedData[$topParentId])) {
+                    $groupedData[$topParentId] = [
+                        'id' => $topParentId,
+                        'name' => $topParent->name,
+                        'pending' => 0,
+                        'completed' => 0,
+                        'total' => 0,
+                        'is_parent' => true,
+                        'is_disabled' => false,
+                        'children' => []
+                    ];
+                }
+
+                $groupedData[$topParentId]['pending'] += $counts['pending'];
+                $groupedData[$topParentId]['completed'] += $counts['completed'];
+                $groupedData[$topParentId]['total'] += $counts['total'];
+
+                if ($vId != $topParentId) {
+                    $groupedData[$topParentId]['children'][] = [
+                        'id' => $currentVertical->id,
+                        'name' => $currentVertical->full_path ?? $currentVertical->name,
+                        'pending' => $counts['pending'],
+                        'completed' => $counts['completed'],
+                        'total' => $counts['total'],
+                        'is_parent' => false
+                    ];
+                }
             }
         }
 

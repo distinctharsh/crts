@@ -117,7 +117,7 @@
                             <thead class="table-light">
                                 <tr>
                                     <th class="text-center" width="5%">#</th>
-                                    <th>Main Category Name</th>
+                                    <th>Category Name</th>
                                     <th class="text-center" width="15%">Pending</th>
                                     <th class="text-center" width="15%">Completed</th>
                                     <th class="text-center" width="15%">Total</th>
@@ -128,6 +128,7 @@
                                 @forelse($parentCategoryReportData as $pCategory)
                                     @php
                                         if ($pCategory['total'] == 0) continue;
+                                        $isDisabled = !empty($pCategory['is_disabled']);
                                     @endphp
                                     <tr>
                                         <td class="text-center font-weight-bold">{{ $parentSn++ }}</td>
