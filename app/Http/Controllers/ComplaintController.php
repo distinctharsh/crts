@@ -81,38 +81,25 @@ class ComplaintController extends Controller
                     ->orWhere('room_number', 'like', "%{$search}%")
                     ->orWhere('description', 'like', "%{$search}%");
 
-                    $q->orWhereHas('networkType', function ($q) use ($search) {
-                        $q->where('name', 'like', "%{$search}%");
-                    });
-
-                    $q->orWhereHas('section', function ($q) use ($search) {
-                        $q->where('name', 'like', "%{$search}%");
-                    });
-
-                    $q->orWhereHas('requestType', function ($q) use ($search) {
-                        $q->where('name', 'like', "%{$search}%");
-                    });
-
-                    $q->orWhereHas('vertical', function ($q) use ($search) {
-                        $q->where('name', 'like', "%{$search}%");
-                    });
-
-                    $q->orWhereHas('assignedTo', function ($q) use ($search) {
-                        $q->where('full_name', 'like', "%{$search}%");
-                    });
-
-                    $q->orWhereHas('client', function ($q) use ($search) {
-                        $q->where('full_name', 'like', "%{$search}%");
-                    });
-
-                    $q->orWhereHas('status', function ($q) use ($search) {
-                        $q->where('name', 'like', "%{$search}%");
-                    });
+                    $q->orWhereHas('networkType', function ($q) use ($search) { $q->where('name', 'like', "%{$search}%"); });
+                    $q->orWhereHas('section', function ($q) use ($search) { $q->where('name', 'like', "%{$search}%"); });
+                    $q->orWhereHas('requestType', function ($q) use ($search) { $q->where('name', 'like', "%{$search}%"); });
+                    $q->orWhereHas('vertical', function ($q) use ($search) { $q->where('name', 'like', "%{$search}%"); });
+                    $q->orWhereHas('assignedTo', function ($q) use ($search) { $q->where('full_name', 'like', "%{$search}%"); });
+                    $q->orWhereHas('actions.user', function ($q) use ($search) { $q->where('full_name', 'like', "%{$search}%"); });
+                    $q->orWhereHas('client', function ($q) use ($search) { $q->where('full_name', 'like', "%{$search}%"); });
+                    $q->orWhereHas('status', function ($q) use ($search) { $q->where('name', 'like', "%{$search}%"); });
                 });
             }
             if ($request->filled('by')) {
                 $searchByUserId = is_array($request->input('by')) ? $request->input('by') : explode(',', $request->input('by'));
-                $query->whereIn('assigned_to', $searchByUserId);
+                
+                $query->where(function ($q) use ($searchByUserId) {
+                    $q->whereIn('assigned_to', $searchByUserId)
+                    ->orWhereHas('actions', function ($actionQuery) use ($searchByUserId) {
+                        $actionQuery->whereIn('user_id', $searchByUserId);
+                    });
+                });
             }
             if ($request->filled('status')) {
                 $searchByStatus = is_array($request->input('status')) ? $request->input('status') : explode(',', $request->input('status'));
