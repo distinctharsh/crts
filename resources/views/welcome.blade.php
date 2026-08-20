@@ -370,14 +370,14 @@
                             <label for="username" class="form-label">Username</label>
                             <div class="input-group">
                                 <span class="input-group-text bg-white border-end-0"><i class="bi bi-person"></i></span>
-                                <input type="text" class="form-control border-start-0 @error('username') is-invalid @enderror" id="username" name="username" value="{{ old('username') }}" required autofocus placeholder="Enter your username">
+                                <input type="text" class="form-control border-start-0 @error('username') is-invalid @enderror" id="username" name="username" value="{{ old('username') }}" required autofocus autocomplete="off" placeholder="Enter your username">
                             </div>
                         </div>
                         <div class="mb-3 position-relative">
                             <label for="password" class="form-label">Password</label>
                             <div class="input-group" id="show_hide_password">
                                 <span class="input-group-text bg-white border-end-0"><i class="bi bi-lock"></i></span>
-                                <input type="password" class="form-control border-start-0 @error('password') is-invalid @enderror" id="password" name="password" required placeholder="Enter your password">
+                                <input type="password" class="form-control border-start-0 @error('password') is-invalid @enderror" id="password" name="password" required autocomplete="new-password" placeholder="Enter your password">
                                 <button class="btn btn-outline-secondary border-start-0" type="button" id="togglePassword" tabindex="-1"><i class="bi bi-eye"></i></button>
                             </div>
                         </div>
