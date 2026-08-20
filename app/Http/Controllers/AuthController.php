@@ -32,7 +32,34 @@ class AuthController extends Controller
                 ->withInput();
         }
 
-        $credentials = $request->only('username', 'password');
+        $rawPassword = $request->input('password');
+        $secretKey = config('app.key');
+        $plainPassword = null;
+
+        try {
+            $cipherText = base64_decode($rawPassword);
+            if (substr($cipherText, 0, 8) === "Salted__") {
+                $salt = substr($cipherText, 8, 8);
+                $ciphertext = substr($cipherText, 16);
+                $keyAndIV = $this->evpkdf($secretKey, $salt, 32, 16);
+                $decrypted = openssl_decrypt($ciphertext, 'aes-256-cbc', $keyAndIV['key'], OPENSSL_RAW_DATA, $keyAndIV['iv']);
+                
+                if ($decrypted !== false) {
+                    $plainPassword = $decrypted;
+                }
+            }
+        } catch (\Exception $e) {
+            $plainPassword = null;
+        }
+
+        if (!$plainPassword) {
+            $plainPassword = $rawPassword;
+        }
+
+        $credentials = [
+            'username' => $request->username,
+            'password' => $plainPassword
+        ];
 
         if (Auth::attempt($credentials)) {
             $request->session()->regenerate();
@@ -45,6 +72,23 @@ class AuthController extends Controller
         return redirect('/home')->withErrors([
             'username' => 'The provided credentials do not match our records.',
         ])->withInput();
+    }
+
+    /**
+     * OpenSSL Key derivation function
+     */
+    private function evpkdf($password, $salt, $keyLen, $ivLen)
+    {
+        $derivedBytes = '';
+        $block = '';
+        while (strlen($derivedBytes) < ($keyLen + $ivLen)) {
+            $block = md5($block . $password . $salt, true);
+            $derivedBytes .= $block;
+        }
+        return [
+            'key' => substr($derivedBytes, 0, $keyLen),
+            'iv'  => substr($derivedBytes, $keyLen, $ivLen)
+        ];
     }
 
     public function logout(Request $request)

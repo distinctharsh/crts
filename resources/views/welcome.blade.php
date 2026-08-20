@@ -17,6 +17,7 @@
     <link href="{{ asset('css/bootstrap.min.css') }}" rel="stylesheet">
     <link href="{{ asset('css/style.css') }}" rel="stylesheet">
     <script src="{{ asset('js/main.js') }}"></script>
+    <script src="{{ asset('js/crypto-js.min.js') }}"></script>
 
 
     <style>
@@ -611,6 +612,22 @@
                     const backdrop = document.querySelector('.modal-backdrop');
                     if (backdrop) {
                         backdrop.remove();
+                    }
+                });
+            }
+        });
+    </script>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            const loginForm = document.querySelector('#loginModal form');
+            if (loginForm) {
+                loginForm.addEventListener('submit', function(e) {
+                    const passwordInput = document.getElementById('password');
+                    if (passwordInput && passwordInput.value) {
+                        const secretKey = "{{ config('app.key') }}";
+                        const encrypted = CryptoJS.AES.encrypt(passwordInput.value, secretKey).toString();
+                        passwordInput.value = encrypted;
                     }
                 });
             }
